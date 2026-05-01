@@ -4,16 +4,16 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 1 — A unit on a map
-- [ ] Single normal-ground tile map
-- [ ] Circle unit with directional arrow
-- [ ] Right-click to move (crisp, snappy, straight line, no pathfinding)
-- [ ] Unit stops exactly on target
-- [ ] Camera follows unit
-- [ ] Space tap to re-center camera
-- [ ] Space hold to lock camera to unit
-- [ ] Middle mouse drag to pan
-- [ ] Edge scrolling to pan
+## Milestone 1 — A unit on a map ✓
+- [x] Single normal-ground tile map
+- [x] Circle unit with directional arrow
+- [x] Right-click to move (crisp, snappy, straight line, no pathfinding)
+- [x] Unit stops exactly on target
+- [x] Camera follows unit
+- [x] Space tap to re-center camera
+- [x] Space hold to lock camera to unit
+- [x] Middle mouse drag to pan
+- [x] Edge scrolling to pan
 
 ---
 
