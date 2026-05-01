@@ -5,7 +5,7 @@ public partial class GameCamera : Camera2D
     private const float EdgeScrollSpeed = 600f;
     private const float EdgeThreshold = 20f;
 
-    private Node2D _unit;
+    private Node2D? _unit;
     private bool _isLockedToUnit;
     private bool _isMiddleMousePanning;
     private Vector2 _panStartMousePos;
