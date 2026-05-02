@@ -29,14 +29,25 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 3 — Win / death loop
-- [ ] Start block (players spawn here)
-- [ ] End block (touching it beats the level)
-- [ ] Death and respawn at start block
-- [ ] Corpse left behind on death
-- [ ] Level transition screen (auto-advance, shows deaths + who beat the level)
-- [ ] 10-second countdown or loading delay between levels
-- [ ] Basic HUD: timer counting up, player name/status
+## Milestone 3a — Death & respawn ✓
+- [x] Start block (players spawn here)
+- [x] Kill surface leaves a corpse instead of instant reset
+- [x] Respawn at start block after short delay
+- [x] End block (touching it beats the level)
+
+---
+
+## Milestone 3b — HUD ✓
+- [x] Timer counting up from 0:00
+- [x] Player name, alive/dead status
+- [x] Death counter
+
+---
+
+## Milestone 3c — Level transition ✓
+- [x] Auto-advance to next level
+- [x] Loading screen showing deaths + who beat the level
+- [x] Short delay before next level loads
 
 ---
 

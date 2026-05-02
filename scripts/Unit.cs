@@ -10,14 +10,21 @@ public partial class Unit : Area2D
 	private const float SlidySpeed = 400f;
 	private const float SlidyTurnRate = 15.0f; // radians/sec
 
+	private const float RespawnDelay = 3f;
+
 	private Vector2? _target;
 	private Vector2 _facing = Vector2.Right;
 	private Vector2 _velocity = Vector2.Zero;
 	private SurfaceType _currentSurface = SurfaceType.Ground;
 	private Vector2 _startPosition;
 	private readonly HashSet<SurfaceZone> _overlappingZones = new();
+	private bool _isDead;
+	private Corpse? _corpse;
 
 	public Color UnitColor { get; set; } = new Color(0.2f, 0.8f, 1f);
+
+	[Signal] public delegate void DiedEventHandler();
+	[Signal] public delegate void RespawnedEventHandler();
 
 	public override void _Ready()
 	{
@@ -33,8 +40,16 @@ public partial class Unit : Area2D
 		AreaExited += OnZoneExited;
 	}
 
+	public void SetStartPosition(Vector2 position)
+	{
+		_startPosition = position;
+		GlobalPosition = position;
+	}
+
 	public override void _Process(double delta)
 	{
+		if (_isDead) return;
+
 		switch (_currentSurface)
 		{
 			case SurfaceType.Ground:
@@ -62,6 +77,8 @@ public partial class Unit : Area2D
 
 	public override void _Draw()
 	{
+		if (_isDead) return;
+
 		DrawCircle(Vector2.Zero, Radius, UnitColor);
 		DrawArc(Vector2.Zero, Radius, 0, Mathf.Tau, 32, Colors.White, 1.5f);
 		DrawLine(Vector2.Zero, _facing * (Radius + 10f), Colors.White, 3f);
@@ -76,7 +93,7 @@ public partial class Unit : Area2D
 
 	public void SetTarget(Vector2 worldPosition)
 	{
-		if (_currentSurface == SurfaceType.Straight) return;
+		if (_isDead || _currentSurface == SurfaceType.Straight) return;
 		_target = worldPosition;
 		QueueRedraw();
 	}
@@ -134,11 +151,29 @@ public partial class Unit : Area2D
 
 	private void Die()
 	{
-		GlobalPosition = _startPosition;
+		if (_isDead) return;
+
+		_isDead = true;
 		_target = null;
 		_velocity = Vector2.Zero;
 		_currentSurface = SurfaceType.Ground;
 		_overlappingZones.Clear();
+
+		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor };
+		GetParent().AddChild(_corpse);
+
+		GetTree().CreateTimer(RespawnDelay).Timeout += Respawn;
+		EmitSignal(SignalName.Died);
+		QueueRedraw();
+	}
+
+	private void Respawn()
+	{
+		_isDead = false;
+		GlobalPosition = _startPosition;
+		_corpse?.QueueFree();
+		_corpse = null;
+		EmitSignal(SignalName.Respawned);
 		QueueRedraw();
 	}
 

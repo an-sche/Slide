@@ -6,12 +6,23 @@ public partial class World : Node2D
 {
     private Unit? _unit;
     private GameCamera? _camera;
+    private Hud? _hud;
+    private LevelTransition? _transition;
 
     public override void _Ready()
     {
         _unit = GetNode<Unit>("Unit");
         _camera = GetNode<GameCamera>("Camera");
         _camera.Initialize(_unit);
+
+        _hud = new Hud();
+        AddChild(_hud);
+        _unit.Died += _hud.OnUnitDied;
+        _unit.Respawned += _hud.OnUnitRespawned;
+
+        _transition = new LevelTransition();
+        AddChild(_transition);
+
         Input.MouseMode = Input.MouseModeEnum.Confined;
         CreateTestLevel();
     }
@@ -46,7 +57,20 @@ public partial class World : Node2D
         AddChild(new SurfaceZone { Type = SurfaceType.Kill, Size = new Vector2(400,  2400), Position = new Vector2(-2200, 0) }); // left
         AddChild(new SurfaceZone { Type = SurfaceType.Kill, Size = new Vector2(400,  2400), Position = new Vector2( 2200, 0) }); // right
 
-        _unit!.Position = new Vector2(-400, -200); // center of Ground tile
+        // Ground tile center is (-1200, -600); place blocks within it
+        var startPos = new Vector2(-1400, -800);
+        AddChild(new StartBlock { Position = startPos });
+
+        var endBlock = new EndBlock { Position = new Vector2(-1000, -400) };
+        AddChild(endBlock);
+        endBlock.LevelCompleted += OnLevelCompleted;
+
+        _unit!.SetStartPosition(startPos);
+    }
+
+    private void OnLevelCompleted()
+    {
+        _transition!.ShowTransition("Slider 1", RunState.ElapsedSeconds, RunState.TotalDeaths);
     }
 
     public override void _Process(double delta)
