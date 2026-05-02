@@ -17,15 +17,15 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 2 — Surfaces
-- [ ] Slidy surface (fixed speed, fixed turning rate, never stops)
-- [ ] Straight surface (no input accepted, exits on surface change)
-- [ ] Kill surface (instant death, leaves corpse)
-- [ ] Fast surface (Slidy at 2x speed and turn rate)
-- [ ] Confusing surface (Slidy but steers away from click)
-- [ ] Fast Confusing surface (Confusing at 2x speed and turn rate)
-- [ ] Test level using all surface types
-- [ ] Smooth visual transitions between surface types (no jagged edges)
+## Milestone 2 — Surfaces ✓
+- [x] Slidy surface (fixed speed, fixed turning rate, never stops)
+- [x] Straight surface (no input accepted, exits on surface change)
+- [x] Kill surface (instant death — corpse deferred to Milestone 3)
+- [x] Fast surface (Slidy at 2x speed, same turning radius)
+- [x] Confusing surface (Slidy but steers away from click)
+- [x] Fast Confusing surface (Confusing at 2x speed, same turning radius)
+- [x] Test level using all surface types
+- [x] Smooth visual transitions between surface types (no jagged edges)
 
 ---
 
