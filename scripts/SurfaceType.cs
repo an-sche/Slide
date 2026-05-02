@@ -1,3 +1,5 @@
+namespace Slide;
+
 public enum SurfaceType
 {
     Ground,

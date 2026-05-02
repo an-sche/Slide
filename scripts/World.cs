@@ -1,5 +1,7 @@
 using Godot;
 
+namespace Slide;
+
 public partial class World : Node2D
 {
     private Unit? _unit;

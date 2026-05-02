@@ -1,5 +1,7 @@
 using Godot;
 
+namespace Slide;
+
 public partial class SurfaceZone : Area2D
 {
     public SurfaceType Type { get; set; } = SurfaceType.Ground;

@@ -1,6 +1,8 @@
 using Godot;
 using System.Collections.Generic;
 
+namespace Slide;
+
 public partial class Unit : Area2D
 {
 	private const float Radius = 16f;
@@ -42,13 +44,13 @@ public partial class Unit : Area2D
 				ProcessMomentumMovement((float)delta, SlidySpeed, SlidyTurnRate, invert: false);
 				break;
 			case SurfaceType.Fast:
-				ProcessMomentumMovement((float)delta, SlidySpeed * 2f, SlidyTurnRate, invert: false);
+				ProcessMomentumMovement((float)delta, SlidySpeed * 2f, SlidyTurnRate * 2f, invert: false);
 				break;
 			case SurfaceType.Confusing:
 				ProcessMomentumMovement((float)delta, SlidySpeed, SlidyTurnRate, invert: true);
 				break;
 			case SurfaceType.FastConfusing:
-				ProcessMomentumMovement((float)delta, SlidySpeed * 2f, SlidyTurnRate, invert: true);
+				ProcessMomentumMovement((float)delta, SlidySpeed * 2f, SlidyTurnRate * 2f, invert: true);
 				break;
 			case SurfaceType.Straight:
 				ProcessStraightMovement((float)delta);

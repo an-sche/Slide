@@ -1,5 +1,7 @@
 using Godot;
 
+namespace Slide;
+
 public partial class GameCamera : Camera2D
 {
     private const float EdgeScrollSpeed = 600f;
