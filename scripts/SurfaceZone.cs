@@ -24,12 +24,12 @@ public partial class SurfaceZone : Area2D
 
     private Color GetColor() => Type switch
     {
-        SurfaceType.Slidy        => new Color(0.50f, 0.80f, 1.00f),
-        SurfaceType.Fast         => new Color(1.00f, 0.60f, 0.20f),
-        SurfaceType.Confusing    => new Color(0.60f, 0.20f, 0.80f),
-        SurfaceType.FastConfusing => new Color(0.90f, 0.15f, 0.30f),
-        SurfaceType.Straight     => new Color(0.55f, 0.55f, 0.55f),
-        SurfaceType.Kill         => new Color(0.75f, 0.08f, 0.08f),
-        _                        => new Color(0.18f, 0.32f, 0.14f),
+        SurfaceType.Slidy         => new Color(0.55f, 0.82f, 1.00f), // light blue
+        SurfaceType.Fast          => new Color(0.10f, 0.25f, 0.75f), // dark blue
+        SurfaceType.Confusing     => new Color(0.75f, 0.55f, 0.95f), // light purple
+        SurfaceType.FastConfusing => new Color(0.38f, 0.10f, 0.58f), // dark purple
+        SurfaceType.Straight      => new Color(0.72f, 0.72f, 0.72f), // light gray
+        SurfaceType.Kill          => new Color(0.75f, 0.08f, 0.08f), // dark red
+        _                         => new Color(0.25f, 0.65f, 0.25f), // green
     };
 }
