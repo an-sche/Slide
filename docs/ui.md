@@ -18,12 +18,12 @@ Players can still spend skill points mid-level before the end is touched, not on
 ## HUD
 
 ### Ability Bar
-Displayed at the bottom of the screen, one icon per ability (Boost, Gack, Warp, Donut, Ethereal). Each icon shows:
+Displayed at the bottom of the screen, one icon per ability in order: Boost (Q), Warp (W), Donut (E), Ethereal (R), Gack (F). Each icon shows:
 - Cooldown overlay (like WoW/League of Legends)
 - A **+** button above the icon when the player has an unspent skill point and the ability is eligible to upgrade
 - Advanced abilities (Warp, Donut, Ethereal) are grayed out / locked until 3 skill points have been earned
 
-Upgrading an ability: click the **+** button, or press **Ctrl + ability key** (e.g. Ctrl+T for Boost). No panel, no pause — inline upgrade like League of Legends. Only affects that player; the game keeps running.
+Upgrading an ability: click the **+** button, or press **Ctrl + ability key** (e.g. Ctrl+Q for Boost). No panel, no pause — inline upgrade like League of Legends. Only affects that player; the game keeps running.
 
 ### Player Info
 Each player (self and teammates) is displayed as:

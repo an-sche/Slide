@@ -70,6 +70,7 @@ public partial class World : Node2D
 
     private void OnLevelCompleted()
     {
+        RunState.PlayerLevel++;
         _transition!.ShowTransition("Slider 1", RunState.ElapsedSeconds, RunState.TotalDeaths);
     }
 

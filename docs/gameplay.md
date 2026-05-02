@@ -15,7 +15,7 @@ Movement is inspired by StarCraft-style click-to-move: right-clicking sets a des
 | Space (hold) | Lock camera to follow own unit continuously |
 | Middle mouse drag | Pan camera |
 | Cursor at screen edge | Pan camera (edge scrolling) |
-| Q, E, R, T, F etc | Remappable Abilities (abilities.md) |
+| Q, W, E, R, F     | Abilities (see abilities.md)        |
 
 ## Rules
 <!-- What can the player do / not do? Win/loss conditions? -->

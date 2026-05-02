@@ -51,15 +51,31 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 4 — Abilities
-- [ ] Ability bar in HUD (icons, cooldown overlay, + button, Ctrl+key upgrade)
-- [ ] Skill point system (earn on level complete or bonus pickup, persist across levels)
-- [ ] Advanced ability lock (Warp, Donut, Ethereal require 3 points earned)
-- [ ] Boost (T) — normal ground only, no effect/no cooldown if used elsewhere
-- [ ] Gack (F)
-- [ ] Warp (Q)
-- [ ] Donut (E)
-- [ ] Ethereal (R)
+## Milestone 4a — Ability bar & skill points ✓
+- [x] Ability bar in HUD (5 slots: Q, W, E, R, F — key label, level dots)
+- [x] Skill point system (earn 1 on level complete, persist across levels via RunState)
+- [x] Spend points to level up an ability (+ button or Ctrl+key)
+- [x] Advanced ability lock (W, E, R grayed out until Lv.3)
+
+---
+
+## Milestone 4b — Starter abilities: Boost & Gack
+- [ ] Boost (Q) — speed boost on normal ground only; no effect and no cooldown consumed on other surfaces
+- [ ] Gack (F) — leaves a goo zone that boosts speed for any player on a non-ground surface; goo lasts 8s
+
+---
+
+## Milestone 4c — Warp
+- [ ] Warp (W) — places a ghost at the unit's current position; reactivating warps the unit back to it
+- [ ] Ghost fades and disappears after its duration expires
+- [ ] Ghost is visible to all players (multiplayer-ready visual)
+
+---
+
+## Milestone 4d — Resurrection abilities: Donut & Ethereal
+- [ ] Donut (E) — fires a ring projectile that inherits the unit's momentum at cast time; resurrects any corpse it touches; unaffected by surfaces
+- [ ] Ethereal (R) — unit becomes ethereal; touching a corpse resurrects it at the ethereal unit's position with matching velocity
+- [ ] Both abilities are no-ops in solo play if no corpses exist (no crash, no cooldown consumed)
 
 ---
 
@@ -99,3 +115,10 @@ Each milestone should be fully playable and testable before moving to the next.
 - [ ] Save and load levels locally
 - [ ] Publish to Steam Workshop
 - [ ] Subscribe to and play Workshop levels
+
+---
+
+## Deferred Items
+
+- Cooldown overlay on ability bar slots (deferred from 4a — implement alongside actual ability cooldowns in 4b/4c/4d)
+- Upgrade UI feedback: flash or sound when a point is spent (deferred from 4a, low priority)

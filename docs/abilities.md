@@ -4,13 +4,13 @@ When a player picks up a bonus or completes a level, they gain a skill point. Sk
 
 Players can spend skill points at any time, including mid-level.
 
-**Starter abilities** (available immediately): Boost (T), Gack (F)
+**Starter abilities** (available immediately): Boost (Q), Gack (F)
 
-**Advanced abilities** (locked until the player has earned 3 skill points total): Warp (Q), Donut (E), Ethereal (R)
+**Advanced abilities** (locked until the player has earned 3 skill points total): Warp (W), Donut (E), Ethereal (R)
 
 A player can save all their points unspent and dump all 3 into an advanced ability at once. The unlock gate is based on total points earned, not points spent.
 
-## Boost (T)
+## Boost (Q)
 
 Only activates on normal ground. If pressed on any other surface, nothing happens and the cooldown is not consumed.
 
@@ -21,7 +21,7 @@ Level 2: 30% for 6 seconds (35s cooldown)
 Level 3: 40% for 7 seconds (30s cooldown)
 Level 4: 50% for 8 seconds (25s cooldown)
 
-## Warp (Q)
+## Warp (W)
 
 This move works on any surface. The player leaves behind a ghost of their unit. They can reactivate the ability later to 'warp' back to their ghost. The ghost only exists for a few seconds then it dissapears. 
 
