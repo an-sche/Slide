@@ -21,11 +21,12 @@ public partial class AbilityBar : Control
     private const float PlusGap      = 4f;
     private const int   UnlockLevel  = 3;
 
-    private readonly StyleBoxFlat[] _styles     = new StyleBoxFlat[5];
-    private readonly Label[]        _keyLabels  = new Label[5];
-    private readonly Label[]        _nameLabels = new Label[5];
-    private readonly Label[]        _dotLabels  = new Label[5];
-    private readonly Button[]       _plusBtns   = new Button[5];
+    private readonly StyleBoxFlat[] _styles          = new StyleBoxFlat[5];
+    private readonly Label[]        _keyLabels        = new Label[5];
+    private readonly Label[]        _nameLabels       = new Label[5];
+    private readonly Label[]        _dotLabels        = new Label[5];
+    private readonly Button[]       _plusBtns         = new Button[5];
+    private readonly ColorRect[]    _cooldownOverlays = new ColorRect[5];
 
     public override void _Ready()
     {
@@ -46,6 +47,8 @@ public partial class AbilityBar : Control
         }
 
         SetLevel(RunState.PlayerLevel);
+        for (int i = 0; i < Slots.Length; i++)
+            UpdateSlotState(i, 0f, false);
     }
 
     public void SetLevel(int level)
@@ -53,12 +56,28 @@ public partial class AbilityBar : Control
         for (int i = 0; i < Slots.Length; i++)
         {
             bool locked = Slots[i].Advanced && level < UnlockLevel;
-            _styles[i].BorderColor = locked ? LockedBorderColor : UnlockedBorderColor;
             _keyLabels[i].AddThemeColorOverride("font_color",  locked ? LockedKeyColor  : UnlockedKeyColor);
             _nameLabels[i].AddThemeColorOverride("font_color", locked ? LockedNameColor : UnlockedNameColor);
             _dotLabels[i].AddThemeColorOverride("font_color",  locked ? LockedNameColor : UnlockedNameColor);
         }
         UpdatePlusButtons();
+    }
+
+    public void UpdateSlotState(int index, float cooldownFraction, bool active)
+    {
+        _cooldownOverlays[index].OffsetBottom = SlotHeight * cooldownFraction;
+
+        Color border;
+        if (active)
+            border = ActiveBorderColor;
+        else if (cooldownFraction > 0f)
+            border = CooldownBorderColor;
+        else if (Slots[index].Advanced && RunState.PlayerLevel < UnlockLevel)
+            border = LockedBorderColor;
+        else
+            border = UnlockedBorderColor;
+
+        _styles[index].BorderColor = border;
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -202,7 +221,20 @@ public partial class AbilityBar : Control
         _dotLabels[i] = dotLabel;
 
         UpdateDots(i);
+
+        var overlay = new ColorRect { Color = new Color(0f, 0f, 0f, 0.72f) };
+        overlay.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
+        overlay.OffsetLeft   = 0f;
+        overlay.OffsetRight  = SlotWidth;
+        overlay.OffsetTop    = 0f;
+        overlay.OffsetBottom = 0f;
+        overlay.MouseFilter  = Control.MouseFilterEnum.Ignore;
+        panel.AddChild(overlay);
+        _cooldownOverlays[i] = overlay;
     }
+
+    private static readonly Color ActiveBorderColor   = new(1f, 0.8f, 0f);
+    private static readonly Color CooldownBorderColor = new(0.25f, 0.25f, 0.25f);
 
     private static readonly Color UnlockedBorderColor = new(0.65f, 0.65f, 0.65f);
     private static readonly Color UnlockedKeyColor    = Colors.White;

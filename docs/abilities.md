@@ -16,10 +16,10 @@ Only activates on normal ground. If pressed on any other surface, nothing happen
 
 Each level increases the percent and seconds. 
 
-Level 1: 20% for 5 seconds (40s cooldown)
-Level 2: 30% for 6 seconds (35s cooldown)
-Level 3: 40% for 7 seconds (30s cooldown)
-Level 4: 50% for 8 seconds (25s cooldown)
+Level 1: 50% for 5 seconds (40s cooldown)
+Level 2: 65% for 6 seconds (35s cooldown)
+Level 3: 80% for 7 seconds (30s cooldown)
+Level 4: 100% for 8 seconds (25s cooldown)
 
 ## Warp (W)
 

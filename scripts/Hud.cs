@@ -9,6 +9,7 @@ public partial class Hud : CanvasLayer
     private Label _timerLabel = null!;
     private Label _statusLabel = null!;
     private AbilityBar _abilityBar = null!;
+    private Unit? _unit;
     private float _elapsed;
     private int _deaths;
     private bool _isAlive = true;
@@ -35,11 +36,16 @@ public partial class Hud : CanvasLayer
         UpdateLabels();
     }
 
+    public void SetUnit(Unit unit) => _unit = unit;
+
     public override void _Process(double delta)
     {
         _elapsed += (float)delta;
         RunState.ElapsedSeconds = _elapsed;
         UpdateTimerLabel();
+
+        if (_unit != null)
+            _abilityBar.UpdateSlotState(0, _unit.BoostCooldownFraction, _unit.IsBoostActive);
     }
 
     public void OnUnitDied()

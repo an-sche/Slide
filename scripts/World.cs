@@ -19,6 +19,7 @@ public partial class World : Node2D
         AddChild(_hud);
         _unit.Died += _hud.OnUnitDied;
         _unit.Respawned += _hud.OnUnitRespawned;
+        _hud.SetUnit(_unit);
 
         _transition = new LevelTransition();
         AddChild(_transition);
