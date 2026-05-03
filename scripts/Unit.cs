@@ -5,16 +5,12 @@ namespace Slide;
 
 public partial class Unit : Area2D
 {
-	private const float Radius = 16f;
+	public const float Radius = 16f;
 	private const float GroundSpeed = 200f;
 	private const float SlidySpeed = 400f;
 	private const float SlidyTurnRate = 15.0f; // radians/sec
 
 	private const float RespawnDelay = 3f;
-
-	private static readonly float[] BoostMultipliers = { 0.50f, 0.65f, 0.80f, 1.00f };
-	private static readonly float[] BoostDurations   = { 5f, 6f, 7f, 8f };
-	private static readonly float[] BoostCooldowns   = { 40f, 35f, 30f, 25f };
 
 	private Vector2? _target;
 	private Vector2 _facing = Vector2.Right;
@@ -25,14 +21,9 @@ public partial class Unit : Area2D
 	private bool _isDead;
 	private Corpse? _corpse;
 
-	private float _boostDuration;
-	private float _boostCooldown;
-	private float _boostMaxCooldown;
-	private float _boostMultiplier;
+	private readonly Ability?[] _abilities = new Ability?[5];
 
-	public float BoostCooldownFraction => _boostMaxCooldown > 0f ? _boostCooldown / _boostMaxCooldown : 0f;
-	public bool IsBoostActive => _boostDuration > 0f;
-
+	public bool IsDead => _isDead;
 	public Color UnitColor { get; set; } = new Color(0.2f, 0.8f, 1f);
 
 	[Signal] public delegate void DiedEventHandler();
@@ -50,6 +41,14 @@ public partial class Unit : Area2D
 
 		AreaEntered += OnZoneEntered;
 		AreaExited += OnZoneExited;
+
+		_abilities[0] = new BoostAbility(this);
+	}
+
+	public (float CooldownFraction, bool IsActive) GetAbilityState(int slot)
+	{
+		var a = _abilities[slot];
+		return a != null ? (a.CooldownFraction, a.IsActive) : (0f, false);
 	}
 
 	public void SetStartPosition(Vector2 position)
@@ -62,8 +61,7 @@ public partial class Unit : Area2D
 	{
 		float dt = (float)delta;
 
-		if (_boostDuration > 0f) _boostDuration = Mathf.Max(0f, _boostDuration - dt);
-		if (_boostCooldown > 0f) _boostCooldown = Mathf.Max(0f, _boostCooldown - dt);
+		foreach (var a in _abilities) a?.Process(dt);
 
 		if (_isDead) return;
 
@@ -97,31 +95,24 @@ public partial class Unit : Area2D
 		if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
 		if (key.CtrlPressed) return;
 
-		if (key.Keycode == Key.Q)
-			TryActivateBoost();
-	}
+		int slot = key.Keycode switch
+		{
+			Key.Q => 0,
+			Key.W => 1,
+			Key.E => 2,
+			Key.R => 3,
+			Key.F => 4,
+			_ => -1,
+		};
 
-	private void TryActivateBoost()
-	{
-		int level = RunState.AbilityLevels[0];
-		if (level <= 0 || _isDead || _boostCooldown > 0f) return;
-
-		_boostMultiplier  = BoostMultipliers[level - 1];
-		_boostDuration    = BoostDurations[level - 1];
-		_boostMaxCooldown = BoostCooldowns[level - 1];
-		_boostCooldown    = _boostMaxCooldown;
+		if (slot >= 0) _abilities[slot]?.TryActivate();
 	}
 
 	public override void _Draw()
 	{
 		if (_isDead) return;
 
-		if (IsBoostActive)
-		{
-			float t = (float)(Time.GetTicksMsec() % 1000) / 1000f;
-			float pulse = (Mathf.Sin(t * Mathf.Tau) + 1f) * 0.5f;
-			DrawArc(Vector2.Zero, Radius + 6f, 0, Mathf.Tau, 32, new Color(1f, 0.8f, 0f, 0.55f + pulse * 0.45f), 2.5f);
-		}
+		foreach (var a in _abilities) a?.DrawOnUnit();
 
 		DrawCircle(Vector2.Zero, Radius, UnitColor);
 		DrawArc(Vector2.Zero, Radius, 0, Mathf.Tau, 32, Colors.White, 1.5f);
@@ -217,10 +208,7 @@ public partial class Unit : Area2D
 		GlobalPosition = _startPosition;
 		_corpse?.QueueFree();
 		_corpse = null;
-		_boostDuration    = 0f;
-		_boostCooldown    = 0f;
-		_boostMaxCooldown = 0f;
-		_boostMultiplier  = 0f;
+		foreach (var a in _abilities) a?.OnRespawn();
 		EmitSignal(SignalName.Respawned);
 		QueueRedraw();
 	}
@@ -229,7 +217,9 @@ public partial class Unit : Area2D
 	{
 		if (_target is not { } target) return;
 
-		float speed = GroundSpeed * (IsBoostActive ? 1f + _boostMultiplier : 1f);
+		float speedMult = 1f;
+		foreach (var a in _abilities) if (a != null) speedMult *= a.GroundSpeedMultiplier;
+		float speed = GroundSpeed * speedMult;
 		Vector2 toTarget = target - GlobalPosition;
 		float distance = toTarget.Length();
 		float step = speed * delta;

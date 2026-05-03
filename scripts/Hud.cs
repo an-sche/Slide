@@ -45,7 +45,13 @@ public partial class Hud : CanvasLayer
         UpdateTimerLabel();
 
         if (_unit != null)
-            _abilityBar.UpdateSlotState(0, _unit.BoostCooldownFraction, _unit.IsBoostActive);
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                var (fraction, active) = _unit.GetAbilityState(i);
+                _abilityBar.UpdateSlotState(i, fraction, active);
+            }
+        }
     }
 
     public void OnUnitDied()
