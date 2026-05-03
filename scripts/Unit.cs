@@ -23,7 +23,13 @@ public partial class Unit : Area2D
 
 	private readonly Ability?[] _abilities = new Ability?[5];
 
+	private int _gooZoneCount;
+
 	public bool IsDead => _isDead;
+	private bool IsInGoo => _gooZoneCount > 0;
+
+	public void EnterGoo() => _gooZoneCount++;
+	public void ExitGoo()  => _gooZoneCount = Mathf.Max(0, _gooZoneCount - 1);
 	public Color UnitColor { get; set; } = new Color(0.2f, 0.8f, 1f);
 
 	[Signal] public delegate void DiedEventHandler();
@@ -43,6 +49,7 @@ public partial class Unit : Area2D
 		AreaExited += OnZoneExited;
 
 		_abilities[0] = new BoostAbility(this);
+		_abilities[4] = new GackAbility(this);
 	}
 
 	public (float CooldownFraction, bool IsActive) GetAbilityState(int slot)
@@ -193,6 +200,7 @@ public partial class Unit : Area2D
 		_velocity = Vector2.Zero;
 		_currentSurface = SurfaceType.Ground;
 		_overlappingZones.Clear();
+		_gooZoneCount = 0;
 
 		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor };
 		GetParent().AddChild(_corpse);
@@ -208,6 +216,7 @@ public partial class Unit : Area2D
 		GlobalPosition = _startPosition;
 		_corpse?.QueueFree();
 		_corpse = null;
+		_gooZoneCount = 0;
 		foreach (var a in _abilities) a?.OnRespawn();
 		EmitSignal(SignalName.Respawned);
 		QueueRedraw();
@@ -240,6 +249,8 @@ public partial class Unit : Area2D
 
 	private void ProcessMomentumMovement(float delta, float speed, float turnRate, bool invert)
 	{
+		speed *= IsInGoo ? GooZone.SpeedMultiplier : 1f;
+
 		if (_velocity.LengthSquared() < 0.001f)
 			_velocity = _facing * speed;
 		else
@@ -265,8 +276,9 @@ public partial class Unit : Area2D
 
 	private void ProcessStraightMovement(float delta)
 	{
+		float straightSpeed = SlidySpeed * (IsInGoo ? GooZone.SpeedMultiplier : 1f);
 		Vector2 dir = _velocity.LengthSquared() > 0.001f ? _velocity.Normalized() : _facing;
-		_velocity = dir * SlidySpeed;
+		_velocity = dir * straightSpeed;
 		GlobalPosition += _velocity * delta;
 		_facing = _velocity.Normalized();
 	}
