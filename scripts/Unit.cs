@@ -25,7 +25,9 @@ public partial class Unit : Area2D
 
 	private int _gooZoneCount;
 
-	public bool IsDead => _isDead;
+	public bool    IsDead   => _isDead;
+	public Vector2 Velocity { get => _velocity; set => _velocity = value; }
+	public Vector2 Facing   => _facing;
 	private bool IsInGoo => _gooZoneCount > 0;
 
 	public void EnterGoo() => _gooZoneCount++;
@@ -49,6 +51,7 @@ public partial class Unit : Area2D
 		AreaExited += OnZoneExited;
 
 		_abilities[0] = new BoostAbility(this);
+		_abilities[1] = new WarpAbility(this);
 		_abilities[4] = new GackAbility(this);
 	}
 
@@ -139,6 +142,8 @@ public partial class Unit : Area2D
 		_target = worldPosition;
 		QueueRedraw();
 	}
+
+	public void ClearTarget() => _target = null;
 
 	private void OnZoneEntered(Area2D area)
 	{

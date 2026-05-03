@@ -56,11 +56,8 @@ public class GackAbility : Ability
 
     public override void OnRespawn()
     {
-        _duration        = 0f;
-        _cooldown        = 0f;
-        _maxCooldown     = 0f;
-        IsActive         = false;
-        CooldownFraction = 0f;
+        _duration = 0f;
+        IsActive  = false;
     }
 
     private void SpawnGoo()

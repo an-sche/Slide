@@ -59,9 +59,9 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 4b — Starter abilities: Boost & Gack
-- [ ] Boost (Q) — speed boost on normal ground only; no effect and no cooldown consumed on other surfaces
-- [ ] Gack (F) — leaves a goo zone that boosts speed for any player on a non-ground surface; goo lasts 8s
+## Milestone 4b — Starter abilities: Boost & Gack ✓
+- [x] Boost (Q) — speed boost on ground, activatable on any surface, full duration regardless of surface
+- [x] Gack (F) — leaves a distance-based goo trail that boosts speed 40% on non-ground surfaces
 
 ---
 
