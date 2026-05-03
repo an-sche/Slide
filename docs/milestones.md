@@ -82,11 +82,24 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 5 — Enemies
-- [ ] Enemy unit (any size, configurable)
-- [ ] Patrol path (follows predefined waypoints, loops)
-- [ ] Random movement (moves randomly within a defined area)
-- [ ] Death on player contact
+## Milestone 5a — Enemy foundation
+- [ ] `IEnemyBehavior` interface (`void Process(float delta, Enemy enemy)`)
+- [ ] `Enemy` class — configurable radius and color, holds one `IEnemyBehavior`, kills player on contact, added to `"enemies"` group
+- [ ] Circle placeholder visual (same style as Unit)
+
+---
+
+## Milestone 5b — Patrol behavior
+- [ ] `Waypoint` record — `Position` (Vector2) + `Speed` (float)
+- [ ] `PatrolEndBehavior` enum — `Loop` / `Disappear`
+- [ ] `PatrolBehavior` — moves through waypoints in order at per-waypoint speed; starts at waypoint[0]; loops or disappears at end
+
+---
+
+## Milestone 5c — Random wander behavior
+- [ ] `RandomWanderBehavior` — polygon area (Vector2[]), speed, min/max idle duration, optional start position
+- [ ] Idle → Moving → Idle state machine; random point inside polygon chosen via `Geometry2D.IsPointInPolygon` rejection sampling
+- [ ] If no start position provided, begin at a random point inside the polygon
 
 ---
 
