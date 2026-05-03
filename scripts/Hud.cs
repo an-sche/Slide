@@ -8,8 +8,9 @@ public partial class Hud : CanvasLayer
 
     private Label _timerLabel = null!;
     private Label _statusLabel = null!;
-    private AbilityBar _abilityBar = null!;
-    private Unit? _unit;
+    private AbilityBar  _abilityBar   = null!;
+    private Unit?       _unit;
+    private PlayerState _playerState  = RunState.GetPlayer(0);
     private float _elapsed;
     private int _deaths;
     private bool _isAlive = true;
@@ -31,12 +32,17 @@ public partial class Hud : CanvasLayer
         root.AddChild(_abilityBar);
 
         _elapsed = RunState.ElapsedSeconds;
-        _deaths = RunState.TotalDeaths;
-        _abilityBar.SetLevel(RunState.PlayerLevel);
+        _deaths  = RunState.TotalDeaths;
         UpdateLabels();
     }
 
-    public void SetUnit(Unit unit) => _unit = unit;
+    public void SetUnit(Unit unit)
+    {
+        _unit        = unit;
+        _playerState = unit.PlayerState;
+        _abilityBar.SetPlayerState(_playerState);
+        UpdateStatusLabel();
+    }
 
     public override void _Process(double delta)
     {
@@ -78,7 +84,7 @@ public partial class Hud : CanvasLayer
     private void UpdateStatusLabel()
     {
         string status = _isAlive ? "Alive" : "Dead";
-        _statusLabel.Text = $"{PlayerName}  |  Lv.{RunState.PlayerLevel}  |  {status}  |  Deaths: {_deaths}";
+        _statusLabel.Text = $"{PlayerName}  |  Lv.{_playerState.PlayerLevel}  |  {status}  |  Deaths: {_deaths}";
     }
 
     private void UpdateLabels()

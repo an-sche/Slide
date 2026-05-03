@@ -21,7 +21,7 @@ public class BoostAbility : Ability
 
     public override void TryActivate()
     {
-        int level = RunState.AbilityLevels[SlotIndex];
+        int level = Unit.PlayerState.AbilityLevels[SlotIndex];
         if (level <= 0 || Unit.IsDead || _cooldown > 0f) return;
 
         _multiplier  = Multipliers[level - 1];

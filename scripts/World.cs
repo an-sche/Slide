@@ -71,7 +71,7 @@ public partial class World : Node2D
 
     private void OnLevelCompleted()
     {
-        RunState.PlayerLevel++;
+        RunState.LevelUpAll();
         _transition!.ShowTransition("Slider 1", RunState.ElapsedSeconds, RunState.TotalDeaths);
     }
 
@@ -79,6 +79,21 @@ public partial class World : Node2D
     {
         if (Input.IsMouseButtonPressed(MouseButton.Right))
             _unit?.SetTarget(GetGlobalMousePosition());
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.Quoteleft }) return;
+        if (_unit == null) return;
+
+        var ps = _unit.PlayerState;
+        ps.PlayerLevel      = 20;
+        ps.AbilityLevels[0] = 4; // Q Boost
+        ps.AbilityLevels[1] = 4; // W Warp
+        ps.AbilityLevels[2] = 4; // E Donut
+        ps.AbilityLevels[3] = 4; // R Ethereal
+        ps.AbilityLevels[4] = 1; // F Gack
+        GetViewport().SetInputAsHandled();
     }
 
     public override void _Draw()

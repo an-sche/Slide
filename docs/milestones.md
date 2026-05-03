@@ -65,17 +65,16 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 4c — Warp
-- [ ] Warp (W) — places a ghost at the unit's current position; reactivating warps the unit back to it
-- [ ] Ghost fades and disappears after its duration expires
-- [ ] Ghost is visible to all players (multiplayer-ready visual)
+## Milestone 4c — Warp ✓
+- [x] Warp (W) — places a ghost at the unit's current position; reactivating warps the unit back to it
+- [x] Ghost fades and disappears after its duration expires
+- [x] Ghost is visible to all players (multiplayer-ready visual)
 
 ---
 
 ## Milestone 4d — Resurrection abilities: Donut & Ethereal
-- [ ] Donut (E) — fires a ring projectile that inherits the unit's momentum at cast time; resurrects any corpse it touches; unaffected by surfaces
+- [x] Donut (E) — fires a ring projectile in the unit's facing direction at fixed speed; stationary on ground; passes through and resurrects all corpses it touches; unaffected by surfaces
 - [ ] Ethereal (R) — unit becomes ethereal; touching a corpse resurrects it at the ethereal unit's position with matching velocity
-- [ ] Both abilities are no-ops in solo play if no corpses exist (no crash, no cooldown consumed)
 
 ---
 
@@ -120,5 +119,4 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ## Deferred Items
 
-- Cooldown overlay on ability bar slots (deferred from 4a — implement alongside actual ability cooldowns in 4b/4c/4d)
 - Upgrade UI feedback: flash or sound when a point is spent (deferred from 4a, low priority)

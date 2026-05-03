@@ -1,12 +1,23 @@
 using Godot;
+using System;
 
 namespace Slide;
 
-public partial class Corpse : Node2D
+public partial class Corpse : Area2D
 {
     private const float Radius = 16f;
 
-    public Color UnitColor { get; set; } = new Color(0.2f, 0.8f, 1f);
+    public Color   UnitColor   { get; set; } = new Color(0.2f, 0.8f, 1f);
+    public Action? OnResurrect { get; set; }
+
+    public override void _Ready()
+    {
+        CollisionLayer = 16;
+        CollisionMask  = 0;
+        Monitorable    = true;
+        Monitoring     = false;
+        AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = Radius } });
+    }
 
     public override void _Draw()
     {

@@ -19,7 +19,7 @@ public class GackAbility : Ability
 
     public override void TryActivate()
     {
-        int level = RunState.AbilityLevels[SlotIndex];
+        int level = Unit.PlayerState.AbilityLevels[SlotIndex];
         if (level <= 0 || Unit.IsDead || _cooldown > 0f) return;
 
         _duration         = Durations[level - 1];

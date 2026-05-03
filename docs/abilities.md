@@ -38,13 +38,17 @@ This move works on any surface, however it's bonus only applies on non normal gr
 
 There is only one level for this ability. 
 
-Level 1: 8 seconds (30s cooldown)
+Level 1: 4 seconds (30s cooldown)
 
 ## Donut (E)
 
-This move helps on multiplayer a lot! The player shoots a circle / donut out of their unit in the direction they are moving. The donut gets the 'point in time' momentum of the unit at time of pressing this ability. If they are on normal ground, the donut has no momentum, but if they are on slidy surfaces, then the donut follows the point in time momentum of the player. If the donut touches a dead players body. The player is ressurected! The donut is unaffected by any surface or enemy and just continues moving for x seconds. 
+The player fires a donut-shaped ring projectile from their position in their current facing direction. The donut always moves at the same fixed speed regardless of surface. On normal ground, the donut is spawned with no velocity and sits in place for its duration.
 
-Each level increases the duration of the donut's movement. 
+The donut travels in a straight line, is unaffected by surfaces, and lasts until its lifetime expires — it is never destroyed early. It can pass through and resurrect multiple corpses in a single throw. Any resurrected unit returns to their start block.
+
+Notable solo strategy: throw a donut just before hitting a kill surface — if the donut reaches your corpse before expiring, you skip the full respawn delay and return to your start block immediately.
+
+Each level increases the duration (and therefore range) of the donut. 
 
 Level 1: 1.5 seconds (45s cooldown)
 Level 2: 3.0 seconds (40s cooldown)

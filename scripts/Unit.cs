@@ -19,15 +19,20 @@ public partial class Unit : Area2D
 	private Vector2 _startPosition;
 	private readonly HashSet<SurfaceZone> _overlappingZones = new();
 	private bool _isDead;
-	private Corpse? _corpse;
+	private Corpse?          _corpse;
+	private SceneTreeTimer?  _respawnTimer;
 
 	private readonly Ability?[] _abilities = new Ability?[5];
 
 	private int _gooZoneCount;
 
-	public bool    IsDead   => _isDead;
-	public Vector2 Velocity { get => _velocity; set => _velocity = value; }
-	public Vector2 Facing   => _facing;
+	public int         PlayerId    { get; set; } = 0;
+	public PlayerState PlayerState => RunState.GetPlayer(PlayerId);
+
+	public bool    IsDead     => _isDead;
+	public bool    IsOnGround => _currentSurface == SurfaceType.Ground;
+	public Vector2 Velocity   { get => _velocity; set => _velocity = value; }
+	public Vector2 Facing     => _facing;
 	private bool IsInGoo => _gooZoneCount > 0;
 
 	public void EnterGoo() => _gooZoneCount++;
@@ -52,6 +57,7 @@ public partial class Unit : Area2D
 
 		_abilities[0] = new BoostAbility(this);
 		_abilities[1] = new WarpAbility(this);
+		_abilities[2] = new DonutAbility(this);
 		_abilities[4] = new GackAbility(this);
 	}
 
@@ -207,24 +213,37 @@ public partial class Unit : Area2D
 		_overlappingZones.Clear();
 		_gooZoneCount = 0;
 
-		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor };
+		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor, OnResurrect = ResurrectEarly };
 		GetParent().AddChild(_corpse);
 
-		GetTree().CreateTimer(RespawnDelay).Timeout += Respawn;
+		_respawnTimer          = GetTree().CreateTimer(RespawnDelay);
+		_respawnTimer.Timeout += Respawn;
 		EmitSignal(SignalName.Died);
 		QueueRedraw();
 	}
 
 	private void Respawn()
 	{
-		_isDead = false;
+		_respawnTimer  = null;
+		_isDead        = false;
 		GlobalPosition = _startPosition;
 		_corpse?.QueueFree();
-		_corpse = null;
+		_corpse       = null;
 		_gooZoneCount = 0;
 		foreach (var a in _abilities) a?.OnRespawn();
 		EmitSignal(SignalName.Respawned);
 		QueueRedraw();
+	}
+
+	public void ResurrectEarly()
+	{
+		if (!_isDead) return;
+		if (_respawnTimer != null)
+		{
+			_respawnTimer.Timeout -= Respawn;
+			_respawnTimer          = null;
+		}
+		Respawn();
 	}
 
 	private void ProcessGroundMovement(float delta)

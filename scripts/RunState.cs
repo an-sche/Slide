@@ -3,29 +3,22 @@ namespace Slide;
 public static class RunState
 {
     public static float ElapsedSeconds { get; set; }
-    public static int TotalDeaths { get; set; }
-    public static int PlayerLevel { get; set; } = 1;
+    public static int   TotalDeaths    { get; set; }
 
-    // One entry per ability slot (Q, W, E, R, F), all start at level 0 (unspent)
-    public static int[] AbilityLevels { get; } = { 0, 0, 0, 0, 0 };
+    private static readonly PlayerState[] _players =
+        [new(), new(), new(), new(), new(), new(), new(), new()];
 
-    public static int SpentPoints
+    public static PlayerState GetPlayer(int id) => _players[id];
+
+    public static void LevelUpAll()
     {
-        get
-        {
-            int total = 0;
-            foreach (int level in AbilityLevels) total += level;
-            return total;
-        }
+        foreach (var p in _players) p.PlayerLevel++;
     }
-
-    public static int AvailablePoints => PlayerLevel - SpentPoints;
 
     public static void Reset()
     {
         ElapsedSeconds = 0;
-        TotalDeaths = 0;
-        PlayerLevel = 1;
-        for (int i = 0; i < AbilityLevels.Length; i++) AbilityLevels[i] = 0;
+        TotalDeaths    = 0;
+        foreach (var p in _players) p.Reset();
     }
 }

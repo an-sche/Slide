@@ -21,6 +21,8 @@ public partial class AbilityBar : Control
     private const float PlusGap      = 4f;
     private const int   UnlockLevel  = 3;
 
+    private PlayerState _playerState = RunState.GetPlayer(0);
+
     private readonly StyleBoxFlat[] _styles          = new StyleBoxFlat[5];
     private readonly Label[]        _keyLabels        = new Label[5];
     private readonly Label[]        _nameLabels       = new Label[5];
@@ -46,9 +48,21 @@ public partial class AbilityBar : Control
             BuildSlot(i, x);
         }
 
-        SetLevel(RunState.PlayerLevel);
+        SetLevel(_playerState.PlayerLevel);
         for (int i = 0; i < Slots.Length; i++)
             UpdateSlotState(i, 0f, false);
+    }
+
+    public void SetPlayerState(PlayerState state)
+    {
+        _playerState = state;
+    }
+
+    public override void _Process(double delta)
+    {
+        SetLevel(_playerState.PlayerLevel);
+        for (int i = 0; i < Slots.Length; i++) UpdateDots(i);
+        UpdatePlusButtons();
     }
 
     public void SetLevel(int level)
@@ -72,7 +86,7 @@ public partial class AbilityBar : Control
             border = ActiveBorderColor;
         else if (cooldownFraction > 0f)
             border = CooldownBorderColor;
-        else if (Slots[index].Advanced && RunState.PlayerLevel < UnlockLevel)
+        else if (Slots[index].Advanced && _playerState.PlayerLevel < UnlockLevel)
             border = LockedBorderColor;
         else
             border = UnlockedBorderColor;
@@ -102,29 +116,29 @@ public partial class AbilityBar : Control
 
     private void TryUpgrade(int i)
     {
-        if (RunState.AvailablePoints <= 0) return;
-        if (RunState.AbilityLevels[i] >= Slots[i].MaxLevel) return;
-        if (Slots[i].Advanced && RunState.PlayerLevel < UnlockLevel) return;
+        if (_playerState.AvailablePoints <= 0) return;
+        if (_playerState.AbilityLevels[i] >= Slots[i].MaxLevel) return;
+        if (Slots[i].Advanced && _playerState.PlayerLevel < UnlockLevel) return;
 
-        RunState.AbilityLevels[i]++;
+        _playerState.AbilityLevels[i]++;
         UpdateDots(i);
         UpdatePlusButtons();
     }
 
     private void UpdatePlusButtons()
     {
-        int available = RunState.AvailablePoints;
+        int available = _playerState.AvailablePoints;
         for (int i = 0; i < Slots.Length; i++)
         {
             _plusBtns[i].Visible = available > 0
-                && RunState.AbilityLevels[i] < Slots[i].MaxLevel
-                && (!Slots[i].Advanced || RunState.PlayerLevel >= UnlockLevel);
+                && _playerState.AbilityLevels[i] < Slots[i].MaxLevel
+                && (!Slots[i].Advanced || _playerState.PlayerLevel >= UnlockLevel);
         }
     }
 
     private void UpdateDots(int i)
     {
-        int level    = RunState.AbilityLevels[i];
+        int level    = _playerState.AbilityLevels[i];
         int maxLevel = Slots[i].MaxLevel;
         _dotLabels[i].Text = new string('●', level) + new string('○', maxLevel - level);
     }

@@ -23,7 +23,7 @@ public class WarpAbility : Ability
 
     public override void TryActivate()
     {
-        int level = RunState.AbilityLevels[SlotIndex];
+        int level = Unit.PlayerState.AbilityLevels[SlotIndex];
         if (level <= 0) return;
 
         if (_state == WarpState.Idle)
@@ -52,7 +52,7 @@ public class WarpAbility : Ability
             Unit.Velocity       = _capturedVelocity;
             Unit.ClearTarget();
 
-            int level2       = RunState.AbilityLevels[SlotIndex];
+            int level2       = Unit.PlayerState.AbilityLevels[SlotIndex];
             _maxCooldown     = Cooldowns[level2 - 1];
             _cooldown        = _maxCooldown;
 
@@ -75,7 +75,7 @@ public class WarpAbility : Ability
                 _state   = WarpState.Idle;
                 IsActive = false;
 
-                int level = RunState.AbilityLevels[SlotIndex];
+                int level = Unit.PlayerState.AbilityLevels[SlotIndex];
                 if (level > 0)
                 {
                     _maxCooldown = Cooldowns[level - 1];
