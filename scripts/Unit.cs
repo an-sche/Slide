@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 namespace Slide;
@@ -35,6 +36,8 @@ public partial class Unit : Area2D
 	public Vector2 Facing     => _facing;
 	private bool IsInGoo => _gooZoneCount > 0;
 
+	public event Action<Corpse>? CorpseTouched;
+
 	public void EnterGoo() => _gooZoneCount++;
 	public void ExitGoo()  => _gooZoneCount = Mathf.Max(0, _gooZoneCount - 1);
 	public Color UnitColor { get; set; } = new Color(0.2f, 0.8f, 1f);
@@ -47,7 +50,7 @@ public partial class Unit : Area2D
 		_startPosition = GlobalPosition;
 
 		CollisionLayer = 2;
-		CollisionMask = 1;
+		CollisionMask  = 1 | 16; // surfaces + corpses
 		ZIndex = 1;
 
 		AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = Radius * 0.8f } });
@@ -58,6 +61,7 @@ public partial class Unit : Area2D
 		_abilities[0] = new BoostAbility(this);
 		_abilities[1] = new WarpAbility(this);
 		_abilities[2] = new DonutAbility(this);
+		_abilities[3] = new EtherealAbility(this);
 		_abilities[4] = new GackAbility(this);
 	}
 
@@ -134,6 +138,8 @@ public partial class Unit : Area2D
 		DrawArc(Vector2.Zero, Radius, 0, Mathf.Tau, 32, Colors.White, 1.5f);
 		DrawLine(Vector2.Zero, _facing * (Radius + 10f), Colors.White, 3f);
 
+		foreach (var a in _abilities) a?.DrawAboveUnit();
+
 		if (_target.HasValue && _currentSurface != SurfaceType.Straight)
 		{
 			Vector2 localTarget = ToLocal(_target.Value);
@@ -153,9 +159,8 @@ public partial class Unit : Area2D
 
 	private void OnZoneEntered(Area2D area)
 	{
-		if (area is not SurfaceZone zone) return;
-		_overlappingZones.Add(zone);
-		UpdateCurrentSurface();
+		if (area is SurfaceZone zone) { _overlappingZones.Add(zone); UpdateCurrentSurface(); }
+		else if (area is Corpse c)    CorpseTouched?.Invoke(c);
 	}
 
 	private void OnZoneExited(Area2D area)
@@ -213,7 +218,7 @@ public partial class Unit : Area2D
 		_overlappingZones.Clear();
 		_gooZoneCount = 0;
 
-		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor, OnResurrect = ResurrectEarly };
+		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor, OnResurrect = ResurrectEarly, SourceUnit = this };
 		GetParent().AddChild(_corpse);
 
 		_respawnTimer          = GetTree().CreateTimer(RespawnDelay);
@@ -244,6 +249,26 @@ public partial class Unit : Area2D
 			_respawnTimer          = null;
 		}
 		Respawn();
+	}
+
+	public void ResurrectAt(Vector2 position, Vector2 velocity)
+	{
+		if (!_isDead) return;
+		if (_respawnTimer != null)
+		{
+			_respawnTimer.Timeout -= Respawn;
+			_respawnTimer          = null;
+		}
+		_respawnTimer  = null;
+		_isDead        = false;
+		GlobalPosition = position;
+		_velocity      = velocity;
+		_corpse?.QueueFree();
+		_corpse       = null;
+		_gooZoneCount = 0;
+		foreach (var a in _abilities) a?.OnRespawn();
+		EmitSignal(SignalName.Respawned);
+		QueueRedraw();
 	}
 
 	private void ProcessGroundMovement(float delta)

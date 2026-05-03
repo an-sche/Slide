@@ -72,9 +72,13 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 4d — Resurrection abilities: Donut & Ethereal
+## Milestone 4d — Donut ✓
 - [x] Donut (E) — fires a ring projectile in the unit's facing direction at fixed speed; stationary on ground; passes through and resurrects all corpses it touches; unaffected by surfaces
-- [ ] Ethereal (R) — unit becomes ethereal; touching a corpse resurrects it at the ethereal unit's position with matching velocity
+
+---
+
+## Milestone 4e — Ethereal ✓
+- [x] Ethereal (R) — unit becomes ethereal; touching a corpse resurrects it at the ethereal unit's position with matching velocity; can resurrect multiple corpses per activation
 
 ---
 
@@ -120,3 +124,5 @@ Each milestone should be fully playable and testable before moving to the next.
 ## Deferred Items
 
 - Upgrade UI feedback: flash or sound when a point is spent (deferred from 4a, low priority)
+- Waypoint cleanup: when a unit reaches its waypoint on ground, the waypoint marker should be removed from the display
+- Slidy surface steering: holding right-click should orbit the unit around the target point, not steer toward a point on the tangent of the unit's circle — needs tuning to feel correct

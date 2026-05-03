@@ -14,6 +14,7 @@ public abstract class Ability
 
     public abstract void TryActivate();
     public abstract void Process(float delta);
-    public virtual void DrawOnUnit() { }
-    public virtual void OnRespawn() { }
+    public virtual void DrawOnUnit()    { }
+    public virtual void DrawAboveUnit() { }
+    public virtual void OnRespawn()     { }
 }

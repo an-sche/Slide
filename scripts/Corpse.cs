@@ -9,6 +9,7 @@ public partial class Corpse : Area2D
 
     public Color   UnitColor   { get; set; } = new Color(0.2f, 0.8f, 1f);
     public Action? OnResurrect { get; set; }
+    public Unit?   SourceUnit  { get; set; }
 
     public override void _Ready()
     {

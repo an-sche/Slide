@@ -81,6 +81,7 @@ public partial class World : Node2D
             _unit?.SetTarget(GetGlobalMousePosition());
     }
 
+#if DEBUG
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.Quoteleft }) return;
@@ -95,6 +96,7 @@ public partial class World : Node2D
         ps.AbilityLevels[4] = 1; // F Gack
         GetViewport().SetInputAsHandled();
     }
+#endif
 
     public override void _Draw()
     {
