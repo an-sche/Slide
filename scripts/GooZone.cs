@@ -20,12 +20,16 @@ public partial class GooZone : Area2D
         AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = GooRadius } });
     }
 
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
         _remaining -= (float)delta;
         if (_remaining <= 0f)
             QueueFree();
-        else
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_remaining > 0f)
             QueueRedraw();
     }
 

@@ -7,11 +7,9 @@ public class EtherealAbility : Ability
     private static readonly float[] Durations = [3f, 4f, 5f, 6f];
     private static readonly float[] Cooldowns = [45f, 40f, 35f, 30f];
 
-    private const int SlotIndex = 3; // R
+    private const AbilitySlot Slot = AbilitySlot.Ethereal;
 
     private float _duration;
-    private float _cooldown;
-    private float _maxCooldown;
 
     public EtherealAbility(Unit unit) : base(unit)
     {
@@ -20,7 +18,7 @@ public class EtherealAbility : Ability
 
     public override void TryActivate()
     {
-        int level = Unit.PlayerState.AbilityLevels[SlotIndex];
+        int level = Unit.PlayerState.AbilityLevels[(int)Slot];
         if (level <= 0 || Unit.IsDead || _cooldown > 0f) return;
 
         _duration    = Durations[level - 1];
@@ -38,10 +36,7 @@ public class EtherealAbility : Ability
                 IsActive = false;
         }
 
-        if (_cooldown > 0f)
-            _cooldown = Mathf.Max(0f, _cooldown - delta);
-
-        CooldownFraction = _maxCooldown > 0f ? _cooldown / _maxCooldown : 0f;
+        TickCooldown(delta);
     }
 
     public override void DrawOnUnit()
@@ -60,6 +55,7 @@ public class EtherealAbility : Ability
     }
 
     public override void OnRespawn() { }
+
 
     private void OnCorpseTouched(Corpse corpse)
     {

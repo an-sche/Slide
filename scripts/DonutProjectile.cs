@@ -25,7 +25,7 @@ public partial class DonutProjectile : Area2D
         AreaEntered += area => { if (area is Corpse c) c.OnResurrect?.Invoke(); };
     }
 
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
         _remaining -= (float)delta;
         if (_remaining <= 0f)
@@ -34,6 +34,10 @@ public partial class DonutProjectile : Area2D
             return;
         }
         GlobalPosition += MoveVelocity * (float)delta;
+    }
+
+    public override void _Process(double delta)
+    {
         QueueRedraw();
     }
 

@@ -7,19 +7,17 @@ public class GackAbility : Ability
     private static readonly float[] Durations = [4f];
     private static readonly float[] Cooldowns = [30f];
 
-    private const int   SlotIndex    = 4; // F
+    private const AbilitySlot Slot = AbilitySlot.Gack;
     private const float DropDistance = 40f;
 
     private float   _duration;
-    private float   _cooldown;
-    private float   _maxCooldown;
     private Vector2 _lastDropPosition;
 
     public GackAbility(Unit unit) : base(unit) { }
 
     public override void TryActivate()
     {
-        int level = Unit.PlayerState.AbilityLevels[SlotIndex];
+        int level = Unit.PlayerState.AbilityLevels[(int)Slot];
         if (level <= 0 || Unit.IsDead || _cooldown > 0f) return;
 
         _duration         = Durations[level - 1];
@@ -48,10 +46,7 @@ public class GackAbility : Ability
             SpawnGoo();
         }
 
-        if (_cooldown > 0f)
-            _cooldown = Mathf.Max(0f, _cooldown - delta);
-
-        CooldownFraction = _maxCooldown > 0f ? _cooldown / _maxCooldown : 0f;
+        TickCooldown(delta);
     }
 
     public override void OnRespawn()
@@ -59,6 +54,7 @@ public class GackAbility : Ability
         _duration = 0f;
         IsActive  = false;
     }
+
 
     private void SpawnGoo()
     {

@@ -62,11 +62,11 @@ public partial class Unit : Area2D
 		AreaEntered += OnZoneEntered;
 		AreaExited += OnZoneExited;
 
-		_abilities[0] = new BoostAbility(this);
-		_abilities[1] = new WarpAbility(this);
-		_abilities[2] = new DonutAbility(this);
-		_abilities[3] = new EtherealAbility(this);
-		_abilities[4] = new GackAbility(this);
+		_abilities[(int)AbilitySlot.Boost]    = new BoostAbility(this);
+		_abilities[(int)AbilitySlot.Warp]     = new WarpAbility(this);
+		_abilities[(int)AbilitySlot.Donut]    = new DonutAbility(this);
+		_abilities[(int)AbilitySlot.Ethereal] = new EtherealAbility(this);
+		_abilities[(int)AbilitySlot.Gack]     = new GackAbility(this);
 	}
 
 	public (float CooldownFraction, bool IsActive) GetAbilityState(int slot)
@@ -81,7 +81,7 @@ public partial class Unit : Area2D
 		GlobalPosition = position;
 	}
 
-	public override void _Process(double delta)
+	public override void _PhysicsProcess(double delta)
 	{
 		float dt = (float)delta;
 
@@ -110,7 +110,10 @@ public partial class Unit : Area2D
 				ProcessStraightMovement(dt);
 				break;
 		}
+	}
 
+	public override void _Process(double delta)
+	{
 		QueueRedraw();
 	}
 
@@ -121,11 +124,11 @@ public partial class Unit : Area2D
 
 		int slot = key.Keycode switch
 		{
-			Key.Q => 0,
-			Key.W => 1,
-			Key.E => 2,
-			Key.R => 3,
-			Key.F => 4,
+			Key.Q => (int)AbilitySlot.Boost,
+			Key.W => (int)AbilitySlot.Warp,
+			Key.E => (int)AbilitySlot.Donut,
+			Key.R => (int)AbilitySlot.Ethereal,
+			Key.F => (int)AbilitySlot.Gack,
 			_ => -1,
 		};
 
@@ -243,6 +246,8 @@ public partial class Unit : Area2D
 	}
 
 	public void TriggerDeath() => Die();
+
+	public void ResetAbilityCooldowns() { foreach (var a in _abilities) a?.ResetCooldown(); }
 
 	public void ResurrectEarly()
 	{

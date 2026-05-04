@@ -20,9 +20,13 @@ public partial class Enemy : Area2D
         AreaEntered += area => { if (area is Unit u && !u.IsDead) u.TriggerDeath(); };
     }
 
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
         Behavior?.Process((float)delta, this);
+    }
+
+    public override void _Process(double delta)
+    {
         QueueRedraw();
     }
 

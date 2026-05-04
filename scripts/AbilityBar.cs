@@ -101,11 +101,11 @@ public partial class AbilityBar : Control
 
         int index = key.Keycode switch
         {
-            Key.Q => 0,
-            Key.W => 1,
-            Key.E => 2,
-            Key.R => 3,
-            Key.F => 4,
+            Key.Q => (int)AbilitySlot.Boost,
+            Key.W => (int)AbilitySlot.Warp,
+            Key.E => (int)AbilitySlot.Donut,
+            Key.R => (int)AbilitySlot.Ethereal,
+            Key.F => (int)AbilitySlot.Gack,
             _ => -1,
         };
 

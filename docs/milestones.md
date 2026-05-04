@@ -103,12 +103,37 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 6 — Local multiplayer
-- [ ] Two players on the same machine (split input)
-- [ ] Resurrection by touching corpse (respawns at start block)
-- [ ] Team wipe detection (all players dead simultaneously = full run reset)
-- [ ] Per-player HUD: `Name spent (available)`, death count, resurrection count, alive/dead
-- [ ] Run reset: back to level 1, 1 skill point each
+## Milestone 6 — Multiplayer foundations (localhost)
+
+**Testing:** Use Godot's "Debug → Run Multiple Instances" to launch host + client(s) on the same machine.
+
+### 6a — Fixed timestep & simulation cleanup
+- [ ] Move `Unit` and `Enemy` simulation from `_Process` to `_PhysicsProcess`
+- [ ] Verify movement feels identical before and after the switch
+
+### 6b — Network transport & roles
+- [ ] Integrate Godot's built-in ENet transport (no Steam yet)
+- [ ] Main menu: "Host" and "Join" buttons (join connects to localhost by default)
+- [ ] Host assigns peer IDs; each peer controls exactly one `Unit`
+
+### 6c — Input pipeline
+- [ ] Client sends right-click target and ability keypresses to host via `@rpc`
+- [ ] Host applies inputs, simulates, and is the sole authority on all game state
+- [ ] Local unit on host simulates directly (no RPC round-trip for host player)
+
+### 6d — State synchronization
+- [ ] `MultiplayerSynchronizer` on each `Unit` — broadcasts `GlobalPosition`, `Velocity`, `Facing`, `IsDead`
+- [ ] Enemy positions broadcast from host each tick
+- [ ] Clients render received state; no client-side prediction yet
+
+### 6e — Game flow
+- [ ] Resurrection by touching a teammate's corpse (respawns at start block)
+- [ ] Team wipe detection: all players dead simultaneously → full run reset (level 1, 1 skill point each)
+- [ ] Level complete triggers advance for all players simultaneously
+
+### 6f — Per-player HUD
+- [ ] Each client shows only their own unit's ability bar and status
+- [ ] All clients show a shared scoreboard: player name, alive/dead, death count
 
 ---
 

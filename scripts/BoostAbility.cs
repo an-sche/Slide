@@ -8,11 +8,9 @@ public class BoostAbility : Ability
     private static readonly float[] Durations   = [5f, 6f, 7f, 8f];
     private static readonly float[] Cooldowns   = [40f, 35f, 30f, 25f];
 
-    private const int SlotIndex = 0; // Q
+    private const AbilitySlot Slot = AbilitySlot.Boost;
 
     private float _duration;
-    private float _cooldown;
-    private float _maxCooldown;
     private float _multiplier;
 
     public BoostAbility(Unit unit) : base(unit) { }
@@ -21,7 +19,7 @@ public class BoostAbility : Ability
 
     public override void TryActivate()
     {
-        int level = Unit.PlayerState.AbilityLevels[SlotIndex];
+        int level = Unit.PlayerState.AbilityLevels[(int)Slot];
         if (level <= 0 || Unit.IsDead || _cooldown > 0f) return;
 
         _multiplier  = Multipliers[level - 1];
@@ -39,10 +37,7 @@ public class BoostAbility : Ability
             IsActive  = _duration > 0f;
         }
 
-        if (_cooldown > 0f)
-            _cooldown = Mathf.Max(0f, _cooldown - delta);
-
-        CooldownFraction = _maxCooldown > 0f ? _cooldown / _maxCooldown : 0f;
+        TickCooldown(delta);
     }
 
     public override void DrawOnUnit()
@@ -60,4 +55,5 @@ public class BoostAbility : Ability
         _multiplier = 0f;
         IsActive    = false;
     }
+
 }

@@ -142,11 +142,12 @@ public partial class World : Node2D
 
         var ps = _unit.PlayerState;
         ps.PlayerLevel      = 20;
-        ps.AbilityLevels[0] = 4; // Q Boost
-        ps.AbilityLevels[1] = 4; // W Warp
-        ps.AbilityLevels[2] = 4; // E Donut
-        ps.AbilityLevels[3] = 4; // R Ethereal
-        ps.AbilityLevels[4] = 1; // F Gack
+        ps.AbilityLevels[(int)AbilitySlot.Boost]    = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Warp]     = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Donut]    = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Ethereal] = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Gack]     = 1;
+        _unit.ResetAbilityCooldowns();
         GetViewport().SetInputAsHandled();
     }
 #endif

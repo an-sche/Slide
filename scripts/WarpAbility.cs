@@ -7,7 +7,7 @@ public class WarpAbility : Ability
     private static readonly float[] Durations = [5f, 6f, 7f, 8f];
     private static readonly float[] Cooldowns = [45f, 40f, 35f, 30f];
 
-    private const int SlotIndex = 1; // W
+    private const AbilitySlot Slot = AbilitySlot.Warp;
 
     private enum WarpState { Idle, GhostPlaced }
 
@@ -16,14 +16,12 @@ public class WarpAbility : Ability
     private Vector2    _capturedVelocity;
     private float      _ghostRemaining;
     private float      _ghostMaxDuration;
-    private float      _cooldown;
-    private float      _maxCooldown;
 
     public WarpAbility(Unit unit) : base(unit) { }
 
     public override void TryActivate()
     {
-        int level = Unit.PlayerState.AbilityLevels[SlotIndex];
+        int level = Unit.PlayerState.AbilityLevels[(int)Slot];
         if (level <= 0) return;
 
         if (_state == WarpState.Idle)
@@ -52,7 +50,7 @@ public class WarpAbility : Ability
             Unit.Velocity       = _capturedVelocity;
             Unit.ClearTarget();
 
-            int level2       = Unit.PlayerState.AbilityLevels[SlotIndex];
+            int level2       = Unit.PlayerState.AbilityLevels[(int)Slot];
             _maxCooldown     = Cooldowns[level2 - 1];
             _cooldown        = _maxCooldown;
 
@@ -75,7 +73,7 @@ public class WarpAbility : Ability
                 _state   = WarpState.Idle;
                 IsActive = false;
 
-                int level = Unit.PlayerState.AbilityLevels[SlotIndex];
+                int level = Unit.PlayerState.AbilityLevels[(int)Slot];
                 if (level > 0)
                 {
                     _maxCooldown = Cooldowns[level - 1];
@@ -88,14 +86,12 @@ public class WarpAbility : Ability
             }
         }
 
-        if (_cooldown > 0f)
-            _cooldown = Mathf.Max(0f, _cooldown - delta);
-
-        CooldownFraction = _maxCooldown > 0f ? _cooldown / _maxCooldown : 0f;
+        TickCooldown(delta);
     }
 
     public override void OnRespawn()
     {
         // Ghost stays in the world, cooldown keeps ticking — nothing to reset
     }
+
 }
