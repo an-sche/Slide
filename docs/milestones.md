@@ -82,17 +82,17 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 5a — Enemy foundation
-- [ ] `IEnemyBehavior` interface (`void Process(float delta, Enemy enemy)`)
-- [ ] `Enemy` class — configurable radius and color, holds one `IEnemyBehavior`, kills player on contact, added to `"enemies"` group
-- [ ] Circle placeholder visual (same style as Unit)
+## Milestone 5a — Enemy foundation ✓
+- [x] `IEnemyBehavior` interface (`void Process(float delta, Enemy enemy)`)
+- [x] `Enemy` class — configurable radius and color, holds one `IEnemyBehavior`, kills player on contact, added to `"enemies"` group
+- [x] Circle placeholder visual (same style as Unit)
 
 ---
 
-## Milestone 5b — Patrol behavior
-- [ ] `Waypoint` record — `Position` (Vector2) + `Speed` (float)
-- [ ] `PatrolEndBehavior` enum — `Loop` / `Disappear`
-- [ ] `PatrolBehavior` — moves through waypoints in order at per-waypoint speed; starts at waypoint[0]; loops or disappears at end
+## Milestone 5b — Patrol behavior ✓
+- [x] `Waypoint` record — `Position` (Vector2) + `Speed` (float)
+- [x] `PatrolEndBehavior` enum — `Loop` / `Disappear`
+- [x] `PatrolBehavior` — moves through waypoints in order at per-waypoint speed; starts at waypoint[0]; loops or disappears at end
 
 ---
 
@@ -119,6 +119,30 @@ Each milestone should be fully playable and testable before moving to the next.
 - [ ] Ready-up flow, host starts run
 - [ ] Up to 8 players
 - [ ] Disconnect does not end run — original lobby members can reconnect mid-run
+
+### Architecture notes
+
+**Simulation model: host-authoritative using Godot's built-in multiplayer**
+- Host runs all game logic (unit movement, enemy behaviors, ability effects, kill detection)
+- Clients send inputs to host via `@rpc`; host simulates and syncs state back via `MultiplayerSynchronizer`
+- Steam Relay (via GodotSteam addon) routes traffic between players — same role as Battle.net for StarCraft
+- Host has zero latency advantage; acceptable for a co-op puzzle game
+
+**GodotSteam addon required**
+- Provides Steamworks integration (lobbies, relay, authentication) for Godot
+- Works alongside Godot's built-in `MultiplayerAPI`
+
+**Fixed timestep (recommended before Milestone 7)**
+- Currently game logic runs in `_Process(double delta)` — delta varies per frame and drifts between machines
+- Switching unit and enemy simulation to `_PhysicsProcess` before networking reduces jitter and makes state sync more stable
+
+**Enemy sync**
+- Patrol enemies are deterministic — host broadcasts config once at level load; clients can simulate locally
+- Wander enemies and all kill decisions are host-authoritative only; results broadcast to clients
+
+**Bandwidth**
+- `MultiplayerSynchronizer` broadcasts positions each tick; 100 enemies × 8 bytes × 20 ticks/sec ≈ 16KB/s — well within Steam relay limits
+- Player inputs (target point, ability key) are small RPCs from each client to host
 
 ---
 

@@ -67,6 +67,40 @@ public partial class World : Node2D
         endBlock.LevelCompleted += OnLevelCompleted;
 
         _unit!.SetStartPosition(startPos);
+
+        // Patrol enemies on the slidy tile (center 0, -600)
+        AddChild(new Enemy
+        {
+            Position = new Vector2(-500, -600),
+            Radius   = 32f,
+            Behavior = new PatrolBehavior(
+            [
+                new Waypoint(new Vector2(-500, -600), 250f),
+                new Waypoint(new Vector2( 500, -600), 250f),
+            ], PatrolEndBehavior.Loop),
+        });
+        AddChild(new Enemy
+        {
+            Position = new Vector2(200, -800),
+            Radius   = 24f,
+            Behavior = new PatrolBehavior(
+            [
+                new Waypoint(new Vector2(200, -800), 350f),
+                new Waypoint(new Vector2(200, -400), 350f),
+            ], PatrolEndBehavior.Loop),
+        });
+        AddChild(new Enemy
+        {
+            Position = new Vector2(-200, -400),
+            Radius   = 20f,
+            Behavior = new PatrolBehavior(
+            [
+                new Waypoint(new Vector2(-200, -400), 180f),
+                new Waypoint(new Vector2( 400, -400), 180f),
+                new Waypoint(new Vector2( 400, -800), 180f),
+                new Waypoint(new Vector2(-200, -800), 180f),
+            ], PatrolEndBehavior.Loop),
+        });
     }
 
     private void OnLevelCompleted()

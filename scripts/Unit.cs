@@ -240,6 +240,8 @@ public partial class Unit : Area2D
 		QueueRedraw();
 	}
 
+	public void TriggerDeath() => Die();
+
 	public void ResurrectEarly()
 	{
 		if (!_isDead) return;
