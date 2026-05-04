@@ -12,8 +12,8 @@ public partial class GooZone : Area2D
 
     public override void _Ready()
     {
-        CollisionLayer = 8;
-        CollisionMask  = 2;
+        CollisionLayer = Layers.GooZones;
+        CollisionMask  = Layers.Units;
 
         AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = GooRadius } });
 

@@ -9,8 +9,8 @@ public partial class SurfaceZone : Area2D
 
     public override void _Ready()
     {
-        CollisionLayer = 1;
-        CollisionMask = 0;
+        CollisionLayer = Layers.Surfaces;
+        CollisionMask  = 0;
         Monitoring = false;
         Monitorable = true;
 

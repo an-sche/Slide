@@ -49,8 +49,8 @@ public partial class Unit : Area2D
 	{
 		_startPosition = GlobalPosition;
 
-		CollisionLayer = 2;
-		CollisionMask  = 1 | 16; // surfaces + corpses
+		CollisionLayer = Layers.Units;
+		CollisionMask  = Layers.Surfaces | Layers.Corpses;
 		ZIndex = 1;
 
 		AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = Radius * 0.8f } });
@@ -261,7 +261,6 @@ public partial class Unit : Area2D
 			_respawnTimer.Timeout -= Respawn;
 			_respawnTimer          = null;
 		}
-		_respawnTimer  = null;
 		_isDead        = false;
 		GlobalPosition = position;
 		_velocity      = velocity;

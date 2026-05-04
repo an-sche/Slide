@@ -15,8 +15,8 @@ public partial class DonutProjectile : Area2D
     {
         _remaining = Lifetime;
 
-        CollisionLayer = 32;
-        CollisionMask  = 16;
+        CollisionLayer = Layers.Donuts;
+        CollisionMask  = Layers.Corpses;
         Monitoring     = true;
         Monitorable    = false;
 
@@ -39,7 +39,7 @@ public partial class DonutProjectile : Area2D
 
     public override void _Draw()
     {
-        float a     = _remaining / Lifetime;
+        float a     = Lifetime > 0f ? _remaining / Lifetime : 0f;
         float t     = (float)(Time.GetTicksMsec() % 1000) / 1000f;
         float pulse = (Mathf.Sin(t * Mathf.Tau) + 1f) * 0.5f;
 

@@ -6,7 +6,7 @@ public partial class Enemy : Area2D
 {
     public float          Radius   { get; set; } = 16f;
     public Color          Color    { get; set; } = new Color(0.9f, 0.2f, 0.2f);
-    public IEnemyBehavior Behavior { get; set; } = null!;
+    public IEnemyBehavior? Behavior { get; set; }
 
     public override void _Ready()
     {
@@ -28,6 +28,7 @@ public partial class Enemy : Area2D
 
     public override void _Draw()
     {
+        Behavior?.Draw(this);
         DrawCircle(Vector2.Zero, Radius, Color);
         DrawArc(Vector2.Zero, Radius, 0, Mathf.Tau, 32, new Color(1f, 1f, 1f, 0.4f), 1.5f);
     }

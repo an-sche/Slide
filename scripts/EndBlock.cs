@@ -12,8 +12,8 @@ public partial class EndBlock : Area2D
 
     public override void _Ready()
     {
-        CollisionLayer = 4;
-        CollisionMask = 2; // detects units
+        CollisionLayer = Layers.EndBlock;
+        CollisionMask  = Layers.Units;
         Monitoring = true;
         Monitorable = false;
 

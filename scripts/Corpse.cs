@@ -13,7 +13,7 @@ public partial class Corpse : Area2D
 
     public override void _Ready()
     {
-        CollisionLayer = 16;
+        CollisionLayer = Layers.Corpses;
         CollisionMask  = 0;
         Monitorable    = true;
         Monitoring     = false;

@@ -96,10 +96,10 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 5c — Random wander behavior
-- [ ] `RandomWanderBehavior` — polygon area (Vector2[]), speed, min/max idle duration, optional start position
-- [ ] Idle → Moving → Idle state machine; random point inside polygon chosen via `Geometry2D.IsPointInPolygon` rejection sampling
-- [ ] If no start position provided, begin at a random point inside the polygon
+## Milestone 5c — Random wander behavior ✓
+- [x] `RandomWanderBehavior` — polygon area (Vector2[]), speed, min/max idle duration, optional start position
+- [x] Idle → Moving → Idle state machine; random point inside polygon chosen via `Geometry2D.IsPointInPolygon` rejection sampling
+- [x] If no start position provided, begin at a random point inside the polygon
 
 ---
 

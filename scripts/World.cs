@@ -101,6 +101,25 @@ public partial class World : Node2D
                 new Waypoint(new Vector2(-200, -800), 180f),
             ], PatrolEndBehavior.Loop),
         });
+
+        // Wander enemies on the fast tile (center 1200, -600), spans 600→1800 x, -1200→0 y
+        Vector2[] fastTileArea =
+        [
+            new(680, -1120), new(1720, -1120),
+            new(1720, -80),  new(680,  -80),
+        ];
+
+        AddChild(new Enemy { Radius = 36f, Color = new Color(0.85f, 0.3f, 0.1f),
+            Behavior = new RandomWanderBehavior(fastTileArea, speed: 120f, minIdleDuration: 1.5f, maxIdleDuration: 4f) });
+
+        AddChild(new Enemy { Radius = 22f, Color = new Color(0.9f, 0.15f, 0.3f),
+            Behavior = new RandomWanderBehavior(fastTileArea, speed: 280f, minIdleDuration: 0.3f, maxIdleDuration: 1.5f) });
+
+        AddChild(new Enemy { Radius = 28f, Color = new Color(0.8f, 0.2f, 0.5f),
+            Behavior = new RandomWanderBehavior(fastTileArea, speed: 180f, minIdleDuration: 0.8f, maxIdleDuration: 3f) });
+
+        AddChild(new Enemy { Radius = 18f, Color = new Color(0.95f, 0.4f, 0.1f),
+            Behavior = new RandomWanderBehavior(fastTileArea, speed: 350f, minIdleDuration: 0.2f, maxIdleDuration: 1f) });
     }
 
     private void OnLevelCompleted()
