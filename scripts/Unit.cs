@@ -25,7 +25,6 @@ public partial class Unit : Area2D
 
 	private readonly Ability?[] _abilities = new Ability?[5];
 
-	private int _gooZoneCount;
 
 	public int         PlayerId    { get; set; } = 0;
 	public PlayerState PlayerState => RunState.GetPlayer(PlayerId);
@@ -34,12 +33,17 @@ public partial class Unit : Area2D
 	public bool    IsOnGround => _currentSurface == SurfaceType.Ground;
 	public Vector2 Velocity   { get => _velocity; set => _velocity = value; }
 	public Vector2 Facing     => _facing;
-	private bool IsInGoo => _gooZoneCount > 0;
+	private bool IsInGoo
+	{
+		get
+		{
+			foreach (var area in GetOverlappingAreas())
+				if (area is GooZone) return true;
+			return false;
+		}
+	}
 
 	public event Action<Corpse>? CorpseTouched;
-
-	public void EnterGoo() => _gooZoneCount++;
-	public void ExitGoo()  => _gooZoneCount = Mathf.Max(0, _gooZoneCount - 1);
 	public Color UnitColor { get; set; } = new Color(0.2f, 0.8f, 1f);
 
 	[Signal] public delegate void DiedEventHandler();
@@ -50,7 +54,7 @@ public partial class Unit : Area2D
 		_startPosition = GlobalPosition;
 
 		CollisionLayer = Layers.Units;
-		CollisionMask  = Layers.Surfaces | Layers.Corpses;
+		CollisionMask  = Layers.Surfaces | Layers.Corpses | Layers.GooZones;
 		ZIndex = 1;
 
 		AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = Radius * 0.8f } });
@@ -216,7 +220,6 @@ public partial class Unit : Area2D
 		_velocity = Vector2.Zero;
 		_currentSurface = SurfaceType.Ground;
 		_overlappingZones.Clear();
-		_gooZoneCount = 0;
 
 		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor, OnResurrect = ResurrectEarly, SourceUnit = this };
 		GetParent().AddChild(_corpse);
@@ -234,7 +237,6 @@ public partial class Unit : Area2D
 		GlobalPosition = _startPosition;
 		_corpse?.QueueFree();
 		_corpse       = null;
-		_gooZoneCount = 0;
 		foreach (var a in _abilities) a?.OnRespawn();
 		EmitSignal(SignalName.Respawned);
 		QueueRedraw();
@@ -266,7 +268,6 @@ public partial class Unit : Area2D
 		_velocity      = velocity;
 		_corpse?.QueueFree();
 		_corpse       = null;
-		_gooZoneCount = 0;
 		foreach (var a in _abilities) a?.OnRespawn();
 		EmitSignal(SignalName.Respawned);
 		QueueRedraw();

@@ -10,8 +10,8 @@ public partial class Enemy : Area2D
 
     public override void _Ready()
     {
-        CollisionLayer = 64;
-        CollisionMask  = 2; // detects units
+        CollisionLayer = Layers.Enemies;
+        CollisionMask  = Layers.Units;
 
         AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = Radius } });
 

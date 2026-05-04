@@ -13,12 +13,11 @@ public partial class GooZone : Area2D
     public override void _Ready()
     {
         CollisionLayer = Layers.GooZones;
-        CollisionMask  = Layers.Units;
+        CollisionMask  = 0;
+        Monitorable    = true;
+        Monitoring     = false;
 
         AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = GooRadius } });
-
-        AreaEntered += area => { if (area is Unit u) u.EnterGoo(); };
-        AreaExited  += area => { if (area is Unit u) u.ExitGoo(); };
     }
 
     public override void _Process(double delta)
