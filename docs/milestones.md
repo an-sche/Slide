@@ -82,6 +82,14 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
+## Milestone 4f — Bonus pickups ✓
+- [x] `Bonus` node placed on the map — star placeholder visual, sprite later
+- [x] First unit to touch it gains +1 `PlayerLevel` (skill point); bonus disappears immediately, no respawn
+- [x] Shared: one bonus, one point — whichever player reaches it first gets it
+- [x] Add several bonuses to the test level
+
+---
+
 ## Milestone 5a — Enemy foundation ✓
 - [x] `IEnemyBehavior` interface (`void Process(float delta, Enemy enemy)`)
 - [x] `Enemy` class — configurable radius and color, holds one `IEnemyBehavior`, kills player on contact, added to `"enemies"` group

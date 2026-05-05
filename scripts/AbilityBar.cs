@@ -19,9 +19,13 @@ public partial class AbilityBar : Control
     private const float BottomMargin = 14f;
     private const float PlusBtnH     = 24f;
     private const float PlusGap      = 4f;
+    private const float PointsLabelH = 22f;
+    private const float PointsGap    = 5f;
     private const int   UnlockLevel  = 3;
 
     private PlayerState _playerState = RunState.GetPlayer(0);
+
+    private Label _pointsLabel = null!;
 
     private readonly StyleBoxFlat[] _styles          = new StyleBoxFlat[5];
     private readonly Label[]        _keyLabels        = new Label[5];
@@ -33,13 +37,26 @@ public partial class AbilityBar : Control
     public override void _Ready()
     {
         float totalWidth  = Slots.Length * SlotWidth + (Slots.Length - 1) * Spacing;
-        float totalHeight = PlusBtnH + PlusGap + SlotHeight;
+        float totalHeight = PointsLabelH + PointsGap + PlusBtnH + PlusGap + SlotHeight;
 
         SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
         OffsetLeft   = -totalWidth / 2f;
         OffsetRight  =  totalWidth / 2f;
         OffsetBottom = -BottomMargin;
         OffsetTop    = -(totalHeight + BottomMargin);
+
+        _pointsLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
+        _pointsLabel.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
+        _pointsLabel.OffsetLeft   = 0f;
+        _pointsLabel.OffsetRight  = totalWidth;
+        _pointsLabel.OffsetTop    = 0f;
+        _pointsLabel.OffsetBottom = PointsLabelH;
+        _pointsLabel.AddThemeFontSizeOverride("font_size", 14);
+        _pointsLabel.AddThemeColorOverride("font_color", new Color(1f, 0.85f, 0f));
+        _pointsLabel.AddThemeColorOverride("font_outline_color", Colors.Black);
+        _pointsLabel.AddThemeConstantOverride("outline_size", 3);
+        _pointsLabel.Visible = false;
+        AddChild(_pointsLabel);
 
         for (int i = 0; i < Slots.Length; i++)
         {
@@ -128,6 +145,10 @@ public partial class AbilityBar : Control
     private void UpdatePlusButtons()
     {
         int available = _playerState.AvailablePoints;
+
+        _pointsLabel.Visible = available > 0;
+        _pointsLabel.Text    = available == 1 ? "1 skill point" : $"{available} skill points";
+
         for (int i = 0; i < Slots.Length; i++)
         {
             _plusBtns[i].Visible = available > 0
@@ -168,8 +189,8 @@ public partial class AbilityBar : Control
         btn.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
         btn.OffsetLeft   = x;
         btn.OffsetRight  = x + SlotWidth;
-        btn.OffsetTop    = 0f;
-        btn.OffsetBottom = PlusBtnH;
+        btn.OffsetTop    = PointsLabelH + PointsGap;
+        btn.OffsetBottom = PointsLabelH + PointsGap + PlusBtnH;
         btn.Visible      = false;
         btn.AddThemeStyleboxOverride("normal",  normal);
         btn.AddThemeStyleboxOverride("hover",   hover);
@@ -186,7 +207,7 @@ public partial class AbilityBar : Control
 
     private void BuildSlot(int i, float x)
     {
-        float slotY = PlusBtnH + PlusGap;
+        float slotY = PointsLabelH + PointsGap + PlusBtnH + PlusGap;
 
         var style = new StyleBoxFlat
         {

@@ -9,4 +9,5 @@ public static class Layers
     public const int Corpses  = 16;
     public const int Donuts   = 32;
     public const int Enemies  = 64;
+    public const int Bonuses  = 128;
 }

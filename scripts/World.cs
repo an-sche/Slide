@@ -68,6 +68,13 @@ public partial class World : Node2D
 
         _unit!.SetStartPosition(startPos);
 
+        // Bonuses spread across tiles
+        AddChild(new Bonus { Position = new Vector2(-1200, -400) }); // ground tile
+        AddChild(new Bonus { Position = new Vector2(  200, -900) }); // slidy tile
+        AddChild(new Bonus { Position = new Vector2( 1100, -400) }); // fast tile
+        AddChild(new Bonus { Position = new Vector2(-1100,  400) }); // confusing tile
+        AddChild(new Bonus { Position = new Vector2(  100,  700) }); // fast confusing tile
+
         // Patrol enemies on the slidy tile (center 0, -600)
         AddChild(new Enemy
         {

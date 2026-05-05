@@ -50,6 +50,8 @@ public partial class Hud : CanvasLayer
         RunState.ElapsedSeconds = _elapsed;
         UpdateTimerLabel();
 
+        UpdateStatusLabel();
+
         if (_unit != null)
         {
             for (int i = 0; i < 5; i++)
