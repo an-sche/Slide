@@ -12,9 +12,7 @@ A player can save all their points unspent and dump all 3 into an advanced abili
 
 ## Boost (Q)
 
-Only activates on normal ground. If pressed on any other surface, nothing happens and the cooldown is not consumed.
-
-Each level increases the percent and seconds. 
+Activates on any surface. Each level increases the speed percent and duration.
 
 Level 1: 50% for 5 seconds (40s cooldown)
 Level 2: 65% for 6 seconds (35s cooldown)
@@ -34,7 +32,7 @@ Level 4: 8 seconds (30s cooldown)
 
 ## Gack (F)
 
-This move works on any surface, however it's bonus only applies on non normal ground surfaces. The player begins leaving behind goo that provides speed boosts to any player on that goo. The player also gains the bonus. It's a small area around the player's unit that gets the goo. The goo lasts 8 seconds only. 
+This move works on any surface, however its bonus only applies on non-ground surfaces. The player begins leaving behind goo that provides speed boosts to any player on that goo. The player also gains the bonus. It's a small area around the player's unit that gets the goo. The goo lasts 5 seconds.
 
 There is only one level for this ability. 
 

@@ -98,7 +98,8 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ## Milestone 5c — Random wander behavior ✓
 - [x] `RandomWanderBehavior` — polygon area (Vector2[]), speed, min/max idle duration, optional start position
-- [x] Idle → Moving → Idle state machine; random point inside polygon chosen via `Geometry2D.IsPointInPolygon` rejection sampling
+- [x] Idle → Telegraph → Moving → Idle state machine; telegraph flashes a ring on the enemy for 0.5s before it moves
+- [x] Random target points sampled uniformly via triangle decomposition — no rejection sampling, no loops
 - [x] If no start position provided, begin at a random point inside the polygon
 
 ---

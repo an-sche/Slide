@@ -60,7 +60,7 @@ The enemy picks random points inside a defined polygon area, moves to them, idle
 - **Moving**: travel to the target at `Speed`; on arrival, enter Idle
 
 **Notes:**
-- Random points are validated using `Geometry2D.IsPointInPolygon` (rejection sampling)
+- Random points are sampled uniformly using triangle decomposition (`Geometry2D.TriangulatePolygon`): pick a random triangle weighted by area, then a uniform random point within it. Guaranteed termination with exactly 3 random numbers, no loops.
 - The polygon is defined in world space
 
 ---
