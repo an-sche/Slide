@@ -107,9 +107,9 @@ Each milestone should be fully playable and testable before moving to the next.
 
 **Testing:** Use Godot's "Debug → Run Multiple Instances" to launch host + client(s) on the same machine.
 
-### 6a — Fixed timestep & simulation cleanup
-- [ ] Move `Unit` and `Enemy` simulation from `_Process` to `_PhysicsProcess`
-- [ ] Verify movement feels identical before and after the switch
+### 6a — Fixed timestep & simulation cleanup ✓
+- [x] Move `Unit` and `Enemy` simulation from `_Process` to `_PhysicsProcess`
+- [x] Verify movement feels identical before and after the switch
 
 ### 6b — Network transport & roles
 - [ ] Integrate Godot's built-in ENet transport (no Steam yet)
@@ -157,9 +157,9 @@ Each milestone should be fully playable and testable before moving to the next.
 - Provides Steamworks integration (lobbies, relay, authentication) for Godot
 - Works alongside Godot's built-in `MultiplayerAPI`
 
-**Fixed timestep (recommended before Milestone 7)**
-- Currently game logic runs in `_Process(double delta)` — delta varies per frame and drifts between machines
-- Switching unit and enemy simulation to `_PhysicsProcess` before networking reduces jitter and makes state sync more stable
+**Fixed timestep (done in 6a)**
+- Unit, Enemy, DonutProjectile, and GooZone simulation moved to `_PhysicsProcess`; rendering stays in `_Process`
+- Physics interpolation enabled project-wide for smooth visuals at any framerate
 
 **Enemy sync**
 - Patrol enemies are deterministic — host broadcasts config once at level load; clients can simulate locally

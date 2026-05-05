@@ -46,9 +46,10 @@ public class WarpAbility : Ability
         {
             if (Unit.IsDead) return;
 
+            Unit.ClearTarget();
             Unit.GlobalPosition = _ghost!.GlobalPosition;
             Unit.Velocity       = _capturedVelocity;
-            Unit.ClearTarget();
+            Unit.Facing         = _ghost.Facing;
 
             int level2       = Unit.PlayerState.AbilityLevels[(int)Slot];
             _maxCooldown     = Cooldowns[level2 - 1];

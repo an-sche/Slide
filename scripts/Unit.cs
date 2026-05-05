@@ -32,7 +32,7 @@ public partial class Unit : Area2D
 	public bool    IsDead     => _isDead;
 	public bool    IsOnGround => _currentSurface == SurfaceType.Ground;
 	public Vector2 Velocity   { get => _velocity; set => _velocity = value; }
-	public Vector2 Facing     => _facing;
+	public Vector2 Facing     { get => _facing; set => _facing = value.Normalized(); }
 	private bool IsInGoo
 	{
 		get
