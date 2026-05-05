@@ -4,7 +4,7 @@ namespace Slide;
 
 public partial class Hud : CanvasLayer
 {
-    private const string PlayerName = "Slider 1";
+    private readonly string _playerName;
 
     private Label _timerLabel = null!;
     private Label _statusLabel = null!;
@@ -14,6 +14,8 @@ public partial class Hud : CanvasLayer
     private float _elapsed;
     private int _deaths;
     private bool _isAlive = true;
+
+    public Hud(string playerName) => _playerName = playerName;
 
     public override void _Ready()
     {
@@ -86,7 +88,7 @@ public partial class Hud : CanvasLayer
     private void UpdateStatusLabel()
     {
         string status = _isAlive ? "Alive" : "Dead";
-        _statusLabel.Text = $"{PlayerName}  |  Lv.{_playerState.PlayerLevel}  |  {status}  |  Deaths: {_deaths}";
+        _statusLabel.Text = $"{_playerName}  |  Lv.{_playerState.PlayerLevel}  |  {status}  |  Deaths: {_deaths}";
     }
 
     private void UpdateLabels()

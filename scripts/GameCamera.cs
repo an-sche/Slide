@@ -28,6 +28,7 @@ public partial class GameCamera : Camera2D
 
     public override void _Process(double delta)
     {
+        if (!GetWindow().HasFocus()) return;
         if (_isSpaceHeld)
         {
             if (_unit != null) GlobalPosition = _unit.GlobalPosition;
@@ -42,6 +43,7 @@ public partial class GameCamera : Camera2D
 
     public override void _Input(InputEvent @event)
     {
+        if (!GetWindow().HasFocus()) return;
         HandleSpaceInput(@event);
         HandleMiddleMousePan(@event);
         HandleZoom(@event);

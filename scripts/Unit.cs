@@ -26,11 +26,14 @@ public partial class Unit : Area2D
 	private readonly Ability?[] _abilities = new Ability?[5];
 
 
-	public int         PlayerId    { get; set; } = 0;
-	public PlayerState PlayerState => RunState.GetPlayer(PlayerId);
+	public int         PlayerId      { get; set; } = 0;
+	public bool        IsLocalPlayer { get; set; } = true;
+	public PlayerState PlayerState  => RunState.GetPlayer(PlayerId);
 
-	public bool    IsDead     => _isDead;
-	public bool    IsOnGround => _currentSurface == SurfaceType.Ground;
+	public bool    IsDead        => _isDead;
+	public bool    IsOnGround   => _currentSurface == SurfaceType.Ground;
+	public bool    HasTarget    => _target.HasValue;
+	public Vector2 TargetPosition => _target ?? Vector2.Zero;
 	public Vector2 Velocity   { get => _velocity; set => _velocity = value; }
 	public Vector2 Facing     { get => _facing; set => _facing = value.Normalized(); }
 	private bool IsInGoo
@@ -87,6 +90,9 @@ public partial class Unit : Area2D
 
 		foreach (var a in _abilities) a?.Process(dt);
 
+		// Clients don't simulate — they receive state from the host.
+		if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
+
 		if (_isDead) return;
 
 		switch (_currentSurface)
@@ -119,6 +125,8 @@ public partial class Unit : Area2D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
+		if (!IsLocalPlayer) return;
+		if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
 		if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
 		if (key.CtrlPressed) return;
 
@@ -147,7 +155,7 @@ public partial class Unit : Area2D
 
 		foreach (var a in _abilities) a?.DrawAboveUnit();
 
-		if (_target.HasValue && _currentSurface != SurfaceType.Straight)
+		if (IsLocalPlayer && _target.HasValue && _currentSurface != SurfaceType.Straight)
 		{
 			Vector2 localTarget = ToLocal(_target.Value);
 			DrawCircle(localTarget, 4f, new Color(1f, 1f, 0f, 0.8f));
@@ -246,6 +254,43 @@ public partial class Unit : Area2D
 	}
 
 	public void TriggerDeath() => Die();
+
+	public void TryActivateAbility(int slot)
+	{
+		if (slot >= 0 && slot < _abilities.Length)
+			_abilities[slot]?.TryActivate();
+	}
+
+	// Applied on clients when the host determines this unit has died.
+	// Does not start a respawn timer — the host will send a respawn RPC.
+	public void ApplyRemoteDeath(Vector2 deathPosition)
+	{
+		if (_isDead) return;
+		_isDead = true;
+		_target = null;
+		_velocity = Vector2.Zero;
+		_currentSurface = SurfaceType.Ground;
+		_overlappingZones.Clear();
+		GlobalPosition = deathPosition;
+		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor, OnResurrect = ResurrectEarly, SourceUnit = this };
+		GetParent().AddChild(_corpse);
+		EmitSignal(SignalName.Died);
+		QueueRedraw();
+	}
+
+	// Applied on clients when the host determines this unit has respawned.
+	public void ApplyRemoteRespawn(Vector2 spawnPosition)
+	{
+		if (_respawnTimer != null) { _respawnTimer.Timeout -= Respawn; _respawnTimer = null; }
+		if (!_isDead) return;
+		_isDead = false;
+		GlobalPosition = spawnPosition;
+		_corpse?.QueueFree();
+		_corpse = null;
+		foreach (var a in _abilities) a?.OnRespawn();
+		EmitSignal(SignalName.Respawned);
+		QueueRedraw();
+	}
 
 	public void ResetAbilityCooldowns() { foreach (var a in _abilities) a?.ResetCooldown(); }
 
