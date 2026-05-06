@@ -157,9 +157,9 @@ Each milestone should be fully playable and testable before moving to the next.
 
 All new behaviors implement `IEnemyBehavior` and are fully compatible with the existing `Enemy` class and multiplayer determinism model.
 
-### 7a — Orbiter
-- [ ] `OrbiterBehavior` — circles a fixed center point at a configurable radius and angular speed (radians/sec); clockwise or counter-clockwise
-- [ ] Multiple orbiters can share the same center point
+### 7a — Orbiter ✓
+- [x] `OrbiterBehavior` — circles a fixed center point at a configurable radius and angular speed (radians/sec); clockwise or counter-clockwise
+- [x] Multiple orbiters can share the same center point
 
 ### 7b — Chaser
 - [ ] `ChaserBehavior` — idles until any player enters a detection radius; switches to pursuit at fixed speed

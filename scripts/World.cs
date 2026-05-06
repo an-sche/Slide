@@ -360,6 +360,10 @@ public partial class World : Node2D
             Behavior = new RandomWanderBehavior(fastTileArea, speed: 180f, minIdleDuration: 0.8f, maxIdleDuration: 3f,   seed: 1003) });
         AddChild(new Enemy { Radius = 18f, Color = new Color(0.95f, 0.4f, 0.1f),
             Behavior = new RandomWanderBehavior(fastTileArea, speed: 350f, minIdleDuration: 0.2f, maxIdleDuration: 1f,   seed: 1004) });
+
+        // Confusing tile center is (-1200, 600); radius 350 stays well inside the 1200×1200 zone.
+        AddChild(new Enemy { Radius = 30f, Color = new Color(0.3f, 0.8f, 0.5f),
+            Behavior = new OrbiterBehavior(center: new Vector2(-1200, 600), radius: 350f, angularSpeed: 1.1f, clockwise: true) });
     }
 
     public override void _Draw()
