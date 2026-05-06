@@ -153,13 +153,85 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 7 — Steam networking
+## Milestone 7 — More enemy types
+
+All new behaviors implement `IEnemyBehavior` and are fully compatible with the existing `Enemy` class and multiplayer determinism model.
+
+### 7a — Orbiter
+- [ ] `OrbiterBehavior` — circles a fixed center point at a configurable radius and angular speed (radians/sec); clockwise or counter-clockwise
+- [ ] Multiple orbiters can share the same center point
+
+### 7b — Chaser
+- [ ] `ChaserBehavior` — idles until any player enters a detection radius; switches to pursuit at fixed speed
+- [ ] Telegraph: ring flash on the enemy for 0.5 s before it starts moving (mirrors RandomWander telegraph)
+- [ ] Gives up and returns to idle if no player is within an extended give-up radius for N seconds
+
+### 7c — Bouncer
+- [ ] `BouncerBehavior` — moves in a straight line at fixed speed; bounces off a defined rectangular bounding box; configurable start position and initial direction
+
+### 7d — Sniper
+- [ ] `SniperBehavior` — stationary; aims a visible warning ray at the nearest player for 1 s; fires an instant-kill line projectile (`SniperBeam`) along that ray; configurable cooldown between shots
+- [ ] `SniperBeam` node — thin line that persists for ~0.15 s then disappears; kills any player it overlaps on the frame it fires
+
+### 7e — Guard
+- [ ] `GuardBehavior` — wraps a `PatrolBehavior`; enters chase mode when a player steps inside a detection radius; returns to patrol when all players exit a larger give-up radius or N seconds pass with no player in range
+
+---
+
+## Milestone 8 — Level editor
+
+Levels are stored as JSON files (`user://levels/<name>.json`). The format encodes a tile grid, entity list, and metadata. Workshop upload (Milestone 9) reuses the same files.
+
+### 8a — Level file format & runtime loader
+- [ ] Full JSON schema defined in `docs/map.md`: vertex-based corner grid (`(height+1) × (width+1)` surface codes), entities, enemies, spawners, triggers, doors
+- [ ] At load time, `LevelLoader` runs marching squares on the corner grid → traces closed polygons per contiguous surface region → instantiates `SurfaceZone` nodes with polygon collision shapes; no tile grid exists at runtime
+- [ ] Nearest-corner rule: each tile quadrant takes its nearest corner's surface type; boundary edges are exact diagonals — players die precisely where the visual edge appears
+- [ ] `LevelLoader` wires up entities, enemies (inactive until spawner fires), spawner conditions (immediate / timed / trigger), trigger actions, and doors
+- [ ] `World` accepts an optional level path; falls back to `res://levels/test.json` if none provided
+- [ ] Export the existing hardcoded test level to `res://levels/test.json` and load it through `LevelLoader`
+
+### 8b — Editor scene & tile painter
+- [ ] Separate `Editor` scene accessible from main menu ("Edit Levels")
+- [ ] Grid overlay showing tile boundaries; left-click/drag to paint the hovered corner vertex with the selected surface type
+- [ ] Palette panel listing all surface types with color swatches; shortcut keys for common types
+- [ ] Real-time preview: editor renders the marching-squares boundary as you paint so you see the exact physics polygon
+
+### 8c — Entity placement
+- [ ] Toolbar mode toggle: Corners | Entities | Enemies | Triggers
+- [ ] Place / delete: StartBlock, EndBlock, Bonus — single-instance constraint on Start and End
+- [ ] Left-click to place selected entity; right-click to remove
+
+### 8d — Enemy placement & spawner/trigger wiring
+- [ ] Place any enemy type from the enemy palette; configure radius, color, and behavior params in a side panel
+- [ ] Patrol path editor: click to add waypoints sequentially; drag to reposition; per-waypoint speed field
+- [ ] Wander polygon editor: click to add vertices; drag to reposition; close polygon with double-click
+- [ ] Chaser / guard detection and give-up radii shown as overlay circles in the editor viewport
+- [ ] Spawner panel: assign enemies to spawner slots, set condition (immediate / timed / trigger)
+- [ ] Trigger panel: place button triggers, link actions (open/close door, spawn wave, fire trigger)
+
+### 8e — Save, load, and play
+- [ ] Save button writes JSON to `user://levels/`; load button opens a file list
+- [ ] "Play" button from editor launches the level in `World` using `LevelLoader`; Escape returns to editor
+- [ ] Level select screen (accessible from main menu) lists all saved levels
+
+### 8f — Playlists
+- [ ] `PlaylistData` JSON schema: `{ name, levels: [<level filename>, ...] }` stored in `user://playlists/`
+- [ ] Playlist editor: create/rename a playlist, add levels from the saved-levels list, reorder with drag-and-drop, remove entries
+- [ ] `RunState` tracks the active playlist and current index; level complete advances to the next entry
+- [ ] Main menu shows playlists alongside individual levels; selecting a playlist starts from its first level
+- [ ] Built-in playlists (shipped with the game) stored in `res://playlists/` and shown alongside user playlists
+
+---
+
+## Milestone 9 — Steam networking
 - [ ] Steam Relay (Steamworks P2P) integration
 - [ ] Public and private lobbies
 - [ ] Host selects level set (built-in or Workshop playlist)
 - [ ] Ready-up flow, host starts run
 - [ ] Up to 8 players
 - [ ] Disconnect does not end run — original lobby members can reconnect mid-run
+- [ ] Publish individual levels and playlists to Steam Workshop
+- [ ] Subscribe to and play Workshop levels and playlists
 
 ### Architecture notes
 
@@ -184,18 +256,6 @@ Each milestone should be fully playable and testable before moving to the next.
 **Bandwidth**
 - `MultiplayerSynchronizer` broadcasts positions each tick; 100 enemies × 8 bytes × 20 ticks/sec ≈ 16KB/s — well within Steam relay limits
 - Player inputs (target point, ability key) are small RPCs from each client to host
-
----
-
-## Milestone 8 — Level editor
-- [ ] Accessible from main menu
-- [ ] Tile painter (select surface type, paint onto grid)
-- [ ] Place start block, end block, bonuses
-- [ ] Enemy placement + waypoint path editor
-- [ ] Trigger system (place button, link to action e.g. open door)
-- [ ] Save and load levels locally
-- [ ] Publish to Steam Workshop
-- [ ] Subscribe to and play Workshop levels
 
 ---
 
