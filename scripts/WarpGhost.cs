@@ -6,8 +6,21 @@ public partial class WarpGhost : Node2D
 {
     public float   Fraction { get; set; } = 1f;
     public Vector2 Facing   { get; set; } = Vector2.Right;
+    // When > 0 the ghost manages its own fade-out (used on clients that don't run WarpAbility).
+    public float   Duration { get; set; } = 0f;
 
-    public override void _Process(double delta) => QueueRedraw();
+    private float _elapsed;
+
+    public override void _Process(double delta)
+    {
+        if (Duration > 0f)
+        {
+            _elapsed += (float)delta;
+            Fraction  = Mathf.Max(0f, 1f - _elapsed / Duration);
+            if (Fraction <= 0f) { QueueFree(); return; }
+        }
+        QueueRedraw();
+    }
 
     public override void _Draw()
     {

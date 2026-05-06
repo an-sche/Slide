@@ -27,8 +27,26 @@ public partial class Unit : Area2D
 
 
 	public int         PlayerId      { get; set; } = 0;
+	public long        PeerId        { get; set; } = 1L;
 	public bool        IsLocalPlayer { get; set; } = true;
 	public PlayerState PlayerState  => RunState.GetPlayer(PlayerId);
+
+	public byte AbilitiesActiveMask
+	{
+		get
+		{
+			byte mask = 0;
+			for (int i = 0; i < _abilities.Length; i++)
+				if (_abilities[i]?.IsActive == true) mask |= (byte)(1 << i);
+			return mask;
+		}
+	}
+
+	public void SetAbilitiesActive(byte mask)
+	{
+		for (int i = 0; i < _abilities.Length; i++)
+			_abilities[i]?.SetActiveState((mask & (1 << i)) != 0);
+	}
 
 	public bool    IsDead        => _isDead;
 	public bool    IsOnGround   => _currentSurface == SurfaceType.Ground;
@@ -126,7 +144,6 @@ public partial class Unit : Area2D
 	public override void _UnhandledInput(InputEvent @event)
 	{
 		if (!IsLocalPlayer) return;
-		if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
 		if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
 		if (key.CtrlPressed) return;
 
@@ -140,7 +157,20 @@ public partial class Unit : Area2D
 			_ => -1,
 		};
 
-		if (slot >= 0) _abilities[slot]?.TryActivate();
+		if (slot < 0) return;
+
+		if (!GameNetwork.IsMultiplayer || Multiplayer.IsServer())
+		{
+			_abilities[slot]?.TryActivate();
+		}
+		else
+		{
+			// Activate locally so the HUD cooldown display is immediate.
+			_abilities[slot]?.TryActivate();
+			// Forward to host with current level so host can simulate correctly.
+			int level = PlayerState.AbilityLevels[slot];
+			(GetParent() as World)?.RpcId(1, nameof(World.UseAbility), slot, level);
+		}
 	}
 
 	public override void _Draw()

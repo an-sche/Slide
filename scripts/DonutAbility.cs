@@ -20,13 +20,21 @@ public class DonutAbility : Ability
         _maxCooldown = Cooldowns[level - 1];
         _cooldown    = _maxCooldown;
 
-        var projectile = new DonutProjectile
+        if (!GameNetwork.IsMultiplayer || Unit.Multiplayer.IsServer())
         {
-            GlobalPosition = Unit.GlobalPosition,
-            MoveVelocity   = Unit.IsOnGround ? Vector2.Zero : Unit.Facing * DonutSpeed,
-            Lifetime       = Durations[level - 1],
-        };
-        Unit.GetParent().AddChild(projectile);
+            var velocity   = Unit.IsOnGround ? Vector2.Zero : Unit.Facing * DonutSpeed;
+            var lifetime   = Durations[level - 1];
+            var projectile = new DonutProjectile
+            {
+                GlobalPosition = Unit.GlobalPosition,
+                MoveVelocity   = velocity,
+                Lifetime       = lifetime,
+            };
+            Unit.GetParent().AddChild(projectile);
+            if (GameNetwork.IsMultiplayer)
+                (Unit.GetParent() as World)?.Rpc(nameof(World.ClientSpawnDonut),
+                    Unit.GlobalPosition, velocity, lifetime);
+        }
     }
 
     public override void Process(float delta)

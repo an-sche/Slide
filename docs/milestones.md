@@ -131,7 +131,7 @@ Each milestone should be fully playable and testable before moving to the next.
 - [x] Host is sole authority on all movement and game state; clients suppress local simulation
 - [x] Host player's unit simulates directly with no RPC round-trip
 - [x] Waypoint indicator appears immediately on the clicking player's screen and clears when the host clears the target
-- [ ] Ability keypresses (Q/W/E/R/F) not yet forwarded from client to host — clients cannot use abilities in multiplayer
+- [x] Ability keypresses (Q/W/E/R/F) forwarded from client to host via `UseAbility` RPC; host activates on the authoritative unit
 
 ### 6d — State synchronization ✓
 - [x] Host broadcasts `GlobalPosition`, `Facing`, and move target for every unit each physics tick via `SyncUnitState` RPC (unreliable channel)

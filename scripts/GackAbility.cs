@@ -58,7 +58,11 @@ public class GackAbility : Ability
 
     private void SpawnGoo()
     {
-        var goo = new GooZone { GlobalPosition = Unit.GlobalPosition };
+        if (GameNetwork.IsMultiplayer && !Unit.Multiplayer.IsServer()) return;
+        var pos = Unit.GlobalPosition;
+        var goo = new GooZone { GlobalPosition = pos };
         Unit.GetParent().AddChild(goo);
+        if (GameNetwork.IsMultiplayer)
+            (Unit.GetParent() as World)?.Rpc(nameof(World.ClientSpawnGooZone), pos);
     }
 }

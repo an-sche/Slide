@@ -13,7 +13,9 @@ public partial class World : Node2D
     private Vector2          _startPosition;
 
     // All spawned units (maintained on every peer)
-    private readonly Dictionary<long, Unit> _units = new();
+    private readonly Dictionary<long, Unit>      _units      = new();
+    // Warp ghosts tracked on clients for removal (keyed by peerId of the owning unit)
+    private readonly Dictionary<long, WarpGhost> _warpGhosts = new();
 
     private static readonly Color[] PlayerColors =
     [
@@ -59,6 +61,7 @@ public partial class World : Node2D
         {
             Name          = $"Unit_{peerId}",
             PlayerId      = playerIndex,
+            PeerId        = peerId,
             UnitColor     = color,
             IsLocalPlayer = isLocal,
         };
@@ -115,7 +118,7 @@ public partial class World : Node2D
     {
         if (!GameNetwork.IsMultiplayer || !Multiplayer.IsServer() || _units.Count == 0) return;
         foreach (var (peerId, unit) in _units)
-            Rpc(nameof(SyncUnitState), peerId, unit.GlobalPosition, unit.Facing, unit.HasTarget, unit.TargetPosition);
+            Rpc(nameof(SyncUnitState), peerId, unit.GlobalPosition, unit.Facing, unit.HasTarget, unit.TargetPosition, unit.AbilitiesActiveMask);
     }
 
     public override void _Process(double delta)
@@ -129,6 +132,18 @@ public partial class World : Node2D
             RpcId(1, nameof(SetMoveTarget), target);
     }
 
+    // Client → host: activate an ability on the sender's unit.
+    // level is sent so the host uses the client's actual upgraded level, not its own stale copy.
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
+    public void UseAbility(int slot, int level)
+    {
+        if (!Multiplayer.IsServer()) return;
+        long sender = Multiplayer.GetRemoteSenderId();
+        if (!_units.TryGetValue(sender, out var unit)) return;
+        unit.PlayerState.AbilityLevels[slot] = level;
+        unit.TryActivateAbility(slot);
+    }
+
     // Client → host: set this client's unit move target.
     [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
     public void SetMoveTarget(Vector2 position)
@@ -139,15 +154,16 @@ public partial class World : Node2D
             unit.SetTarget(position);
     }
 
-    // Host → all clients: push position, facing, and target for one unit per call.
+    // Host → all clients: push position, facing, target, and active ability states for one unit per call.
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
-    public void SyncUnitState(long peerId, Vector2 position, Vector2 facing, bool hasTarget, Vector2 target)
+    public void SyncUnitState(long peerId, Vector2 position, Vector2 facing, bool hasTarget, Vector2 target, byte abilitiesActive)
     {
         if (!_units.TryGetValue(peerId, out var unit)) return;
         unit.GlobalPosition = position;
         unit.Facing         = facing;
         if (hasTarget) unit.SetTarget(target);
         else           unit.ClearTarget();
+        unit.SetAbilitiesActive(abilitiesActive);
     }
 
     // Host → all clients: a unit just died.
@@ -164,6 +180,37 @@ public partial class World : Node2D
     {
         if (!_units.TryGetValue(peerId, out var unit) || !unit.IsDead) return;
         unit.ApplyRemoteRespawn(spawnPosition);
+    }
+
+    // Host → all clients: spawn a goo zone.
+    [Rpc(MultiplayerApi.RpcMode.Authority)]
+    public void ClientSpawnGooZone(Vector2 position)
+    {
+        AddChild(new GooZone { GlobalPosition = position });
+    }
+
+    // Host → all clients: a unit placed a warp ghost.
+    [Rpc(MultiplayerApi.RpcMode.Authority)]
+    public void ClientSpawnWarpGhost(long peerId, Vector2 position, Vector2 facing, float duration)
+    {
+        if (_warpGhosts.TryGetValue(peerId, out var old)) { old.QueueFree(); _warpGhosts.Remove(peerId); }
+        var ghost = new WarpGhost { GlobalPosition = position, Facing = facing, Duration = duration };
+        AddChild(ghost);
+        _warpGhosts[peerId] = ghost;
+    }
+
+    // Host → all clients: a warp ghost was consumed or expired.
+    [Rpc(MultiplayerApi.RpcMode.Authority)]
+    public void ClientRemoveWarpGhost(long peerId)
+    {
+        if (_warpGhosts.TryGetValue(peerId, out var ghost)) { ghost.QueueFree(); _warpGhosts.Remove(peerId); }
+    }
+
+    // Host → all clients: spawn a donut projectile.
+    [Rpc(MultiplayerApi.RpcMode.Authority)]
+    public void ClientSpawnDonut(Vector2 position, Vector2 velocity, float lifetime)
+    {
+        AddChild(new DonutProjectile { GlobalPosition = position, MoveVelocity = velocity, Lifetime = lifetime });
     }
 
     private void OnLevelCompleted()

@@ -17,6 +17,8 @@ public abstract class Ability
 
     protected Ability(Unit unit) { Unit = unit; }
 
+    public void SetActiveState(bool active) => IsActive = active;
+
     public abstract void TryActivate();
     public abstract void Process(float delta);
     public virtual void DrawOnUnit()      { }
