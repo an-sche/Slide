@@ -120,28 +120,35 @@ Each milestone should be fully playable and testable before moving to the next.
 - [x] Move `Unit` and `Enemy` simulation from `_Process` to `_PhysicsProcess`
 - [x] Verify movement feels identical before and after the switch
 
-### 6b — Network transport & roles
-- [ ] Integrate Godot's built-in ENet transport (no Steam yet)
-- [ ] Main menu: "Host" and "Join" buttons (join connects to localhost by default)
-- [ ] Host assigns peer IDs; each peer controls exactly one `Unit`
+### 6b — Network transport & roles ✓
+- [x] Integrate Godot's built-in ENet transport (no Steam yet)
+- [x] Main menu: "Play Solo", "Host", and "Join" buttons; Join reveals an IP field (default `127.0.0.1`)
+- [x] Lobby: players see each other, click Ready; game starts when all are ready (guaranteed simultaneous World load → deterministic enemy sync from tick 0)
+- [x] Peer disconnect removes that player's unit from the scene
 
-### 6c — Input pipeline
-- [ ] Client sends right-click target and ability keypresses to host via `@rpc`
-- [ ] Host applies inputs, simulates, and is the sole authority on all game state
-- [ ] Local unit on host simulates directly (no RPC round-trip for host player)
+### 6c — Input pipeline ✓
+- [x] Client sends right-click target to host via `SetMoveTarget` RPC; host applies it to that peer's unit
+- [x] Host is sole authority on all movement and game state; clients suppress local simulation
+- [x] Host player's unit simulates directly with no RPC round-trip
+- [x] Waypoint indicator appears immediately on the clicking player's screen and clears when the host clears the target
+- [ ] Ability keypresses (Q/W/E/R/F) not yet forwarded from client to host — clients cannot use abilities in multiplayer
 
-### 6d — State synchronization
-- [ ] `MultiplayerSynchronizer` on each `Unit` — broadcasts `GlobalPosition`, `Velocity`, `Facing`, `IsDead`
-- [ ] Enemy positions broadcast from host each tick
-- [ ] Clients render received state; no client-side prediction yet
+### 6d — State synchronization ✓
+- [x] Host broadcasts `GlobalPosition`, `Facing`, and move target for every unit each physics tick via `SyncUnitState` RPC (unreliable channel)
+- [x] `IsDead` synced via separate reliable `BroadcastUnitDeath` / `BroadcastUnitRespawn` RPCs
+- [x] Clients apply received state; no client-side prediction
+- [x] Camera ignores input and stops updating when its window is not focused
+- [x] Enemy positions synced via deterministic lockstep — per-instance seeded RNG, fixed physics tick, identical simulation on all peers; kill detection host-authoritative only (reconnection not supported)
+- [ ] Velocity not synced (not needed; clients don't simulate movement)
 
 ### 6e — Game flow
-- [ ] Resurrection by touching a teammate's corpse (respawns at start block)
+- [x] Resurrection by touching a teammate's corpse — host-authoritative; broadcasts respawn to all clients; units cannot self-resurrect
+- [x] Multiplayer death: units stay dead indefinitely until resurrected (no auto-respawn timer); solo mode keeps the 3-second auto-respawn
 - [ ] Team wipe detection: all players dead simultaneously → full run reset (level 1, 1 skill point each)
 - [ ] Level complete triggers advance for all players simultaneously
 
 ### 6f — Per-player HUD
-- [ ] Each client shows only their own unit's ability bar and status
+- [x] Each client shows only their own unit's ability bar and status (camera and HUD created only for local unit)
 - [ ] All clients show a shared scoreboard: player name, alive/dead, death count
 
 ---
@@ -158,7 +165,7 @@ Each milestone should be fully playable and testable before moving to the next.
 
 **Simulation model: host-authoritative using Godot's built-in multiplayer**
 - Host runs all game logic (unit movement, enemy behaviors, ability effects, kill detection)
-- Clients send inputs to host via `@rpc`; host simulates and syncs state back via `MultiplayerSynchronizer`
+- Clients send right-click inputs to host via `@rpc`; host simulates and broadcasts state back via manual RPCs (`SyncUnitState` unreliable, death/respawn reliable)
 - Steam Relay (via GodotSteam addon) routes traffic between players — same role as Battle.net for StarCraft
 - Host has zero latency advantage; acceptable for a co-op puzzle game
 

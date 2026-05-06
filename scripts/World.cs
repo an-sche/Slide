@@ -5,18 +5,15 @@ namespace Slide;
 
 public partial class World : Node2D
 {
-    private GameCamera?     _camera;
-    private Hud?            _hud;
+    private GameCamera?      _camera;
+    private Hud?             _hud;
     private LevelTransition? _transition;
-    private Unit?           _localUnit;
-    private bool            _levelCompleted;
-    private Vector2         _startPosition;
+    private Unit?            _localUnit;
+    private bool             _levelCompleted;
+    private Vector2          _startPosition;
 
     // All spawned units (maintained on every peer)
     private readonly Dictionary<long, Unit> _units = new();
-    // Peer → player-index mapping (maintained on host only)
-    private readonly Dictionary<long, int> _peerToIndex = new();
-    private int _nextPlayerIndex;
 
     private static readonly Color[] PlayerColors =
     [
@@ -42,58 +39,12 @@ public partial class World : Node2D
         {
             SpawnUnit(1L, 0);
         }
-        else if (Multiplayer.IsServer())
-        {
-            long hostId = Multiplayer.GetUniqueId();
-            _peerToIndex[hostId] = 0;
-            _nextPlayerIndex     = 1;
-            SpawnUnit(hostId, 0);
-            Multiplayer.PeerDisconnected += OnPeerDisconnected;
-        }
         else
         {
+            foreach (var p in GameSetup.Players)
+                SpawnUnit(p.PeerId, p.Index);
             Multiplayer.PeerDisconnected += OnPeerDisconnected;
-            RpcId(1, nameof(RequestSetup));
         }
-    }
-
-    // Called by clients on the host to request their unit setup.
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
-    public void RequestSetup()
-    {
-        if (!Multiplayer.IsServer()) return;
-
-        long newPeerId = Multiplayer.GetRemoteSenderId();
-        if (_peerToIndex.ContainsKey(newPeerId)) return;
-
-        int playerIndex = _nextPlayerIndex++;
-        _peerToIndex[newPeerId] = playerIndex;
-
-        // Tell the new peer to spawn their own unit.
-        RpcId(newPeerId, nameof(SetupPlayer), newPeerId, playerIndex);
-
-        // Tell the new peer about all already-existing players.
-        foreach (var (existingId, existingIndex) in _peerToIndex)
-        {
-            if (existingId == newPeerId) continue;
-            RpcId(newPeerId, nameof(SetupPlayer), existingId, existingIndex);
-        }
-
-        // Spawn the new player's unit locally on the host and notify existing clients.
-        SpawnUnit(newPeerId, playerIndex);
-        foreach (long existingId in _peerToIndex.Keys)
-        {
-            if (existingId == newPeerId) continue;
-            if (existingId == Multiplayer.GetUniqueId()) continue; // host already spawned above
-            RpcId(existingId, nameof(SetupPlayer), newPeerId, playerIndex);
-        }
-    }
-
-    // Called on clients (from host) to create a unit for a given peer.
-    [Rpc(MultiplayerApi.RpcMode.Authority)]
-    public void SetupPlayer(long peerId, int playerIndex)
-    {
-        SpawnUnit(peerId, playerIndex);
     }
 
     private void SpawnUnit(long peerId, int playerIndex)
@@ -118,6 +69,7 @@ public partial class World : Node2D
         unit.CorpseTouched += corpse =>
         {
             if (corpse.SourceUnit == null || !corpse.SourceUnit.IsDead) return;
+            if (corpse.SourceUnit == unit) return; // can't self-resurrect
             corpse.SourceUnit.ResurrectEarly();
         };
 
@@ -157,7 +109,6 @@ public partial class World : Node2D
             unit.QueueFree();
             _units.Remove(peerId);
         }
-        _peerToIndex.Remove(peerId);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -305,13 +256,13 @@ public partial class World : Node2D
         ];
 
         AddChild(new Enemy { Radius = 36f, Color = new Color(0.85f, 0.3f, 0.1f),
-            Behavior = new RandomWanderBehavior(fastTileArea, speed: 120f, minIdleDuration: 1.5f, maxIdleDuration: 4f) });
+            Behavior = new RandomWanderBehavior(fastTileArea, speed: 120f, minIdleDuration: 1.5f, maxIdleDuration: 4f,   seed: 1001) });
         AddChild(new Enemy { Radius = 22f, Color = new Color(0.9f, 0.15f, 0.3f),
-            Behavior = new RandomWanderBehavior(fastTileArea, speed: 280f, minIdleDuration: 0.3f, maxIdleDuration: 1.5f) });
+            Behavior = new RandomWanderBehavior(fastTileArea, speed: 280f, minIdleDuration: 0.3f, maxIdleDuration: 1.5f, seed: 1002) });
         AddChild(new Enemy { Radius = 28f, Color = new Color(0.8f, 0.2f, 0.5f),
-            Behavior = new RandomWanderBehavior(fastTileArea, speed: 180f, minIdleDuration: 0.8f, maxIdleDuration: 3f) });
+            Behavior = new RandomWanderBehavior(fastTileArea, speed: 180f, minIdleDuration: 0.8f, maxIdleDuration: 3f,   seed: 1003) });
         AddChild(new Enemy { Radius = 18f, Color = new Color(0.95f, 0.4f, 0.1f),
-            Behavior = new RandomWanderBehavior(fastTileArea, speed: 350f, minIdleDuration: 0.2f, maxIdleDuration: 1f) });
+            Behavior = new RandomWanderBehavior(fastTileArea, speed: 350f, minIdleDuration: 0.2f, maxIdleDuration: 1f,   seed: 1004) });
     }
 
     public override void _Draw()

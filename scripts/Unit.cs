@@ -225,6 +225,8 @@ public partial class Unit : Area2D
 	private void Die()
 	{
 		if (_isDead) return;
+		// In multiplayer, only the host determines death. Clients receive it via BroadcastUnitDeath → ApplyRemoteDeath.
+		if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
 
 		_isDead = true;
 		_target = null;
@@ -235,8 +237,12 @@ public partial class Unit : Area2D
 		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor, OnResurrect = ResurrectEarly, SourceUnit = this };
 		GetParent().AddChild(_corpse);
 
-		_respawnTimer          = GetTree().CreateTimer(RespawnDelay);
-		_respawnTimer.Timeout += Respawn;
+		// Solo only: auto-respawn after a delay. In multiplayer, units stay dead until resurrected.
+		if (!GameNetwork.IsMultiplayer)
+		{
+			_respawnTimer          = GetTree().CreateTimer(RespawnDelay);
+			_respawnTimer.Timeout += Respawn;
+		}
 		EmitSignal(SignalName.Died);
 		QueueRedraw();
 	}
@@ -297,6 +303,7 @@ public partial class Unit : Area2D
 	public void ResurrectEarly()
 	{
 		if (!_isDead) return;
+		if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
 		if (_respawnTimer != null)
 		{
 			_respawnTimer.Timeout -= Respawn;

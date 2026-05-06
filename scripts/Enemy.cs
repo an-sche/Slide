@@ -17,7 +17,12 @@ public partial class Enemy : Area2D
 
         AddToGroup("enemies");
 
-        AreaEntered += area => { if (area is Unit u && !u.IsDead) u.TriggerDeath(); };
+        AreaEntered += area =>
+        {
+            if (area is not Unit u || u.IsDead) return;
+            if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
+            u.TriggerDeath();
+        };
     }
 
     public override void _PhysicsProcess(double delta)

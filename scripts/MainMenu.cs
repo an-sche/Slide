@@ -94,7 +94,7 @@ public partial class MainMenu : Control
         }
         Multiplayer.MultiplayerPeer = peer;
         GameNetwork.IsMultiplayer   = true;
-        GetTree().ChangeSceneToFile("res://scenes/World.tscn");
+        GetTree().ChangeSceneToFile("res://scenes/Lobby.tscn");
     }
 
     private void OnJoinToggle()
@@ -129,7 +129,7 @@ public partial class MainMenu : Control
     {
         Multiplayer.ConnectedToServer -= OnConnectedToServer;
         Multiplayer.ConnectionFailed  -= OnConnectionFailed;
-        GetTree().ChangeSceneToFile("res://scenes/World.tscn");
+        GetTree().ChangeSceneToFile("res://scenes/Lobby.tscn");
     }
 
     private void OnConnectionFailed()

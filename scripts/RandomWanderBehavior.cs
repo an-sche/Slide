@@ -6,12 +6,13 @@ public class RandomWanderBehavior : IEnemyBehavior
 {
     private const float TelegraphDuration = 0.5f;
 
-    private readonly Vector2[] _polygon;
-    private readonly float     _speed;
-    private readonly float     _minIdle;
-    private readonly float     _maxIdle;
-    private readonly Vector2?  _startPosition;
-    private readonly Vector2   _centroid;
+    private readonly Vector2[]             _polygon;
+    private readonly float                 _speed;
+    private readonly float                 _minIdle;
+    private readonly float                 _maxIdle;
+    private readonly Vector2?              _startPosition;
+    private readonly Vector2               _centroid;
+    private readonly RandomNumberGenerator _rng = new();
 
     // Precomputed triangulation for O(1) uniform point sampling
     private readonly int[]   _triIndices;
@@ -30,13 +31,15 @@ public class RandomWanderBehavior : IEnemyBehavior
         float     speed,
         float     minIdleDuration,
         float     maxIdleDuration,
-        Vector2?  startPosition = null)
+        Vector2?  startPosition = null,
+        ulong     seed          = 0)
     {
         _polygon       = polygon;
         _speed         = speed;
         _minIdle       = minIdleDuration;
         _maxIdle       = maxIdleDuration;
         _startPosition = startPosition;
+        _rng.Seed      = seed;
 
         var sum = Vector2.Zero;
         foreach (var p in polygon) sum += p;
@@ -113,7 +116,7 @@ public class RandomWanderBehavior : IEnemyBehavior
     private void EnterIdle()
     {
         _state     = WanderState.Idle;
-        _idleTimer = (float)GD.RandRange(_minIdle, _maxIdle);
+        _idleTimer = _rng.RandfRange(_minIdle, _maxIdle);
     }
 
     // Picks a random triangle weighted by area, then a uniform random point within it.
@@ -122,7 +125,7 @@ public class RandomWanderBehavior : IEnemyBehavior
     {
         if (_totalArea <= 0f) return _centroid;
 
-        float pick = (float)GD.RandRange(0.0, _totalArea);
+        float pick = _rng.RandfRange(0f, _totalArea);
         int tri = _cumulativeAreas.Length - 1;
         for (int i = 0; i < _cumulativeAreas.Length; i++)
         {
@@ -133,8 +136,8 @@ public class RandomWanderBehavior : IEnemyBehavior
         Vector2 b = _polygon[_triIndices[tri * 3 + 1]];
         Vector2 c = _polygon[_triIndices[tri * 3 + 2]];
 
-        float r1 = (float)GD.RandRange(0.0, 1.0);
-        float r2 = (float)GD.RandRange(0.0, 1.0);
+        float r1 = _rng.Randf();
+        float r2 = _rng.Randf();
         if (r1 + r2 > 1f) { r1 = 1f - r1; r2 = 1f - r2; }
         return a + r1 * (b - a) + r2 * (c - a);
     }
