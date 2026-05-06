@@ -46,6 +46,10 @@ public partial class MainMenu : Control
         joinBtn.Pressed += OnJoinToggle;
         vbox.AddChild(joinBtn);
 
+        var editBtn = MakeButton("Edit Levels");
+        editBtn.Pressed += () => GetTree().ChangeSceneToFile("res://scenes/Editor.tscn");
+        vbox.AddChild(editBtn);
+
         // Join sub-panel (hidden until Join is clicked)
         _joinPanel = new VBoxContainer { Visible = false };
         _joinPanel.AddThemeConstantOverride("separation", 8);
