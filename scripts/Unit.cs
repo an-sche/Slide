@@ -259,6 +259,7 @@ public partial class Unit : Area2D
 		if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
 
 		_isDead = true;
+		RunState.GetPlayer(PlayerId).TotalDeaths++;
 		_target = null;
 		_velocity = Vector2.Zero;
 		_currentSurface = SurfaceType.Ground;
@@ -303,6 +304,7 @@ public partial class Unit : Area2D
 	{
 		if (_isDead) return;
 		_isDead = true;
+		RunState.GetPlayer(PlayerId).TotalDeaths++;
 		_target = null;
 		_velocity = Vector2.Zero;
 		_currentSurface = SurfaceType.Ground;

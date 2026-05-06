@@ -1,21 +1,19 @@
 using Godot;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Slide;
 
 public partial class Hud : CanvasLayer
 {
-    private readonly string _playerName;
-
     private Label _timerLabel = null!;
-    private Label _statusLabel = null!;
-    private AbilityBar  _abilityBar   = null!;
-    private Unit?       _unit;
-    private PlayerState _playerState  = RunState.GetPlayer(0);
+    private VBoxContainer _scoreboardBox = null!;
+    private AbilityBar _abilityBar = null!;
+    private Unit? _unit;
+    private PlayerState _playerState = RunState.GetPlayer(0);
     private float _elapsed;
-    private int _deaths;
-    private bool _isAlive = true;
 
-    public Hud(string playerName) => _playerName = playerName;
+    private readonly List<(Unit unit, Label label)> _scoreboardRows = [];
 
     public override void _Ready()
     {
@@ -23,8 +21,14 @@ public partial class Hud : CanvasLayer
         root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(root);
 
-        _statusLabel = CreateLabel(root, Control.LayoutPreset.TopLeft,
-            offsetLeft: 10, offsetTop: 10, offsetRight: 420, offsetBottom: 40);
+        _scoreboardBox = new VBoxContainer();
+        _scoreboardBox.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
+        _scoreboardBox.OffsetLeft   = 10;
+        _scoreboardBox.OffsetTop    = 10;
+        _scoreboardBox.OffsetRight  = 500;
+        _scoreboardBox.OffsetBottom = 300;
+        _scoreboardBox.AddThemeConstantOverride("separation", 2);
+        root.AddChild(_scoreboardBox);
 
         _timerLabel = CreateLabel(root, Control.LayoutPreset.TopRight,
             offsetLeft: -130, offsetTop: 10, offsetRight: -10, offsetBottom: 40,
@@ -34,8 +38,7 @@ public partial class Hud : CanvasLayer
         root.AddChild(_abilityBar);
 
         _elapsed = RunState.ElapsedSeconds;
-        _deaths  = RunState.TotalDeaths;
-        UpdateLabels();
+        UpdateTimerLabel();
     }
 
     public void SetUnit(Unit unit)
@@ -43,7 +46,26 @@ public partial class Hud : CanvasLayer
         _unit        = unit;
         _playerState = unit.PlayerState;
         _abilityBar.SetPlayerState(_playerState);
-        UpdateStatusLabel();
+    }
+
+    public void SetAllUnits(IEnumerable<Unit> units)
+    {
+        foreach (var child in _scoreboardBox.GetChildren())
+            child.QueueFree();
+        _scoreboardRows.Clear();
+
+        foreach (var unit in units.OrderBy(u => u.PlayerId))
+        {
+            var label = new Label();
+            label.AddThemeFontSizeOverride("font_size", 16);
+            label.AddThemeColorOverride("font_color", unit.UnitColor);
+            label.AddThemeColorOverride("font_outline_color", Colors.Black);
+            label.AddThemeConstantOverride("outline_size", 4);
+            _scoreboardBox.AddChild(label);
+            _scoreboardRows.Add((unit, label));
+        }
+
+        UpdateScoreboard();
     }
 
     public override void _Process(double delta)
@@ -51,8 +73,7 @@ public partial class Hud : CanvasLayer
         _elapsed += (float)delta;
         RunState.ElapsedSeconds = _elapsed;
         UpdateTimerLabel();
-
-        UpdateStatusLabel();
+        UpdateScoreboard();
 
         if (_unit != null)
         {
@@ -64,18 +85,17 @@ public partial class Hud : CanvasLayer
         }
     }
 
-    public void OnUnitDied()
-    {
-        _deaths++;
-        RunState.TotalDeaths = _deaths;
-        _isAlive = false;
-        UpdateStatusLabel();
-    }
+    public void OnUnitDied()      { }
+    public void OnUnitRespawned() { }
 
-    public void OnUnitRespawned()
+    private void UpdateScoreboard()
     {
-        _isAlive = true;
-        UpdateStatusLabel();
+        foreach (var (unit, label) in _scoreboardRows)
+        {
+            string prefix = unit.IsLocalPlayer ? ">" : " ";
+            string status = unit.IsDead ? "☠" : "♥";
+            label.Text = $"{prefix} Slider {unit.PlayerId + 1}  Lv.{unit.PlayerState.PlayerLevel}  {status}  Deaths: {unit.PlayerState.TotalDeaths}";
+        }
     }
 
     private void UpdateTimerLabel()
@@ -83,18 +103,6 @@ public partial class Hud : CanvasLayer
         int minutes = (int)_elapsed / 60;
         int seconds = (int)_elapsed % 60;
         _timerLabel.Text = $"{minutes}:{seconds:D2}";
-    }
-
-    private void UpdateStatusLabel()
-    {
-        string status = _isAlive ? "Alive" : "Dead";
-        _statusLabel.Text = $"{_playerName}  |  Lv.{_playerState.PlayerLevel}  |  {status}  |  Deaths: {_deaths}";
-    }
-
-    private void UpdateLabels()
-    {
-        UpdateTimerLabel();
-        UpdateStatusLabel();
     }
 
     private static Label CreateLabel(
@@ -105,9 +113,9 @@ public partial class Hud : CanvasLayer
     {
         var label = new Label { HorizontalAlignment = align };
         label.SetAnchorsPreset(preset);
-        label.OffsetLeft = offsetLeft;
-        label.OffsetTop = offsetTop;
-        label.OffsetRight = offsetRight;
+        label.OffsetLeft   = offsetLeft;
+        label.OffsetTop    = offsetTop;
+        label.OffsetRight  = offsetRight;
         label.OffsetBottom = offsetBottom;
         label.AddThemeFontSizeOverride("font_size", 16);
         label.AddThemeColorOverride("font_color", Colors.White);

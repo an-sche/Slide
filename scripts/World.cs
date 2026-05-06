@@ -50,15 +50,16 @@ public partial class World : Node2D
                 SpawnUnit(p.PeerId, p.Index);
             Multiplayer.PeerDisconnected += OnPeerDisconnected;
         }
+
+        _hud?.SetAllUnits(_units.Values);
     }
 
     private void SpawnUnit(long peerId, int playerIndex)
     {
         if (_units.ContainsKey(peerId)) return;
 
-        Color  color      = PlayerColors[playerIndex % PlayerColors.Length];
-        string playerName = $"Slider {playerIndex + 1}";
-        bool   isLocal    = !GameNetwork.IsMultiplayer || peerId == Multiplayer.GetUniqueId();
+        Color color   = PlayerColors[playerIndex % PlayerColors.Length];
+        bool  isLocal = !GameNetwork.IsMultiplayer || peerId == Multiplayer.GetUniqueId();
 
         var unit = new Unit
         {
@@ -103,7 +104,7 @@ public partial class World : Node2D
         AddChild(_camera);
         _camera.Initialize(unit);
 
-        _hud = new Hud(playerName);
+        _hud = new Hud();
         AddChild(_hud);
         unit.Died      += _hud.OnUnitDied;
         unit.Respawned += _hud.OnUnitRespawned;
@@ -253,14 +254,23 @@ public partial class World : Node2D
         GetTree().ChangeSceneToFile("res://scenes/World.tscn");
     }
 
-    private void OnLevelCompleted()
+    private void OnLevelCompleted(int finisherPlayerId)
     {
+        if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
         if (_levelCompleted) return;
         _levelCompleted = true;
 
-        RunState.LevelUpAll();
-        string finisherName = _localUnit != null ? $"Slider {_localUnit.PlayerId + 1}" : "???";
-        _transition!.ShowTransition(finisherName, RunState.ElapsedSeconds, RunState.TotalDeaths);
+        if (GameNetwork.IsMultiplayer)
+            Rpc(nameof(BroadcastLevelComplete), finisherPlayerId, RunState.ElapsedSeconds, RunState.TotalDeaths);
+        BroadcastLevelComplete(finisherPlayerId, RunState.ElapsedSeconds, RunState.TotalDeaths);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority)]
+    public void BroadcastLevelComplete(int finisherPlayerId, float elapsed, int deaths)
+    {
+        RunState.GetPlayer(finisherPlayerId).PlayerLevel++;
+        string finisherName = $"Slider {finisherPlayerId + 1}";
+        _transition!.ShowTransition(finisherName, elapsed, deaths);
     }
 
     private void CreateTestLevel()

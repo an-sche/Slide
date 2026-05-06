@@ -8,7 +8,9 @@ public partial class EndBlock : Area2D
     private static readonly Color BlockColor = new(1.0f, 0.85f, 0.0f);
 
     [Signal]
-    public delegate void LevelCompletedEventHandler();
+    public delegate void LevelCompletedEventHandler(int finisherPlayerId);
+
+    private bool _triggered;
 
     public override void _Ready()
     {
@@ -34,7 +36,8 @@ public partial class EndBlock : Area2D
 
     private void OnAreaEntered(Area2D area)
     {
-        if (area is Unit)
-            EmitSignal(SignalName.LevelCompleted);
+        if (_triggered || area is not Unit u) return;
+        _triggered = true;
+        EmitSignal(SignalName.LevelCompleted, u.PlayerId);
     }
 }

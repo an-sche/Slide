@@ -145,11 +145,11 @@ Each milestone should be fully playable and testable before moving to the next.
 - [x] Resurrection by touching a teammate's corpse — host-authoritative; broadcasts respawn to all clients; units cannot self-resurrect
 - [x] Multiplayer death: units stay dead indefinitely until resurrected (no auto-respawn timer); solo mode keeps the 3-second auto-respawn
 - [x] Team wipe detection: all players dead for 5 s → full run reset (level 1, 1 skill point each); timer cancels if any resurrection occurs during the window
-- [ ] Level complete triggers advance for all players simultaneously
+- [x] Level complete triggers advance for all players simultaneously
 
 ### 6f — Per-player HUD
 - [x] Each client shows only their own unit's ability bar and status (camera and HUD created only for local unit)
-- [ ] All clients show a shared scoreboard: player name, alive/dead, death count
+- [x] All clients show a shared scoreboard: player name, alive/dead, death count
 
 ---
 
