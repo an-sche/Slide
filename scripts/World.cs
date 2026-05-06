@@ -12,6 +12,9 @@ public partial class World : Node2D
     private bool             _levelCompleted;
     private Vector2          _startPosition;
 
+    private const float WipeDelay = 5f;
+    private SceneTreeTimer? _wipeTimer;
+
     // All spawned units (maintained on every peer)
     private readonly Dictionary<long, Unit>      _units      = new();
     // Warp ghosts tracked on clients for removal (keyed by peerId of the owning unit)
@@ -80,13 +83,15 @@ public partial class World : Node2D
         {
             unit.Died += () =>
             {
-                if (Multiplayer.IsServer())
-                    Rpc(nameof(BroadcastUnitDeath), peerId, unit.GlobalPosition);
+                if (!Multiplayer.IsServer()) return;
+                Rpc(nameof(BroadcastUnitDeath), peerId, unit.GlobalPosition);
+                CheckTeamWipe();
             };
             unit.Respawned += () =>
             {
-                if (Multiplayer.IsServer())
-                    Rpc(nameof(BroadcastUnitRespawn), peerId, _startPosition + new Vector2(playerIndex * 48f, 0));
+                if (!Multiplayer.IsServer()) return;
+                Rpc(nameof(BroadcastUnitRespawn), peerId, _startPosition + new Vector2(playerIndex * 48f, 0));
+                CancelWipeTimer();
             };
         }
 
@@ -211,6 +216,41 @@ public partial class World : Node2D
     public void ClientSpawnDonut(Vector2 position, Vector2 velocity, float lifetime)
     {
         AddChild(new DonutProjectile { GlobalPosition = position, MoveVelocity = velocity, Lifetime = lifetime });
+    }
+
+    private void CheckTeamWipe()
+    {
+        if (_wipeTimer != null) return; // already counting
+        foreach (var unit in _units.Values)
+            if (!unit.IsDead) return; // someone is still alive
+
+        _wipeTimer          = GetTree().CreateTimer(WipeDelay);
+        _wipeTimer.Timeout += OnWipeTimerExpired;
+    }
+
+    private void CancelWipeTimer()
+    {
+        if (_wipeTimer == null) return;
+        _wipeTimer.Timeout -= OnWipeTimerExpired;
+        _wipeTimer          = null;
+    }
+
+    private void OnWipeTimerExpired()
+    {
+        _wipeTimer = null;
+        // Double-check — a Donut or Ethereal may have resurrected someone during the delay.
+        foreach (var unit in _units.Values)
+            if (!unit.IsDead) return;
+
+        Rpc(nameof(ResetRun));
+        ResetRun();
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority)]
+    public void ResetRun()
+    {
+        RunState.Reset(); // resets to PlayerLevel = 1, all ability levels 0
+        GetTree().ChangeSceneToFile("res://scenes/World.tscn");
     }
 
     private void OnLevelCompleted()

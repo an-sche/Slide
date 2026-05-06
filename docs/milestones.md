@@ -144,7 +144,7 @@ Each milestone should be fully playable and testable before moving to the next.
 ### 6e — Game flow
 - [x] Resurrection by touching a teammate's corpse — host-authoritative; broadcasts respawn to all clients; units cannot self-resurrect
 - [x] Multiplayer death: units stay dead indefinitely until resurrected (no auto-respawn timer); solo mode keeps the 3-second auto-respawn
-- [ ] Team wipe detection: all players dead simultaneously → full run reset (level 1, 1 skill point each)
+- [x] Team wipe detection: all players dead for 5 s → full run reset (level 1, 1 skill point each); timer cancels if any resurrection occurs during the window
 - [ ] Level complete triggers advance for all players simultaneously
 
 ### 6f — Per-player HUD
