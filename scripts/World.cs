@@ -10,9 +10,7 @@ public partial class World : Node2D
     private LevelTransition? _transition;
     private Unit?            _localUnit;
     private bool             _levelCompleted;
-    private bool             _levelLoaded;
     private Vector2          _startPosition;
-    private CanvasLayer?     _picker;
 
     private const float WipeDelay = GameplayConstants.WipeDelay;
     private SceneTreeTimer? _wipeTimer;
@@ -27,67 +25,10 @@ public partial class World : Node2D
 
         Input.MouseMode = Input.MouseModeEnum.Confined;
 
-        if (GameNetwork.IsMultiplayer)
-            SelectLevel(false);
-        else
-            ShowLevelPicker();
-    }
-
-    private void ShowLevelPicker()
-    {
-        _picker = new CanvasLayer();
-
-        var root = new Control();
-        root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        _picker.AddChild(root);
-
-        var bg = new ColorRect { Color = new Color(0f, 0f, 0f, 0.82f) };
-        bg.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        root.AddChild(bg);
-
-        var label = new Label
-        {
-            Text                = "Select Level\n\n[1]  Hardcoded test level\n[2]  levels/test.json",
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        label.AddThemeFontSizeOverride("font_size", 32);
-        label.AddThemeColorOverride("font_color",         Colors.White);
-        label.AddThemeColorOverride("font_outline_color", Colors.Black);
-        label.AddThemeConstantOverride("outline_size", 4);
-        label.AnchorLeft   = 0.5f;
-        label.AnchorRight  = 0.5f;
-        label.AnchorTop    = 0.5f;
-        label.AnchorBottom = 0.5f;
-        label.OffsetLeft   = -350f;
-        label.OffsetRight  =  350f;
-        label.OffsetTop    = -120f;
-        label.OffsetBottom =  120f;
-        root.AddChild(label);
-
-        AddChild(_picker);
-    }
-
-    private void SelectLevel(bool useJson)
-    {
-        if (_picker != null)
-        {
-            _picker.QueueFree();
-            _picker = null;
-        }
-
-        _levelLoaded = true;
-
-        if (useJson)
-        {
-            var result = LevelLoader.Load("res://levels/test.json", this);
-            _startPosition = result.StartPosition;
-            if (result.EndBlock != null)
-                result.EndBlock.LevelCompleted += OnLevelCompleted;
-        }
-        else
-        {
-            CreateTestLevel();
-        }
+        var result = LevelLoader.Load("res://levels/test.json", this);
+        _startPosition = result.StartPosition;
+        if (result.EndBlock != null)
+            result.EndBlock.LevelCompleted += OnLevelCompleted;
 
         if (!GameNetwork.IsMultiplayer)
         {
@@ -125,7 +66,7 @@ public partial class World : Node2D
         unit.CorpseTouched += corpse =>
         {
             if (corpse.SourceUnit == null || !corpse.SourceUnit.IsDead) return;
-            if (corpse.SourceUnit == unit) return; // can't self-resurrect
+            if (corpse.SourceUnit == unit) return;
             corpse.SourceUnit.ResurrectEarly();
         };
 
@@ -180,40 +121,11 @@ public partial class World : Node2D
     {
         if (!Input.IsMouseButtonPressed(MouseButton.Right)) return;
         var target = GetGlobalMousePosition();
-        // Always set locally so the waypoint appears immediately on this screen.
         _localUnit?.SetTarget(target);
-        // Clients also forward to the host for authoritative movement.
         if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer())
             RpcId(1, nameof(SetMoveTarget), target);
     }
 
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
-
-        if (!_levelLoaded)
-        {
-            if (key.Keycode == Key.Key1)      { SelectLevel(false); GetViewport().SetInputAsHandled(); }
-            else if (key.Keycode == Key.Key2) { SelectLevel(true);  GetViewport().SetInputAsHandled(); }
-            return;
-        }
-
-#if DEBUG
-        if (key.Keycode != Key.Quoteleft || _localUnit == null) return;
-        var ps = _localUnit.PlayerState;
-        ps.PlayerLevel                              = 20;
-        ps.AbilityLevels[(int)AbilitySlot.Boost]    = 4;
-        ps.AbilityLevels[(int)AbilitySlot.Warp]     = 4;
-        ps.AbilityLevels[(int)AbilitySlot.Donut]    = 4;
-        ps.AbilityLevels[(int)AbilitySlot.Ethereal] = 4;
-        ps.AbilityLevels[(int)AbilitySlot.Gack]     = 1;
-        _localUnit.ResetAbilityCooldowns();
-        GetViewport().SetInputAsHandled();
-#endif
-    }
-
-    // Client → host: activate an ability on the sender's unit.
-    // level is sent so the host uses the client's actual upgraded level, not its own stale copy.
     [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
     public void UseAbility(int slot, int level)
     {
@@ -224,7 +136,6 @@ public partial class World : Node2D
         unit.TryActivateAbility(slot);
     }
 
-    // Client → host: set this client's unit move target.
     [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
     public void SetMoveTarget(Vector2 position)
     {
@@ -234,7 +145,6 @@ public partial class World : Node2D
             unit.SetTarget(position);
     }
 
-    // Host → all clients: push position, facing, target, and active ability states for one unit per call.
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
     public void SyncUnitState(long peerId, Vector2 position, Vector2 facing, bool hasTarget, Vector2 target, byte abilitiesActive)
     {
@@ -246,7 +156,6 @@ public partial class World : Node2D
         unit.SetAbilitiesActive(abilitiesActive);
     }
 
-    // Host → all clients: a unit just died.
     [Rpc(MultiplayerApi.RpcMode.Authority)]
     public void BroadcastUnitDeath(long peerId, Vector2 deathPosition)
     {
@@ -254,7 +163,6 @@ public partial class World : Node2D
         unit.ApplyRemoteDeath(deathPosition);
     }
 
-    // Host → all clients: a unit just respawned.
     [Rpc(MultiplayerApi.RpcMode.Authority)]
     public void BroadcastUnitRespawn(long peerId, Vector2 spawnPosition)
     {
@@ -262,14 +170,12 @@ public partial class World : Node2D
         unit.ApplyRemoteRespawn(spawnPosition);
     }
 
-    // Host → all clients: spawn a goo zone.
     [Rpc(MultiplayerApi.RpcMode.Authority)]
     public void ClientSpawnGooZone(Vector2 position)
     {
         AddChild(new GooZone { GlobalPosition = position });
     }
 
-    // Host → all clients: a unit placed a warp ghost.
     [Rpc(MultiplayerApi.RpcMode.Authority)]
     public void ClientSpawnWarpGhost(long peerId, Vector2 position, Vector2 facing, float duration)
     {
@@ -279,14 +185,12 @@ public partial class World : Node2D
         _warpGhosts[peerId] = ghost;
     }
 
-    // Host → all clients: a warp ghost was consumed or expired.
     [Rpc(MultiplayerApi.RpcMode.Authority)]
     public void ClientRemoveWarpGhost(long peerId)
     {
         if (_warpGhosts.TryGetValue(peerId, out var ghost)) { ghost.QueueFree(); _warpGhosts.Remove(peerId); }
     }
 
-    // Host → all clients: spawn a donut projectile.
     [Rpc(MultiplayerApi.RpcMode.Authority)]
     public void ClientSpawnDonut(Vector2 position, Vector2 velocity, float lifetime)
     {
@@ -295,9 +199,9 @@ public partial class World : Node2D
 
     private void CheckTeamWipe()
     {
-        if (_wipeTimer != null) return; // already counting
+        if (_wipeTimer != null) return;
         foreach (var unit in _units.Values)
-            if (!unit.IsDead) return; // someone is still alive
+            if (!unit.IsDead) return;
 
         _wipeTimer          = GetTree().CreateTimer(WipeDelay);
         _wipeTimer.Timeout += OnWipeTimerExpired;
@@ -313,7 +217,6 @@ public partial class World : Node2D
     private void OnWipeTimerExpired()
     {
         _wipeTimer = null;
-        // Double-check — a Donut or Ethereal may have resurrected someone during the delay.
         foreach (var unit in _units.Values)
             if (!unit.IsDead) return;
 
@@ -324,7 +227,7 @@ public partial class World : Node2D
     [Rpc(MultiplayerApi.RpcMode.Authority)]
     public void ResetRun()
     {
-        RunState.Reset(); // resets to PlayerLevel = 1, all ability levels 0
+        RunState.Reset();
         GetTree().ChangeSceneToFile("res://scenes/World.tscn");
     }
 
@@ -347,101 +250,26 @@ public partial class World : Node2D
         _transition!.ShowTransition(finisherName, elapsed, deaths);
     }
 
-    private void CreateTestLevel()
-    {
-        (SurfaceType type, int col, int row)[] grid =
-        {
-            (SurfaceType.Ground,        0, 0),
-            (SurfaceType.Slidy,         1, 0),
-            (SurfaceType.Fast,          2, 0),
-            (SurfaceType.Confusing,     0, 1),
-            (SurfaceType.FastConfusing, 1, 1),
-            (SurfaceType.Straight,      2, 1),
-        };
-
-        var tileSize = new Vector2(1200, 1200);
-
-        foreach (var (type, col, row) in grid)
-        {
-            var center = new Vector2(
-                (col - 1) * tileSize.X,
-                (row - 0.5f) * tileSize.Y);
-            AddChild(new SurfaceZone { Type = type, Size = tileSize, Position = center });
-        }
-
-        AddChild(new SurfaceZone { Type = SurfaceType.Kill, Size = new Vector2(4400, 400),  Position = new Vector2(0, -1600) });
-        AddChild(new SurfaceZone { Type = SurfaceType.Kill, Size = new Vector2(4400, 400),  Position = new Vector2(0,  1600) });
-        AddChild(new SurfaceZone { Type = SurfaceType.Kill, Size = new Vector2(400,  2400), Position = new Vector2(-2200, 0) });
-        AddChild(new SurfaceZone { Type = SurfaceType.Kill, Size = new Vector2(400,  2400), Position = new Vector2( 2200, 0) });
-
-        _startPosition = new Vector2(-1400, -800);
-        AddChild(new StartBlock { Position = _startPosition });
-
-        var endBlock = new EndBlock { Position = new Vector2(-1000, -400) };
-        AddChild(endBlock);
-        endBlock.LevelCompleted += OnLevelCompleted;
-
-        AddChild(new Bonus { Position = new Vector2(-1200, -400) });
-        AddChild(new Bonus { Position = new Vector2(  200, -900) });
-        AddChild(new Bonus { Position = new Vector2( 1100, -400) });
-        AddChild(new Bonus { Position = new Vector2(-1100,  400) });
-        AddChild(new Bonus { Position = new Vector2(  100,  700) });
-
-        AddChild(new Enemy
-        {
-            Position = new Vector2(-500, -600),
-            Radius   = 32f,
-            Behavior = new PatrolBehavior(
-            [
-                new Waypoint(new Vector2(-500, -600), 250f),
-                new Waypoint(new Vector2( 500, -600), 250f),
-            ], PatrolEndBehavior.Loop),
-        });
-        AddChild(new Enemy
-        {
-            Position = new Vector2(200, -800),
-            Radius   = 24f,
-            Behavior = new PatrolBehavior(
-            [
-                new Waypoint(new Vector2(200, -800), 350f),
-                new Waypoint(new Vector2(200, -400), 350f),
-            ], PatrolEndBehavior.Loop),
-        });
-        AddChild(new Enemy
-        {
-            Position = new Vector2(-200, -400),
-            Radius   = 20f,
-            Behavior = new PatrolBehavior(
-            [
-                new Waypoint(new Vector2(-200, -400), 180f),
-                new Waypoint(new Vector2( 400, -400), 180f),
-                new Waypoint(new Vector2( 400, -800), 180f),
-                new Waypoint(new Vector2(-200, -800), 180f),
-            ], PatrolEndBehavior.Loop),
-        });
-
-        Vector2[] fastTileArea =
-        [
-            new(680, -1120), new(1720, -1120),
-            new(1720, -80),  new(680,  -80),
-        ];
-
-        AddChild(new Enemy { Radius = 36f, Color = new Color(0.85f, 0.3f, 0.1f),
-            Behavior = new RandomWanderBehavior(fastTileArea, speed: 120f, minIdleDuration: 1.5f, maxIdleDuration: 4f,   seed: 1001) });
-        AddChild(new Enemy { Radius = 22f, Color = new Color(0.9f, 0.15f, 0.3f),
-            Behavior = new RandomWanderBehavior(fastTileArea, speed: 280f, minIdleDuration: 0.3f, maxIdleDuration: 1.5f, seed: 1002) });
-        AddChild(new Enemy { Radius = 28f, Color = new Color(0.8f, 0.2f, 0.5f),
-            Behavior = new RandomWanderBehavior(fastTileArea, speed: 180f, minIdleDuration: 0.8f, maxIdleDuration: 3f,   seed: 1003) });
-        AddChild(new Enemy { Radius = 18f, Color = new Color(0.95f, 0.4f, 0.1f),
-            Behavior = new RandomWanderBehavior(fastTileArea, speed: 350f, minIdleDuration: 0.2f, maxIdleDuration: 1f,   seed: 1004) });
-
-        // Confusing tile center is (-1200, 600); radius 350 stays well inside the 1200×1200 zone.
-        AddChild(new Enemy { Radius = 30f, Color = new Color(0.3f, 0.8f, 0.5f),
-            Behavior = new OrbiterBehavior(center: new Vector2(-1200, 600), radius: 350f, angularSpeed: 1.1f, clockwise: true) });
-    }
-
     public override void _Draw()
     {
         DrawRect(new Rect2(-10000, -10000, 20000, 20000), new Color(0.18f, 0.32f, 0.14f));
     }
+
+#if DEBUG
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.Quoteleft }) return;
+        if (_localUnit == null) return;
+
+        var ps = _localUnit.PlayerState;
+        ps.PlayerLevel                              = 20;
+        ps.AbilityLevels[(int)AbilitySlot.Boost]    = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Warp]     = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Donut]    = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Ethereal] = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Gack]     = 1;
+        _localUnit.ResetAbilityCooldowns();
+        GetViewport().SetInputAsHandled();
+    }
+#endif
 }
