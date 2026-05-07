@@ -23,4 +23,17 @@ public static class SurfaceConstants
         SurfaceType.Kill          => Kill,
         _                         => Ground,
     };
+
+    public static SurfaceType? FromColor(Color c)
+    {
+        int r = c.R8, g = c.G8, b = c.B8;
+        if (r == Ground.R8        && g == Ground.G8        && b == Ground.B8)        return SurfaceType.Ground;
+        if (r == Slidy.R8         && g == Slidy.G8         && b == Slidy.B8)         return SurfaceType.Slidy;
+        if (r == Fast.R8          && g == Fast.G8          && b == Fast.B8)          return SurfaceType.Fast;
+        if (r == Confusing.R8     && g == Confusing.G8     && b == Confusing.B8)     return SurfaceType.Confusing;
+        if (r == FastConfusing.R8 && g == FastConfusing.G8 && b == FastConfusing.B8) return SurfaceType.FastConfusing;
+        if (r == Straight.R8      && g == Straight.G8      && b == Straight.B8)      return SurfaceType.Straight;
+        if (r == Kill.R8          && g == Kill.G8          && b == Kill.B8)          return SurfaceType.Kill;
+        return null; // void / unknown → no zone
+    }
 }

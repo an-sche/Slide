@@ -22,14 +22,14 @@ public static class LevelLoader
     {
         string    json = FileAccess.GetFileAsString(path);
         LevelData data = JsonSerializer.Deserialize<LevelData>(json, JsonOptions)!;
-        return Populate(data, parent);
+        return Populate(data, path.GetBaseDir(), parent);
     }
 
-    private static LoadResult Populate(LevelData data, Node parent)
+    private static LoadResult Populate(LevelData data, string levelDir, Node parent)
     {
         var result = new LoadResult();
 
-        BuildSurfaces(data, parent);
+        BuildSurfaces(data, levelDir, parent);
 
         foreach (var e in data.Entities)
         {
@@ -69,57 +69,36 @@ public static class LevelLoader
 
     // --- Surface zone construction ---
 
-    private static void BuildSurfaces(LevelData data, Node parent)
+    private static void BuildSurfaces(LevelData data, string levelDir, Node parent)
     {
-        float T = data.TileSize;
+        string imagePath = levelDir + "/" + data.Bitmap;
+        var    image     = Image.LoadFromFile(imagePath);
+        float  cs        = data.CellSize;
+        int    w         = image.GetWidth();
+        int    h         = image.GetHeight();
 
-        for (int r = 0; r < data.Height; r++)
-        for (int c = 0; c < data.Width;  c++)
+        for (int y = 0; y < h; y++)
         {
-            SurfaceType? tl = Corner(data.Corners, r,     c    );
-            SurfaceType? tr = Corner(data.Corners, r,     c + 1);
-            SurfaceType? bl = Corner(data.Corners, r + 1, c    );
-            SurfaceType? br = Corner(data.Corners, r + 1, c + 1);
-
-            float x0 = c * T, x1 = x0 + T, xm = (x0 + x1) * 0.5f;
-            float y0 = r * T, y1 = y0 + T, ym = (y0 + y1) * 0.5f;
-
-            if (tl == tr && tl == bl && tl == br)
+            int x = 0;
+            while (x < w)
             {
-                if (tl != null)
-                    AddZone(parent, tl.Value, new Vector2((x0 + x1) * 0.5f, (y0 + y1) * 0.5f), new Vector2(T, T));
-            }
-            else
-            {
-                // Split into quadrants — each is half the tile in both dimensions
-                float qs = T * 0.5f;
-                if (tl != null) AddZone(parent, tl.Value, new Vector2((x0 + xm) * 0.5f, (y0 + ym) * 0.5f), new Vector2(qs, qs));
-                if (tr != null) AddZone(parent, tr.Value, new Vector2((xm + x1) * 0.5f, (y0 + ym) * 0.5f), new Vector2(qs, qs));
-                if (bl != null) AddZone(parent, bl.Value, new Vector2((x0 + xm) * 0.5f, (ym + y1) * 0.5f), new Vector2(qs, qs));
-                if (br != null) AddZone(parent, br.Value, new Vector2((xm + x1) * 0.5f, (ym + y1) * 0.5f), new Vector2(qs, qs));
+                SurfaceType? type = SurfaceConstants.FromColor(image.GetPixel(x, y));
+                if (type == null) { x++; continue; }
+
+                // Merge adjacent same-type cells into one zone (row run-length encoding)
+                int start = x;
+                while (x < w && SurfaceConstants.FromColor(image.GetPixel(x, y)) == type)
+                    x++;
+                int run = x - start;
+
+                parent.AddChild(new SurfaceZone
+                {
+                    Type     = type.Value,
+                    Size     = new Vector2(run * cs, cs),
+                    Position = new Vector2((start + run * 0.5f) * cs, (y + 0.5f) * cs),
+                });
             }
         }
-    }
-
-    private static void AddZone(Node parent, SurfaceType type, Vector2 center, Vector2 size)
-    {
-        parent.AddChild(new SurfaceZone { Type = type, Size = size, Position = center });
-    }
-
-    private static SurfaceType? Corner(string[][] corners, int r, int c)
-    {
-        if (r >= corners.Length || c >= corners[r].Length) return null;
-        return corners[r][c] switch
-        {
-            "g"  => SurfaceType.Ground,
-            "s"  => SurfaceType.Slidy,
-            "f"  => SurfaceType.Fast,
-            "c"  => SurfaceType.Confusing,
-            "fc" => SurfaceType.FastConfusing,
-            "st" => SurfaceType.Straight,
-            "k"  => SurfaceType.Kill,
-            _    => null,  // "v" or unknown → void, no zone
-        };
     }
 
     // --- Enemy construction ---

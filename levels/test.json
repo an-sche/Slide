@@ -3,21 +3,8 @@
   "name": "Test Level",
   "author": "dev",
   "description": "All six surface types, three patrol enemies, four wanderers, one orbiter.",
-  "tileSize": 600,
-  "width": 10,
-  "height": 8,
-
-  "corners": [
-    ["k","k","k","k","k","k","k","k","k","k","k"],
-    ["k","k","k","k","k","k","k","k","k","k","k"],
-    ["k","k","g","g","g","s","s","f","k","k","k"],
-    ["k","k","g","g","s","s","f","f","k","k","k"],
-    ["k","k","c","c","fc","fc","st","st","k","k","k"],
-    ["k","k","c","c","c","fc","fc","st","k","k","k"],
-    ["k","k","k","k","k","k","k","k","k","k","k"],
-    ["k","k","k","k","k","k","k","k","k","k","k"],
-    ["k","k","k","k","k","k","k","k","k","k","k"]
-  ],
+  "bitmap": "test.png",
+  "cellSize": 4.0,
 
   "entities": [
     { "kind": "start", "x": 1600.0, "y": 1600.0 },

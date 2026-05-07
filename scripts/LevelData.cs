@@ -8,11 +8,9 @@ public class LevelData
     public string  Name        { get; set; } = "";
     public string  Author      { get; set; } = "";
     public string? Description { get; set; }
-    public float   TileSize    { get; set; }
-    public int     Width       { get; set; }
-    public int     Height      { get; set; }
+    public string  Bitmap      { get; set; } = "";
+    public float   CellSize    { get; set; }
 
-    public string[][]    Corners  { get; set; } = [];
     public EntityData[]  Entities { get; set; } = [];
     public EnemyData[]   Enemies  { get; set; } = [];
     public SpawnerData[] Spawners { get; set; } = [];
