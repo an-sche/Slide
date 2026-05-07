@@ -8,7 +8,7 @@ public class GackAbility : Ability
     private static readonly float[] Cooldowns = [30f];
 
     private const AbilitySlot Slot = AbilitySlot.Gack;
-    private const float DropDistance = 40f;
+    private const float DropDistance = GameplayConstants.GackDropDistance;
 
     private float   _duration;
     private Vector2 _lastDropPosition;

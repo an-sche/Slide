@@ -17,14 +17,14 @@ public partial class Editor : Control
     private static readonly Color[][] SlotColors =
     [
         [
-            new Color(0.30f, 0.55f, 0.28f), // Ground
-            new Color(0.18f, 0.48f, 0.90f), // Slidy
-            new Color(0.10f, 0.78f, 0.88f), // Fast
-            new Color(0.58f, 0.18f, 0.80f), // Confusing
-            new Color(0.82f, 0.12f, 0.72f), // FastConfusing
-            new Color(0.90f, 0.52f, 0.08f), // Straight
-            new Color(0.85f, 0.12f, 0.12f), // Kill
-            new Color(0.12f, 0.12f, 0.15f), // Void
+            SurfaceConstants.Ground,
+            SurfaceConstants.Slidy,
+            SurfaceConstants.Fast,
+            SurfaceConstants.Confusing,
+            SurfaceConstants.FastConfusing,
+            SurfaceConstants.Straight,
+            SurfaceConstants.Kill,
+            SurfaceConstants.Void,
         ],
         [
             new Color(0.18f, 0.80f, 0.28f), // Start

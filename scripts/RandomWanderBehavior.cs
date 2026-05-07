@@ -4,7 +4,7 @@ namespace Slide;
 
 public class RandomWanderBehavior : IEnemyBehavior
 {
-    private const float TelegraphDuration = 0.5f;
+    private const float TelegraphDuration = GameplayConstants.TelegraphDuration;
 
     private readonly Vector2[]             _polygon;
     private readonly float                 _speed;

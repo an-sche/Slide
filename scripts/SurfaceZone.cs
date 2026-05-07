@@ -22,14 +22,5 @@ public partial class SurfaceZone : Area2D
         DrawRect(new Rect2(-Size / 2, Size), GetColor());
     }
 
-    private Color GetColor() => Type switch
-    {
-        SurfaceType.Slidy         => new Color(0.55f, 0.82f, 1.00f), // light blue
-        SurfaceType.Fast          => new Color(0.10f, 0.25f, 0.75f), // dark blue
-        SurfaceType.Confusing     => new Color(0.75f, 0.55f, 0.95f), // light purple
-        SurfaceType.FastConfusing => new Color(0.38f, 0.10f, 0.58f), // dark purple
-        SurfaceType.Straight      => new Color(0.72f, 0.72f, 0.72f), // light gray
-        SurfaceType.Kill          => new Color(0.75f, 0.08f, 0.08f), // dark red
-        _                         => new Color(0.25f, 0.65f, 0.25f), // green
-    };
+    private Color GetColor() => SurfaceConstants.ForType(Type);
 }

@@ -6,12 +6,11 @@ namespace Slide;
 
 public partial class Unit : Area2D
 {
-	public const float Radius = 16f;
-	private const float GroundSpeed = 200f;
-	private const float SlidySpeed = 400f;
-	private const float SlidyTurnRate = 15.0f; // radians/sec
-
-	private const float RespawnDelay = 3f;
+	public const float Radius         = GameplayConstants.UnitRadius;
+	private const float GroundSpeed   = GameplayConstants.GroundSpeed;
+	private const float SlidySpeed    = GameplayConstants.SlidySpeed;
+	private const float SlidyTurnRate = GameplayConstants.SlidyTurnRate;
+	private const float RespawnDelay  = GameplayConstants.RespawnDelay;
 
 	private Vector2? _target;
 	private Vector2 _facing = Vector2.Right;

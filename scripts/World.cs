@@ -12,25 +12,11 @@ public partial class World : Node2D
     private bool             _levelCompleted;
     private Vector2          _startPosition;
 
-    private const float WipeDelay = 5f;
+    private const float WipeDelay = GameplayConstants.WipeDelay;
     private SceneTreeTimer? _wipeTimer;
 
-    // All spawned units (maintained on every peer)
     private readonly Dictionary<long, Unit>      _units      = new();
-    // Warp ghosts tracked on clients for removal (keyed by peerId of the owning unit)
     private readonly Dictionary<long, WarpGhost> _warpGhosts = new();
-
-    private static readonly Color[] PlayerColors =
-    [
-        new Color(0.20f, 0.80f, 1.00f), // cyan
-        new Color(1.00f, 0.45f, 0.10f), // orange
-        new Color(0.40f, 1.00f, 0.40f), // green
-        new Color(1.00f, 1.00f, 0.20f), // yellow
-        new Color(0.90f, 0.20f, 0.90f), // magenta
-        new Color(0.20f, 0.60f, 1.00f), // blue
-        new Color(1.00f, 0.20f, 0.40f), // red
-        new Color(0.85f, 0.85f, 0.85f), // white
-    ];
 
     public override void _Ready()
     {
@@ -58,7 +44,7 @@ public partial class World : Node2D
     {
         if (_units.ContainsKey(peerId)) return;
 
-        Color color   = PlayerColors[playerIndex % PlayerColors.Length];
+        Color color   = PlayerConstants.Colors[playerIndex % PlayerConstants.Colors.Length];
         bool  isLocal = !GameNetwork.IsMultiplayer || peerId == Multiplayer.GetUniqueId();
 
         var unit = new Unit

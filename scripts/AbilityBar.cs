@@ -21,7 +21,7 @@ public partial class AbilityBar : Control
     private const float PlusGap      = 4f;
     private const float PointsLabelH = 22f;
     private const float PointsGap    = 5f;
-    private const int   UnlockLevel  = 3;
+    private const int   UnlockLevel  = GameplayConstants.AbilityUnlockLevel;
 
     private PlayerState _playerState = RunState.GetPlayer(0);
 

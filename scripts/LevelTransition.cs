@@ -4,7 +4,7 @@ namespace Slide;
 
 public partial class LevelTransition : CanvasLayer
 {
-    private const float DisplayDuration = 4f;
+    private const float DisplayDuration = GameplayConstants.TransitionDuration;
 
     private Control _overlay = null!;
     private Label _timeLabel = null!;

@@ -4,12 +4,12 @@ namespace Slide;
 
 public partial class GameCamera : Camera2D
 {
-    private const float EdgeScrollSpeed = 600f;
-    private const float EdgeThreshold   = 20f;
-    private const float DefaultZoom     = 1.0f;
-    private const float ZoomStep        = 0.1f;
-    private const float MinZoom         = 1.0f;
-    private const float MaxZoom         = 2.0f;
+    public const float EdgeScrollSpeed = 600f;
+    public const float EdgeThreshold   = 20f;
+    public const float DefaultZoom     = 1.0f;
+    public const float ZoomStep        = 0.1f;
+    public const float MinZoom         = 1.0f;
+    public const float MaxZoom         = 2.0f;
 
     private Node2D? _unit;
     private bool    _isLockedToUnit;

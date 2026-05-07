@@ -8,7 +8,7 @@ public class DonutAbility : Ability
     private static readonly float[] Cooldowns = [45f, 40f, 35f, 30f];
 
     private const AbilitySlot Slot = AbilitySlot.Donut;
-    private const float DonutSpeed = 900f;
+    private const float DonutSpeed = GameplayConstants.DonutSpeed;
 
     public DonutAbility(Unit unit) : base(unit) { }
 
