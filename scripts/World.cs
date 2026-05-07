@@ -10,7 +10,9 @@ public partial class World : Node2D
     private LevelTransition? _transition;
     private Unit?            _localUnit;
     private bool             _levelCompleted;
+    private bool             _levelLoaded;
     private Vector2          _startPosition;
+    private CanvasLayer?     _picker;
 
     private const float WipeDelay = GameplayConstants.WipeDelay;
     private SceneTreeTimer? _wipeTimer;
@@ -24,7 +26,68 @@ public partial class World : Node2D
         AddChild(_transition);
 
         Input.MouseMode = Input.MouseModeEnum.Confined;
-        CreateTestLevel();
+
+        if (GameNetwork.IsMultiplayer)
+            SelectLevel(false);
+        else
+            ShowLevelPicker();
+    }
+
+    private void ShowLevelPicker()
+    {
+        _picker = new CanvasLayer();
+
+        var root = new Control();
+        root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        _picker.AddChild(root);
+
+        var bg = new ColorRect { Color = new Color(0f, 0f, 0f, 0.82f) };
+        bg.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        root.AddChild(bg);
+
+        var label = new Label
+        {
+            Text                = "Select Level\n\n[1]  Hardcoded test level\n[2]  levels/test.json",
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+        label.AddThemeFontSizeOverride("font_size", 32);
+        label.AddThemeColorOverride("font_color",         Colors.White);
+        label.AddThemeColorOverride("font_outline_color", Colors.Black);
+        label.AddThemeConstantOverride("outline_size", 4);
+        label.AnchorLeft   = 0.5f;
+        label.AnchorRight  = 0.5f;
+        label.AnchorTop    = 0.5f;
+        label.AnchorBottom = 0.5f;
+        label.OffsetLeft   = -350f;
+        label.OffsetRight  =  350f;
+        label.OffsetTop    = -120f;
+        label.OffsetBottom =  120f;
+        root.AddChild(label);
+
+        AddChild(_picker);
+    }
+
+    private void SelectLevel(bool useJson)
+    {
+        if (_picker != null)
+        {
+            _picker.QueueFree();
+            _picker = null;
+        }
+
+        _levelLoaded = true;
+
+        if (useJson)
+        {
+            var result = LevelLoader.Load("res://levels/test.json", this);
+            _startPosition = result.StartPosition;
+            if (result.EndBlock != null)
+                result.EndBlock.LevelCompleted += OnLevelCompleted;
+        }
+        else
+        {
+            CreateTestLevel();
+        }
 
         if (!GameNetwork.IsMultiplayer)
         {
@@ -122,6 +185,31 @@ public partial class World : Node2D
         // Clients also forward to the host for authoritative movement.
         if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer())
             RpcId(1, nameof(SetMoveTarget), target);
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
+
+        if (!_levelLoaded)
+        {
+            if (key.Keycode == Key.Key1)      { SelectLevel(false); GetViewport().SetInputAsHandled(); }
+            else if (key.Keycode == Key.Key2) { SelectLevel(true);  GetViewport().SetInputAsHandled(); }
+            return;
+        }
+
+#if DEBUG
+        if (key.Keycode != Key.Quoteleft || _localUnit == null) return;
+        var ps = _localUnit.PlayerState;
+        ps.PlayerLevel                              = 20;
+        ps.AbilityLevels[(int)AbilitySlot.Boost]    = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Warp]     = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Donut]    = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Ethereal] = 4;
+        ps.AbilityLevels[(int)AbilitySlot.Gack]     = 1;
+        _localUnit.ResetAbilityCooldowns();
+        GetViewport().SetInputAsHandled();
+#endif
     }
 
     // Client → host: activate an ability on the sender's unit.
@@ -356,22 +444,4 @@ public partial class World : Node2D
     {
         DrawRect(new Rect2(-10000, -10000, 20000, 20000), new Color(0.18f, 0.32f, 0.14f));
     }
-
-#if DEBUG
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.Quoteleft }) return;
-        if (_localUnit == null) return;
-
-        var ps = _localUnit.PlayerState;
-        ps.PlayerLevel                            = 20;
-        ps.AbilityLevels[(int)AbilitySlot.Boost]    = 4;
-        ps.AbilityLevels[(int)AbilitySlot.Warp]     = 4;
-        ps.AbilityLevels[(int)AbilitySlot.Donut]    = 4;
-        ps.AbilityLevels[(int)AbilitySlot.Ethereal] = 4;
-        ps.AbilityLevels[(int)AbilitySlot.Gack]     = 1;
-        _localUnit.ResetAbilityCooldowns();
-        GetViewport().SetInputAsHandled();
-    }
-#endif
 }
