@@ -99,6 +99,7 @@ public partial class World : Node2D
         if (!isLocal) return;
 
         _localUnit = unit;
+        unit.AbilityInputForwarded += (slot, level) => RpcId(1, nameof(UseAbility), slot, level);
 
         _camera = new GameCamera();
         AddChild(_camera);

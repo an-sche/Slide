@@ -67,6 +67,7 @@ public partial class Unit : Area2D
 	public ProjectileSystem Projectiles { get; set; } = null!;
 
 	public event Action<Corpse>? CorpseTouched;
+	public event Action<int, int>? AbilityInputForwarded;
 	public Color UnitColor { get; set; } = new Color(0.2f, 0.8f, 1f);
 
 	[Signal] public delegate void DiedEventHandler();
@@ -170,8 +171,7 @@ public partial class Unit : Area2D
 			// Activate locally so the HUD cooldown display is immediate.
 			_abilities[slot]?.TryActivate();
 			// Forward to host with current level so host can simulate correctly.
-			int level = PlayerState.AbilityLevels[slot];
-			(GetParent() as World)?.RpcId(1, nameof(World.UseAbility), slot, level);
+			AbilityInputForwarded?.Invoke(slot, PlayerState.AbilityLevels[slot]);
 		}
 	}
 
