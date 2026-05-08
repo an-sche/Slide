@@ -63,6 +63,9 @@ public partial class Unit : Area2D
 		}
 	}
 
+	public EffectSystem     Effects     { get; set; } = null!;
+	public ProjectileSystem Projectiles { get; set; } = null!;
+
 	public event Action<Corpse>? CorpseTouched;
 	public Color UnitColor { get; set; } = new Color(0.2f, 0.8f, 1f);
 
@@ -216,6 +219,7 @@ public partial class Unit : Area2D
 
 	private void UpdateCurrentSurface()
 	{
+		if (_isDead) return;
 		var newSurface = SurfaceType.Ground;
 		int highestPriority = -1;
 		foreach (var zone in _overlappingZones)
@@ -279,7 +283,8 @@ public partial class Unit : Area2D
 
 	private void Respawn()
 	{
-		_respawnTimer  = null;
+		_respawnTimer = null;
+		_overlappingZones.Clear();
 		_isDead        = false;
 		GlobalPosition = _startPosition;
 		_corpse?.QueueFree();
@@ -320,6 +325,7 @@ public partial class Unit : Area2D
 	{
 		if (_respawnTimer != null) { _respawnTimer.Timeout -= Respawn; _respawnTimer = null; }
 		if (!_isDead) return;
+		_overlappingZones.Clear();
 		_isDead = false;
 		GlobalPosition = spawnPosition;
 		_corpse?.QueueFree();
@@ -351,6 +357,7 @@ public partial class Unit : Area2D
 			_respawnTimer.Timeout -= Respawn;
 			_respawnTimer          = null;
 		}
+		_overlappingZones.Clear();
 		_isDead        = false;
 		GlobalPosition = position;
 		_velocity      = velocity;

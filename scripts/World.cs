@@ -15,11 +15,18 @@ public partial class World : Node2D
     private const float WipeDelay = GameplayConstants.WipeDelay;
     private SceneTreeTimer? _wipeTimer;
 
-    private readonly Dictionary<long, Unit>      _units      = new();
-    private readonly Dictionary<long, WarpGhost> _warpGhosts = new();
+    private EffectSystem     _effects     = null!;
+    private ProjectileSystem _projectiles = null!;
+
+    private readonly Dictionary<long, Unit> _units = new();
 
     public override void _Ready()
     {
+        _effects     = new EffectSystem();
+        _projectiles = new ProjectileSystem();
+        AddChild(_effects);
+        AddChild(_projectiles);
+
         _transition = new LevelTransition();
         AddChild(_transition);
 
@@ -51,6 +58,7 @@ public partial class World : Node2D
         Color color   = PlayerConstants.Colors[playerIndex % PlayerConstants.Colors.Length];
         bool  isLocal = !GameNetwork.IsMultiplayer || peerId == Multiplayer.GetUniqueId();
 
+        var spawnPos = _startPosition + new Vector2(playerIndex * 48f, 0);
         var unit = new Unit
         {
             Name          = $"Unit_{peerId}",
@@ -58,10 +66,12 @@ public partial class World : Node2D
             PeerId        = peerId,
             UnitColor     = color,
             IsLocalPlayer = isLocal,
+            Position      = spawnPos,
         };
         AddChild(unit);
-        unit.SetStartPosition(_startPosition + new Vector2(playerIndex * 48f, 0));
-        _units[peerId] = unit;
+        _units[peerId]   = unit;
+        unit.Effects     = _effects;
+        unit.Projectiles = _projectiles;
 
         unit.CorpseTouched += corpse =>
         {
@@ -81,7 +91,7 @@ public partial class World : Node2D
             unit.Respawned += () =>
             {
                 if (!Multiplayer.IsServer()) return;
-                Rpc(nameof(BroadcastUnitRespawn), peerId, _startPosition + new Vector2(playerIndex * 48f, 0));
+                Rpc(nameof(BroadcastUnitRespawn), peerId, spawnPos);
                 CancelWipeTimer();
             };
         }
@@ -168,33 +178,6 @@ public partial class World : Node2D
     {
         if (!_units.TryGetValue(peerId, out var unit) || !unit.IsDead) return;
         unit.ApplyRemoteRespawn(spawnPosition);
-    }
-
-    [Rpc(MultiplayerApi.RpcMode.Authority)]
-    public void ClientSpawnGooZone(Vector2 position)
-    {
-        AddChild(new GooZone { GlobalPosition = position });
-    }
-
-    [Rpc(MultiplayerApi.RpcMode.Authority)]
-    public void ClientSpawnWarpGhost(long peerId, Vector2 position, Vector2 facing, float duration)
-    {
-        if (_warpGhosts.TryGetValue(peerId, out var old)) { old.QueueFree(); _warpGhosts.Remove(peerId); }
-        var ghost = new WarpGhost { GlobalPosition = position, Facing = facing, Duration = duration };
-        AddChild(ghost);
-        _warpGhosts[peerId] = ghost;
-    }
-
-    [Rpc(MultiplayerApi.RpcMode.Authority)]
-    public void ClientRemoveWarpGhost(long peerId)
-    {
-        if (_warpGhosts.TryGetValue(peerId, out var ghost)) { ghost.QueueFree(); _warpGhosts.Remove(peerId); }
-    }
-
-    [Rpc(MultiplayerApi.RpcMode.Authority)]
-    public void ClientSpawnDonut(Vector2 position, Vector2 velocity, float lifetime)
-    {
-        AddChild(new DonutProjectile { GlobalPosition = position, MoveVelocity = velocity, Lifetime = lifetime });
     }
 
     private void CheckTeamWipe()

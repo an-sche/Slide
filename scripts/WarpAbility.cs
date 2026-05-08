@@ -11,11 +11,10 @@ public class WarpAbility : Ability
 
     private enum WarpState { Idle, GhostPlaced }
 
-    private WarpState  _state = WarpState.Idle;
-    private WarpGhost? _ghost;
-    private Vector2    _capturedVelocity;
-    private float      _ghostRemaining;
-    private float      _ghostMaxDuration;
+    private WarpState _state = WarpState.Idle;
+    private Vector2   _capturedVelocity;
+    private float     _ghostRemaining;
+    private float     _ghostMaxDuration;
 
     public WarpAbility(Unit unit) : base(unit) { }
 
@@ -34,15 +33,7 @@ public class WarpAbility : Ability
             _state            = WarpState.GhostPlaced;
             IsActive          = true;
 
-            // Only the host (or solo) physically creates the ghost node.
-            if (!GameNetwork.IsMultiplayer || Unit.Multiplayer.IsServer())
-            {
-                _ghost = new WarpGhost { GlobalPosition = Unit.GlobalPosition, Facing = Unit.Facing };
-                Unit.GetParent().AddChild(_ghost);
-                if (GameNetwork.IsMultiplayer)
-                    (Unit.GetParent() as World)?.Rpc(nameof(World.ClientSpawnWarpGhost),
-                        Unit.PeerId, Unit.GlobalPosition, Unit.Facing, _ghostMaxDuration);
-            }
+            Unit.Effects.SpawnWarpGhost(Unit.PeerId, Unit.GlobalPosition, Unit.Facing, _ghostMaxDuration);
         }
         else
         {
@@ -50,17 +41,14 @@ public class WarpAbility : Ability
 
             Unit.ClearTarget();
 
-            if (_ghost != null)
+            // Host/solo: teleport to ghost. Client: position corrected by next SyncUnitState.
+            if (!GameNetwork.IsMultiplayer || Unit.Multiplayer.IsServer())
             {
-                Unit.GlobalPosition = _ghost.GlobalPosition;
+                Unit.GlobalPosition = Unit.Effects.GetWarpGhostPosition(Unit.PeerId);
                 Unit.Velocity       = _capturedVelocity;
-                Unit.Facing         = _ghost.Facing;
-                _ghost.QueueFree();
-                _ghost = null;
-                if (GameNetwork.IsMultiplayer && Unit.Multiplayer.IsServer())
-                    (Unit.GetParent() as World)?.Rpc(nameof(World.ClientRemoveWarpGhost), Unit.PeerId);
+                Unit.Facing         = Unit.Effects.GetWarpGhostFacing(Unit.PeerId);
             }
-            // If client: position will be corrected by next SyncUnitState from host.
+            Unit.Effects.RemoveWarpGhost(Unit.PeerId);
 
             int level2   = Unit.PlayerState.AbilityLevels[(int)Slot];
             _maxCooldown = Cooldowns[level2 - 1];
@@ -77,13 +65,7 @@ public class WarpAbility : Ability
             _ghostRemaining -= delta;
             if (_ghostRemaining <= 0f)
             {
-                if (_ghost != null)
-                {
-                    _ghost.QueueFree();
-                    _ghost = null;
-                    if (GameNetwork.IsMultiplayer && Unit.Multiplayer.IsServer())
-                        (Unit.GetParent() as World)?.Rpc(nameof(World.ClientRemoveWarpGhost), Unit.PeerId);
-                }
+                Unit.Effects.RemoveWarpGhost(Unit.PeerId);
                 _state   = WarpState.Idle;
                 IsActive = false;
 
@@ -94,9 +76,9 @@ public class WarpAbility : Ability
                     _cooldown    = _maxCooldown;
                 }
             }
-            else if (_ghost != null)
+            else
             {
-                _ghost.Fraction = _ghostRemaining / _ghostMaxDuration;
+                Unit.Effects.UpdateWarpGhostFraction(Unit.PeerId, _ghostRemaining / _ghostMaxDuration);
             }
         }
 
@@ -107,5 +89,4 @@ public class WarpAbility : Ability
     {
         // Ghost stays in the world, cooldown keeps ticking — nothing to reset
     }
-
 }
