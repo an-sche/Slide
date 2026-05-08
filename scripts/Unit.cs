@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Collections.Generic;
 
 namespace Slide;
 
@@ -17,7 +16,6 @@ public partial class Unit : Area2D
 	private Vector2 _velocity = Vector2.Zero;
 	private SurfaceType _currentSurface = SurfaceType.Ground;
 	private Vector2 _startPosition;
-	private readonly HashSet<SurfaceZone> _overlappingZones = new();
 	private bool _isDead;
 	private Corpse?          _corpse;
 	private SceneTreeTimer?  _respawnTimer;
@@ -58,9 +56,14 @@ public partial class Unit : Area2D
 	{
 		get
 		{
-			foreach (var area in GetOverlappingAreas())
-				if (area is GooZone) return true;
-			return false;
+			var query = new PhysicsPointQueryParameters2D
+			{
+				Position          = GlobalPosition,
+				CollideWithAreas  = true,
+				CollideWithBodies = false,
+				CollisionMask     = Layers.GooZones,
+			};
+			return GetWorld2D().DirectSpaceState.IntersectPoint(query).Count > 0;
 		}
 	}
 
@@ -79,13 +82,12 @@ public partial class Unit : Area2D
 		_startPosition = GlobalPosition;
 
 		CollisionLayer = Layers.Units;
-		CollisionMask  = Layers.Surfaces | Layers.Corpses | Layers.GooZones;
+		CollisionMask  = Layers.Corpses;
 		ZIndex = 1;
 
 		AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = Radius * 0.8f } });
 
 		AreaEntered += OnZoneEntered;
-		AreaExited += OnZoneExited;
 
 		_abilities[(int)AbilitySlot.Boost]    = new BoostAbility(this);
 		_abilities[(int)AbilitySlot.Warp]     = new WarpAbility(this);
@@ -116,6 +118,8 @@ public partial class Unit : Area2D
 		if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
 
 		if (_isDead) return;
+
+		UpdateSurfaceFromPoint();
 
 		switch (_currentSurface)
 		{
@@ -207,34 +211,37 @@ public partial class Unit : Area2D
 
 	private void OnZoneEntered(Area2D area)
 	{
-		if (area is SurfaceZone zone) { _overlappingZones.Add(zone); UpdateCurrentSurface(); }
-		else if (area is Corpse c && !_isDead) CorpseTouched?.Invoke(c);
+		if (area is Corpse c && !_isDead) CorpseTouched?.Invoke(c);
 	}
 
-	private void OnZoneExited(Area2D area)
+	private void UpdateSurfaceFromPoint()
 	{
-		if (area is not SurfaceZone zone) return;
-		_overlappingZones.Remove(zone);
-		UpdateCurrentSurface();
-	}
+		var query = new PhysicsPointQueryParameters2D
+		{
+			Position          = GlobalPosition,
+			CollideWithAreas  = true,
+			CollideWithBodies = false,
+			CollisionMask     = Layers.Surfaces,
+		};
+		var results = GetWorld2D().DirectSpaceState.IntersectPoint(query);
 
-	private void UpdateCurrentSurface()
-	{
-		if (_isDead) return;
 		var newSurface = SurfaceType.Ground;
 		int highestPriority = -1;
-		foreach (var zone in _overlappingZones)
+		foreach (var result in results)
 		{
-			int priority = GetSurfacePriority(zone.Type);
-			if (priority > highestPriority)
+			if (result["collider"].As<Area2D>() is SurfaceZone zone)
 			{
-				highestPriority = priority;
-				newSurface = zone.Type;
+				int priority = GetSurfacePriority(zone.Type);
+				if (priority > highestPriority)
+				{
+					highestPriority = priority;
+					newSurface = zone.Type;
+				}
 			}
 		}
 
-		if (newSurface == _currentSurface) return;
-		TransitionToSurface(newSurface);
+		if (newSurface != _currentSurface)
+			TransitionToSurface(newSurface);
 	}
 
 	private void TransitionToSurface(SurfaceType newSurface)
@@ -267,7 +274,6 @@ public partial class Unit : Area2D
 		_target = null;
 		_velocity = Vector2.Zero;
 		_currentSurface = SurfaceType.Ground;
-		_overlappingZones.Clear();
 
 		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor, OnResurrect = ResurrectEarly, SourceUnit = this };
 		GetParent().AddChild(_corpse);
@@ -285,7 +291,6 @@ public partial class Unit : Area2D
 	private void Respawn()
 	{
 		_respawnTimer = null;
-		_overlappingZones.Clear();
 		_isDead        = false;
 		GlobalPosition = _startPosition;
 		_corpse?.QueueFree();
@@ -313,7 +318,6 @@ public partial class Unit : Area2D
 		_target = null;
 		_velocity = Vector2.Zero;
 		_currentSurface = SurfaceType.Ground;
-		_overlappingZones.Clear();
 		GlobalPosition = deathPosition;
 		_corpse = new Corpse { Position = GlobalPosition, UnitColor = UnitColor, OnResurrect = ResurrectEarly, SourceUnit = this };
 		GetParent().AddChild(_corpse);
@@ -326,7 +330,6 @@ public partial class Unit : Area2D
 	{
 		if (_respawnTimer != null) { _respawnTimer.Timeout -= Respawn; _respawnTimer = null; }
 		if (!_isDead) return;
-		_overlappingZones.Clear();
 		_isDead = false;
 		GlobalPosition = spawnPosition;
 		_corpse?.QueueFree();
@@ -359,7 +362,6 @@ public partial class Unit : Area2D
 			_respawnTimer.Timeout -= Respawn;
 			_respawnTimer          = null;
 		}
-		_overlappingZones.Clear();
 		_isDead         = false;
 		GlobalPosition  = position;
 		_facing         = facing;
@@ -429,7 +431,7 @@ public partial class Unit : Area2D
 			}
 		}
 
-		_facing = _velocity.Normalized();
+		_facing = invert ? -_velocity.Normalized() : _velocity.Normalized();
 		GlobalPosition += _velocity * delta;
 	}
 

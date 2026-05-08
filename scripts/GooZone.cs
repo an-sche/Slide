@@ -5,7 +5,7 @@ namespace Slide;
 public partial class GooZone : Area2D
 {
     public const float GooRadius     = 50f;
-    public const float Lifetime      = 5f;
+    public const float Lifetime      = 10f;
     public const float SpeedMultiplier = 1.40f;
 
     private float _remaining = Lifetime;
@@ -14,7 +14,7 @@ public partial class GooZone : Area2D
     {
         CollisionLayer = Layers.GooZones;
         CollisionMask  = 0;
-        Monitorable    = true;
+        Monitorable    = false;
         Monitoring     = false;
 
         AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = GooRadius } });

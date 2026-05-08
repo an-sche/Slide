@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 namespace Slide;
@@ -27,13 +28,19 @@ public static class SurfaceConstants
     public static SurfaceType? FromColor(Color c)
     {
         int r = c.R8, g = c.G8, b = c.B8;
-        if (r == Ground.R8        && g == Ground.G8        && b == Ground.B8)        return SurfaceType.Ground;
-        if (r == Slidy.R8         && g == Slidy.G8         && b == Slidy.B8)         return SurfaceType.Slidy;
-        if (r == Fast.R8          && g == Fast.G8          && b == Fast.B8)          return SurfaceType.Fast;
-        if (r == Confusing.R8     && g == Confusing.G8     && b == Confusing.B8)     return SurfaceType.Confusing;
-        if (r == FastConfusing.R8 && g == FastConfusing.G8 && b == FastConfusing.B8) return SurfaceType.FastConfusing;
-        if (r == Straight.R8      && g == Straight.G8      && b == Straight.B8)      return SurfaceType.Straight;
-        if (r == Kill.R8          && g == Kill.G8          && b == Kill.B8)          return SurfaceType.Kill;
+        if (Near(r, g, b, Ground))        return SurfaceType.Ground;
+        if (Near(r, g, b, Slidy))         return SurfaceType.Slidy;
+        if (Near(r, g, b, Fast))          return SurfaceType.Fast;
+        if (Near(r, g, b, Confusing))     return SurfaceType.Confusing;
+        if (Near(r, g, b, FastConfusing)) return SurfaceType.FastConfusing;
+        if (Near(r, g, b, Straight))      return SurfaceType.Straight;
+        if (Near(r, g, b, Kill))          return SurfaceType.Kill;
         return null; // void / unknown → no zone
     }
+
+    // Image.SetPixel truncates float*255 while Color.R8 rounds, producing a ±1 error per
+    // channel for colors whose float*255 has a fractional part. All surface colors are far
+    // enough apart that ±1 cannot produce a false positive.
+    private static bool Near(int r, int g, int b, Color c) =>
+        Math.Abs(r - c.R8) <= 1 && Math.Abs(g - c.G8) <= 1 && Math.Abs(b - c.B8) <= 1;
 }
