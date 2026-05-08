@@ -91,7 +91,7 @@ public partial class World : Node2D
             unit.Respawned += () =>
             {
                 if (!Multiplayer.IsServer()) return;
-                Rpc(nameof(BroadcastUnitRespawn), peerId, spawnPos);
+                Rpc(nameof(BroadcastUnitRespawn), peerId, unit.GlobalPosition);
                 CancelWipeTimer();
             };
         }

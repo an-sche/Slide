@@ -349,9 +349,10 @@ public partial class Unit : Area2D
 		Respawn();
 	}
 
-	public void ResurrectAt(Vector2 position, Vector2 velocity)
+	public void ResurrectAt(Vector2 position, Vector2 velocity, Vector2 facing)
 	{
 		if (!_isDead) return;
+		if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
 		if (_respawnTimer != null)
 		{
 			_respawnTimer.Timeout -= Respawn;
@@ -361,6 +362,7 @@ public partial class Unit : Area2D
 		_isDead        = false;
 		GlobalPosition = position;
 		_velocity      = velocity;
+		_facing        = facing;
 		_corpse?.QueueFree();
 		_corpse       = null;
 		foreach (var a in _abilities) a?.OnRespawn();
