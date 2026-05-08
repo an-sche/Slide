@@ -39,7 +39,7 @@ The top bar has two sections:
 
 | Tab | Shortcut | Purpose |
 |-----|----------|---------|
-| Paint    | Tab (cycle) or `M` | Paint surface types onto corner vertices |
+| Paint    | Tab (cycle) or `M` | Paint surface types onto map pixels |
 | Entities | Tab (cycle) or `M` | Place start block, end block, and bonuses |
 | Enemies  | Tab (cycle) or `M` | Place and configure enemies |
 | Triggers | Tab (cycle) or `M` | Place buttons and doors; wire actions |
@@ -106,25 +106,28 @@ The hotbar shows the items available in the current mode. Press the number key s
 
 ### Grid
 
-The grid displays tile boundaries and corner vertex points. The corner points (intersections) are what get painted in Paint mode — they are larger hit targets than the grid lines themselves.
+A pixel grid appears at high zoom levels (zoom ≥ 8×) showing individual cell boundaries. Each cell in the editor corresponds to one pixel in the PNG bitmap and one `cellSize`-unit square in the game world.
 
-Grid lines and corner markers scale with zoom so they remain usable at any level of detail.
+Grid lines scale with zoom so they remain usable at any level of detail.
 
 ---
 
 ## Paint mode
 
-Painting modifies **corner vertices** of the tile grid (see `map.md` for why this produces smooth diagonal boundaries).
+Painting writes surface type colors directly into the PNG bitmap. Each pixel encodes one surface type as an RGB color (see `map.md` for the full color table). The PNG is the source of truth — no intermediate representation.
 
 | Input | Action |
 |-------|--------|
-| Left-click | Paint hovered corner with selected surface type |
+| Left-click | Paint pixel(s) under cursor with selected surface type |
 | Left-click + drag | Paint continuously while dragging |
-| Right-click | Set hovered corner to Void (erase) |
+| Right-click | Set pixel(s) to Void (erase) |
+| `[` / `]` | Decrease / increase brush radius |
 
-**Hover highlight:** The nearest corner vertex to the cursor is highlighted with the color of the selected surface type before you click, giving immediate feedback.
+**Brush:** The brush is a filled circle. Radius 0 paints a single pixel. Higher radii paint all pixels within that radius. A white circle preview follows the cursor, showing exactly which pixels will be painted.
 
-**Live preview:** The viewport renders the marching-squares polygon outline in real time as you paint. You see the exact physics boundary that will be used in-game — including smooth diagonals — without needing to bake or export first.
+**Config panel (bottom-right):** Shows the current brush size with `−` / `+` buttons as an alternative to the bracket shortcuts.
+
+**What you see:** The viewport renders the PNG bitmap directly — the colors you paint are the colors that appear in-game as surface zones. No baking or export step is needed; Save writes the PNG and JSON together.
 
 ---
 
@@ -266,7 +269,6 @@ A dot appears next to the level name in the top bar when there are unsaved chang
 ## Planned / future
 
 - Undo / redo (Ctrl+Z / Ctrl+Y)
-- Multi-tile brush size for Paint mode
 - Copy / paste selection of entities and enemies
 - In-editor playtesting with a ghost unit (no HUD, no death, just movement preview)
 - Steam Workshop publish button

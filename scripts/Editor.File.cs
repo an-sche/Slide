@@ -35,6 +35,7 @@ public partial class Editor
         var    image   = Image.LoadFromFile(pngPath);
         _canvas.LoadImage(image);
         _hint.Visible = false;
+        RefreshOverlays();
     }
 
     private void OnSave()

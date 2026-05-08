@@ -15,8 +15,10 @@ public partial class CanvasView : Control
     private Vector2       _panStart;
     private Vector2       _offsetAtPanStart;
     private bool          _needsFit;
-    private Label         _coordLabel = null!;
+    private Label         _coordLabel  = null!;
     private int           _brushRadius = 0;
+    private float         _cellSize    = 1f;
+    private EditorOverlay[] _overlays  = [];
 
     public CanvasView()
     {
@@ -47,6 +49,13 @@ public partial class CanvasView : Control
     }
 
     public Image? GetImage() => _image;
+
+    public void SetOverlays(EditorOverlay[] overlays, float cellSize)
+    {
+        _overlays = overlays;
+        _cellSize  = cellSize;
+        QueueRedraw();
+    }
 
     public int BrushRadius => _brushRadius;
 
@@ -129,6 +138,10 @@ public partial class CanvasView : Control
                 DrawLine(new Vector2(x0, y0 + y * _zoom), new Vector2(x1, y0 + y * _zoom), grid);
         }
 
+        // Entity overlays
+        foreach (var ov in _overlays)
+            DrawOverlay(WorldToScreen(ov.WorldPos), ov);
+
         // Brush preview
         var mouse    = GetLocalMousePosition();
         var cursorPx = ToPixel(mouse);
@@ -180,6 +193,39 @@ public partial class CanvasView : Control
                 break;
             }
         }
+    }
+
+    private Vector2 WorldToScreen(Vector2 worldPos) =>
+        (worldPos / _cellSize) * _zoom + _offset;
+
+    private void DrawOverlay(Vector2 sp, EditorOverlay ov)
+    {
+        const float R     = 8f;
+        var         white = new Color(1f, 1f, 1f, 0.7f);
+
+        switch (ov.Shape)
+        {
+            case OverlayShape.Circle:
+                DrawCircle(sp, R, ov.Color);
+                DrawArc(sp, R, 0, Mathf.Tau, 32, white, 1.5f);
+                break;
+
+            case OverlayShape.Diamond:
+                Vector2[] pts =
+                [
+                    sp + new Vector2(0,  -R),
+                    sp + new Vector2(R,   0),
+                    sp + new Vector2(0,   R),
+                    sp + new Vector2(-R,  0),
+                ];
+                DrawColoredPolygon(pts, ov.Color);
+                DrawPolyline([..pts, pts[0]], white, 1.5f);
+                break;
+        }
+
+        if (_zoom >= 3f && !string.IsNullOrEmpty(ov.Label))
+            DrawString(ThemeDB.FallbackFont, sp + new Vector2(R + 3f, 4f),
+                ov.Label, HorizontalAlignment.Left, -1, 11, white);
     }
 
     public override void _Notification(int what)

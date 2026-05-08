@@ -180,38 +180,44 @@ All new behaviors implement `IEnemyBehavior` and are fully compatible with the e
 
 ## Milestone 8 — Level editor
 
-Levels are stored as JSON files (`user://levels/<name>.json`). The format encodes a tile grid, entity list, and metadata. Workshop upload (Milestone 9) reuses the same files.
+Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.png`). The PNG bitmap defines the surface layout (each pixel = one tile cell, RGB = surface type). The JSON stores metadata, entities, enemies, spawners, triggers, and doors. Workshop upload (Milestone 9) reuses the same files.
 
-### 8a — Level file format & runtime loader
-- [ ] Full JSON schema defined in `docs/map.md`: vertex-based corner grid (`(height+1) × (width+1)` surface codes), entities, enemies, spawners, triggers, doors
-- [ ] At load time, `LevelLoader` runs marching squares on the corner grid → traces closed polygons per contiguous surface region → instantiates `SurfaceZone` nodes with polygon collision shapes; no tile grid exists at runtime
-- [ ] Nearest-corner rule: each tile quadrant takes its nearest corner's surface type; boundary edges are exact diagonals — players die precisely where the visual edge appears
-- [ ] `LevelLoader` wires up entities, enemies (inactive until spawner fires), spawner conditions (immediate / timed / trigger), trigger actions, and doors
-- [ ] `World` accepts an optional level path; falls back to `res://levels/test.json` if none provided
-- [ ] Export the existing hardcoded test level to `res://levels/test.json` and load it through `LevelLoader`
+### 8a — Level file format & runtime loader ✓
+- [x] Full JSON + PNG schema defined in `docs/map.md`: PNG bitmap for surfaces, JSON for everything else
+- [x] At load time, `LevelLoader` reads the PNG row by row, run-length encodes adjacent same-type pixels into rectangular `SurfaceZone` nodes (`Area2D` + `RectangleShape2D`)
+- [x] Surface type detection uses `±1` per-channel tolerance in `SurfaceConstants.FromColor` to handle float truncation when saving painted pixels
+- [x] Surface type at runtime determined by a point query at the unit's center (not the unit's collision circle)
+- [x] `LevelLoader` wires up entities, enemies (inactive until spawner fires), spawner conditions (immediate / timed / trigger), trigger actions, and doors
+- [x] `World` accepts an optional level path via `GameSetup.PlaytestPath`; falls back to `res://levels/test.json` if none provided
 
-### 8b — Editor scene & tile painter
-- [ ] Separate `Editor` scene accessible from main menu ("Edit Levels")
-- [ ] Grid overlay showing tile boundaries; left-click/drag to paint the hovered corner vertex with the selected surface type
-- [ ] Palette panel listing all surface types with color swatches; shortcut keys for common types
-- [ ] Real-time preview: editor renders the marching-squares boundary as you paint so you see the exact physics polygon
+### 8b — Editor scene & pixel painter ✓
+- [x] Separate `Editor` scene accessible from main menu ("Edit Levels")
+- [x] `CanvasView` control: pan (middle mouse drag), zoom (scroll wheel), pixel grid overlay at high zoom
+- [x] Left-click / drag to paint pixels with the selected surface type; circle brush of configurable radius
+- [x] `[` / `]` keys and `−` / `+` buttons in the config panel to adjust brush radius
+- [x] Palette panel listing all surface types with color swatches and number-key shortcuts
+- [x] Config panel in the bottom-right for brush and other per-mode settings
+- [x] Editor split into partial classes: `Editor.cs`, `Editor.Layout.cs`, `Editor.Modes.cs`, `Editor.Paint.cs`, `Editor.File.cs`, `Editor.Overlays.cs`
+- [x] Entity overlays rendered on the canvas (start diamond, end diamond, bonus circles, enemy circles) via `EditorOverlay` record
 
 ### 8c — Entity placement
-- [ ] Toolbar mode toggle: Corners | Entities | Enemies | Triggers
-- [ ] Place / delete: StartBlock, EndBlock, Bonus — single-instance constraint on Start and End
-- [ ] Left-click to place selected entity; right-click to remove
+- [ ] Place / delete: StartBlock, EndBlock, Bonus in Entities mode — left-click to place, right-click to remove
+- [ ] Single-instance constraint on Start and End (placing a second replaces the existing one)
+- [ ] Placed entities persisted to `_levelData.Entities` and saved to JSON
 
 ### 8d — Enemy placement & spawner/trigger wiring
-- [ ] Place any enemy type from the enemy palette; configure radius, color, and behavior params in a side panel
+- [ ] Place any enemy type from the enemy palette in Enemies mode; configure radius, color, and behavior params in a side panel
 - [ ] Patrol path editor: click to add waypoints sequentially; drag to reposition; per-waypoint speed field
 - [ ] Wander polygon editor: click to add vertices; drag to reposition; close polygon with double-click
 - [ ] Chaser / guard detection and give-up radii shown as overlay circles in the editor viewport
 - [ ] Spawner panel: assign enemies to spawner slots, set condition (immediate / timed / trigger)
 - [ ] Trigger panel: place button triggers, link actions (open/close door, spawn wave, fire trigger)
 
-### 8e — Save, load, and play
-- [ ] Save button writes JSON to `user://levels/`; load button opens a file list
-- [ ] "Play" button from editor launches the level in `World` using `LevelLoader`; Escape returns to editor
+### 8e — Save, load, and play ✓
+- [x] Save button writes the PNG bitmap to disk (JSON save is a TODO — currently only PNG is saved)
+- [x] Open button opens a file browser; loaded level auto-reloads on return from playtest
+- [x] Play button auto-saves the PNG, loads the level in `World` via `GameSetup.PlaytestPath`; Escape returns to the editor with the same level still loaded
+- [ ] JSON save on Save button (currently only PNG is written)
 - [ ] Level select screen (accessible from main menu) lists all saved levels
 
 ### 8f — Playlists
