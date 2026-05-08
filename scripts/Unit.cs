@@ -47,8 +47,9 @@ public partial class Unit : Area2D
 			_abilities[i]?.SetActiveState((mask & (1 << i)) != 0);
 	}
 
-	public bool    IsDead        => _isDead;
-	public bool    IsOnGround   => _currentSurface == SurfaceType.Ground;
+	public bool        IsDead         => _isDead;
+	public bool        IsOnGround    => _currentSurface == SurfaceType.Ground;
+	public SurfaceType CurrentSurface => _currentSurface;
 	public bool    HasTarget    => _target.HasValue;
 	public Vector2 TargetPosition => _target ?? Vector2.Zero;
 	public Vector2 Velocity   { get => _velocity; set => _velocity = value; }
@@ -207,7 +208,7 @@ public partial class Unit : Area2D
 	private void OnZoneEntered(Area2D area)
 	{
 		if (area is SurfaceZone zone) { _overlappingZones.Add(zone); UpdateCurrentSurface(); }
-		else if (area is Corpse c)    CorpseTouched?.Invoke(c);
+		else if (area is Corpse c && !_isDead) CorpseTouched?.Invoke(c);
 	}
 
 	private void OnZoneExited(Area2D area)
@@ -349,7 +350,7 @@ public partial class Unit : Area2D
 		Respawn();
 	}
 
-	public void ResurrectAt(Vector2 position, Vector2 velocity, Vector2 facing)
+	public void ResurrectAt(Vector2 position, Vector2 velocity, Vector2 facing, SurfaceType surface)
 	{
 		if (!_isDead) return;
 		if (GameNetwork.IsMultiplayer && !Multiplayer.IsServer()) return;
@@ -359,10 +360,20 @@ public partial class Unit : Area2D
 			_respawnTimer          = null;
 		}
 		_overlappingZones.Clear();
-		_isDead        = false;
-		GlobalPosition = position;
-		_velocity      = velocity;
-		_facing        = facing;
+		_isDead         = false;
+		GlobalPosition  = position;
+		_facing         = facing;
+		_currentSurface = surface;
+		// Normalize velocity to the correct speed for the surface we're landing on
+		if (surface is not SurfaceType.Ground and not SurfaceType.Straight)
+		{
+			float speed = GetBaseSpeed(surface);
+			_velocity = (velocity.LengthSquared() > 0.001f ? velocity.Normalized() : _facing) * speed;
+		}
+		else
+		{
+			_velocity = velocity;
+		}
 		_corpse?.QueueFree();
 		_corpse       = null;
 		foreach (var a in _abilities) a?.OnRespawn();

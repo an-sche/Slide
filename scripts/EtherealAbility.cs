@@ -60,6 +60,6 @@ public class EtherealAbility : Ability
     private void OnCorpseTouched(Corpse corpse)
     {
         if (!IsActive || corpse.SourceUnit == null) return;
-        corpse.SourceUnit.ResurrectAt(Unit.GlobalPosition, Unit.Velocity, Unit.Facing);
+        corpse.SourceUnit.ResurrectAt(Unit.GlobalPosition, Unit.Velocity, Unit.Facing, Unit.CurrentSurface);
     }
 }
