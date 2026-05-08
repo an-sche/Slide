@@ -46,6 +46,9 @@ public partial class Editor : Control
         vbox.AddChild(BuildBottomBar());
 
         SetMode(EditorMode.Paint);
+
+        if (!string.IsNullOrEmpty(GameSetup.LastEditorLevelPath))
+            LoadLevelFile(GameSetup.LastEditorLevelPath);
     }
 
     public override void _UnhandledInput(InputEvent @event)

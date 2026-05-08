@@ -32,7 +32,9 @@ public partial class World : Node2D
 
         Input.MouseMode = Input.MouseModeEnum.Confined;
 
-        var result = LevelLoader.Load("res://levels/test.json", this);
+        string levelPath = GameSetup.IsPlaytest ? GameSetup.PlaytestPath! : "res://levels/test.json";
+        if (GameSetup.IsPlaytest) AddPlaytestBanner();
+        var result = LevelLoader.Load(levelPath, this);
         _startPosition = result.StartPosition;
         if (result.EndBlock != null)
             result.EndBlock.LevelCompleted += OnLevelCompleted;
@@ -239,12 +241,40 @@ public partial class World : Node2D
         DrawRect(new Rect2(-10000, -10000, 20000, 20000), new Color(0.18f, 0.32f, 0.14f));
     }
 
-#if DEBUG
+    private void AddPlaytestBanner()
+    {
+        var canvas = new CanvasLayer { Layer = 128 };
+        var label  = new Label
+        {
+            Text                = "PLAYTEST  —  Esc to return to editor",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AnchorLeft          = 0f,
+            AnchorRight         = 1f,
+            AnchorTop           = 0f,
+            OffsetTop           = 6f,
+            MouseFilter         = Control.MouseFilterEnum.Ignore,
+        };
+        label.AddThemeFontSizeOverride("font_size", 14);
+        label.AddThemeColorOverride("font_color", new Color(1f, 0.85f, 0.2f, 0.85f));
+        canvas.AddChild(label);
+        AddChild(canvas);
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.Quoteleft }) return;
-        if (_localUnit == null) return;
+        if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
 
+        if (GameSetup.IsPlaytest && key.Keycode == Key.Escape)
+        {
+            GameSetup.PlaytestPath  = null;
+            Input.MouseMode         = Input.MouseModeEnum.Visible;
+            GetTree().ChangeSceneToFile("res://scenes/Editor.tscn");
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+#if DEBUG
+        if (key.Keycode != Key.Quoteleft || _localUnit == null) return;
         var ps = _localUnit.PlayerState;
         ps.PlayerLevel                              = 20;
         ps.AbilityLevels[(int)AbilitySlot.Boost]    = 4;
@@ -254,6 +284,6 @@ public partial class World : Node2D
         ps.AbilityLevels[(int)AbilitySlot.Gack]     = 1;
         _localUnit.ResetAbilityCooldowns();
         GetViewport().SetInputAsHandled();
-    }
 #endif
+    }
 }

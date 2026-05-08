@@ -23,6 +23,7 @@ public partial class Editor
 
     private void LoadLevelFile(string path)
     {
+        GameSetup.LastEditorLevelPath = path;
         var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var data = JsonSerializer.Deserialize<LevelData>(FileAccess.GetFileAsString(path), opts)!;
         _levelData       = data;
@@ -49,5 +50,15 @@ public partial class Editor
             GD.PrintErr($"Save failed: {err}");
     }
 
-    private void OnPlay() => GetTree().ChangeSceneToFile("res://scenes/World.tscn");
+    private void OnPlay()
+    {
+        if (string.IsNullOrEmpty(_levelPath)) return;
+
+        // Auto-save the PNG so the World loads the current painted state.
+        _canvas.GetImage()?.SavePng(_levelPath.GetBaseName() + ".png");
+
+        GameSetup.PlaytestPath = _levelPath;
+        RunState.Reset();
+        GetTree().ChangeSceneToFile("res://scenes/World.tscn");
+    }
 }
