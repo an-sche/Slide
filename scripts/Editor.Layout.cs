@@ -20,10 +20,12 @@ public partial class Editor
 
         hbox.AddChild(new Control { CustomMinimumSize = new Vector2(8, 0) });
 
-        var newBtn  = MakeTopBarButton("New");  newBtn.Pressed  += OnNew;  hbox.AddChild(newBtn);
-        var openBtn = MakeTopBarButton("Open"); openBtn.Pressed += OnOpen; hbox.AddChild(openBtn);
-        var saveBtn = MakeTopBarButton("Save"); saveBtn.Pressed += OnSave; hbox.AddChild(saveBtn);
-        var playBtn = MakeTopBarButton("Play"); playBtn.Pressed += OnPlay; hbox.AddChild(playBtn);
+        var newBtn      = MakeTopBarButton("New");      newBtn.Pressed      += OnNew;           hbox.AddChild(newBtn);
+        var openBtn     = MakeTopBarButton("Open");     openBtn.Pressed     += OnOpen;          hbox.AddChild(openBtn);
+        var saveBtn     = MakeTopBarButton("Save");     saveBtn.Pressed     += OnSave;          hbox.AddChild(saveBtn);
+        var saveAsBtn   = MakeTopBarButton("Save As");  saveAsBtn.Pressed   += OnSaveAs;        hbox.AddChild(saveAsBtn);
+        var settingsBtn = MakeTopBarButton("Settings"); settingsBtn.Pressed += OnLevelSettings; hbox.AddChild(settingsBtn);
+        var playBtn     = MakeTopBarButton("Play");     playBtn.Pressed     += OnPlay;          hbox.AddChild(playBtn);
 
         hbox.AddChild(new VSeparator { CustomMinimumSize = new Vector2(0, 28) });
 
@@ -59,7 +61,8 @@ public partial class Editor
     {
         _canvas = new CanvasView();
         _canvas.SetAnchorsPreset(LayoutPreset.FullRect);
-        _canvas.PixelClicked += OnPixelClicked;
+        _canvas.PixelClicked     += OnPixelClicked;
+        _canvas.PixelLeftPressed += OnPixelLeftPressed;
         parent.AddChild(_canvas);
 
         _hint = new Label

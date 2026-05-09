@@ -2,6 +2,9 @@ namespace Slide;
 
 public static class GameplayConstants
 {
+    // World
+    public const float CellSize = 4f;
+
     // Unit movement
     public const float UnitRadius     = 16f;
     public const float GroundSpeed    = 200f;

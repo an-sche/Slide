@@ -217,7 +217,7 @@ Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.pn
 - [x] Save button writes the PNG bitmap to disk (JSON save is a TODO — currently only PNG is saved)
 - [x] Open button opens a file browser; loaded level auto-reloads on return from playtest
 - [x] Play button auto-saves the PNG, loads the level in `World` via `GameSetup.PlaytestPath`; Escape returns to the editor with the same level still loaded
-- [ ] JSON save on Save button (currently only PNG is written)
+- [x] JSON save on Save button
 - [ ] Level select screen (accessible from main menu) lists all saved levels
 
 ### 8f — Playlists

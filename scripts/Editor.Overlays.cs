@@ -43,7 +43,7 @@ public partial class Editor
             list.Add(new EditorOverlay(pos, ParseColor(e.Color), OverlayShape.Circle, e.Behavior.Type));
         }
 
-        _canvas.SetOverlays([.. list], _levelData.CellSize);
+        _canvas.SetOverlays([.. list], GameplayConstants.CellSize);
     }
 
     private static Color ParseColor(string hex)

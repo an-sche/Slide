@@ -225,7 +225,7 @@ public partial class Unit : Area2D
 		};
 		var results = GetWorld2D().DirectSpaceState.IntersectPoint(query);
 
-		var newSurface = SurfaceType.Ground;
+		var newSurface = SurfaceType.Kill;
 		int highestPriority = -1;
 		foreach (var result in results)
 		{

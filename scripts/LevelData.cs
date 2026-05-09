@@ -9,7 +9,6 @@ public class LevelData
     public string  Author      { get; set; } = "";
     public string? Description { get; set; }
     public string  Bitmap      { get; set; } = "";
-    public float   CellSize    { get; set; }
 
     public EntityData[]  Entities { get; set; } = [];
     public EnemyData[]   Enemies  { get; set; } = [];

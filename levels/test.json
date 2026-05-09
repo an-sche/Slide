@@ -4,147 +4,340 @@
   "author": "dev",
   "description": "All six surface types, three patrol enemies, four wanderers, one orbiter.",
   "bitmap": "test.png",
-  "cellSize": 4.0,
-
   "entities": [
-    { "kind": "start", "x": 1600.0, "y": 1600.0 },
-    { "kind": "end",   "x": 2000.0, "y": 2000.0 },
-    { "kind": "bonus", "x": 1800.0, "y": 2000.0 },
-    { "kind": "bonus", "x": 3200.0, "y": 1500.0 },
-    { "kind": "bonus", "x": 4100.0, "y": 2000.0 },
-    { "kind": "bonus", "x": 1900.0, "y": 2800.0 },
-    { "kind": "bonus", "x": 3100.0, "y": 3100.0 }
+    {
+      "kind": "bonus",
+      "x": 1800,
+      "y": 2000
+    },
+    {
+      "kind": "bonus",
+      "x": 3200,
+      "y": 1500
+    },
+    {
+      "kind": "bonus",
+      "x": 4100,
+      "y": 2000
+    },
+    {
+      "kind": "bonus",
+      "x": 1900,
+      "y": 2800
+    },
+    {
+      "kind": "bonus",
+      "x": 3100,
+      "y": 3100
+    },
+    {
+      "kind": "bonus",
+      "x": 1102,
+      "y": 1758
+    },
+    {
+      "kind": "bonus",
+      "x": 930,
+      "y": 1838
+    },
+    {
+      "kind": "bonus",
+      "x": 790,
+      "y": 2002
+    },
+    {
+      "kind": "bonus",
+      "x": 726,
+      "y": 2254
+    },
+    {
+      "kind": "bonus",
+      "x": 1094,
+      "y": 1886
+    },
+    {
+      "kind": "start",
+      "x": 170,
+      "y": 2226
+    },
+    {
+      "kind": "end",
+      "x": 4198,
+      "y": 3010
+    }
   ],
-
   "enemies": [
     {
-      "radius": 32.0,
+      "radius": 32,
       "color": "#e63333",
       "behavior": {
         "type": "patrol",
         "waypoints": [
-          { "x": 2500.0, "y": 1800.0, "speed": 250.0 },
-          { "x": 3500.0, "y": 1800.0, "speed": 250.0 }
+          {
+            "x": 2500,
+            "y": 1800,
+            "speed": 250
+          },
+          {
+            "x": 3500,
+            "y": 1800,
+            "speed": 250
+          }
         ],
-        "endBehavior": "loop"
+        "endBehavior": "loop",
+        "speed": 0,
+        "minIdle": 0,
+        "maxIdle": 0,
+        "seed": 0,
+        "centerX": 0,
+        "centerY": 0,
+        "radius": 0,
+        "angularSpeed": 0,
+        "clockwise": false,
+        "startAngle": 0
       }
     },
     {
-      "radius": 24.0,
+      "radius": 24,
       "color": "#e63333",
       "behavior": {
         "type": "patrol",
         "waypoints": [
-          { "x": 3200.0, "y": 1600.0, "speed": 350.0 },
-          { "x": 3200.0, "y": 2000.0, "speed": 350.0 }
+          {
+            "x": 3200,
+            "y": 1600,
+            "speed": 350
+          },
+          {
+            "x": 3200,
+            "y": 2000,
+            "speed": 350
+          }
         ],
-        "endBehavior": "loop"
+        "endBehavior": "loop",
+        "speed": 0,
+        "minIdle": 0,
+        "maxIdle": 0,
+        "seed": 0,
+        "centerX": 0,
+        "centerY": 0,
+        "radius": 0,
+        "angularSpeed": 0,
+        "clockwise": false,
+        "startAngle": 0
       }
     },
     {
-      "radius": 20.0,
+      "radius": 20,
       "color": "#e63333",
       "behavior": {
         "type": "patrol",
         "waypoints": [
-          { "x": 2800.0, "y": 2000.0, "speed": 180.0 },
-          { "x": 3400.0, "y": 2000.0, "speed": 180.0 },
-          { "x": 3400.0, "y": 1600.0, "speed": 180.0 },
-          { "x": 2800.0, "y": 1600.0, "speed": 180.0 }
+          {
+            "x": 2800,
+            "y": 2000,
+            "speed": 180
+          },
+          {
+            "x": 3400,
+            "y": 2000,
+            "speed": 180
+          },
+          {
+            "x": 3400,
+            "y": 1600,
+            "speed": 180
+          },
+          {
+            "x": 2800,
+            "y": 1600,
+            "speed": 180
+          }
         ],
-        "endBehavior": "loop"
+        "endBehavior": "loop",
+        "speed": 0,
+        "minIdle": 0,
+        "maxIdle": 0,
+        "seed": 0,
+        "centerX": 0,
+        "centerY": 0,
+        "radius": 0,
+        "angularSpeed": 0,
+        "clockwise": false,
+        "startAngle": 0
       }
     },
     {
-      "radius": 36.0,
+      "radius": 36,
       "color": "#d94d1a",
       "behavior": {
         "type": "wander",
         "polygon": [
-          { "x": 3680.0, "y": 1280.0 },
-          { "x": 4720.0, "y": 1280.0 },
-          { "x": 4720.0, "y": 2320.0 },
-          { "x": 3680.0, "y": 2320.0 }
+          {
+            "x": 3680,
+            "y": 1280
+          },
+          {
+            "x": 4720,
+            "y": 1280
+          },
+          {
+            "x": 4720,
+            "y": 2320
+          },
+          {
+            "x": 3680,
+            "y": 2320
+          }
         ],
-        "speed": 120.0,
+        "speed": 120,
         "minIdle": 1.5,
-        "maxIdle": 4.0,
-        "seed": 1001
+        "maxIdle": 4,
+        "seed": 1001,
+        "centerX": 0,
+        "centerY": 0,
+        "radius": 0,
+        "angularSpeed": 0,
+        "clockwise": false,
+        "startAngle": 0
       }
     },
     {
-      "radius": 22.0,
+      "radius": 22,
       "color": "#e6264d",
       "behavior": {
         "type": "wander",
         "polygon": [
-          { "x": 3680.0, "y": 1280.0 },
-          { "x": 4720.0, "y": 1280.0 },
-          { "x": 4720.0, "y": 2320.0 },
-          { "x": 3680.0, "y": 2320.0 }
+          {
+            "x": 3680,
+            "y": 1280
+          },
+          {
+            "x": 4720,
+            "y": 1280
+          },
+          {
+            "x": 4720,
+            "y": 2320
+          },
+          {
+            "x": 3680,
+            "y": 2320
+          }
         ],
-        "speed": 280.0,
+        "speed": 280,
         "minIdle": 0.3,
         "maxIdle": 1.5,
-        "seed": 1002
+        "seed": 1002,
+        "centerX": 0,
+        "centerY": 0,
+        "radius": 0,
+        "angularSpeed": 0,
+        "clockwise": false,
+        "startAngle": 0
       }
     },
     {
-      "radius": 28.0,
+      "radius": 28,
       "color": "#cc3380",
       "behavior": {
         "type": "wander",
         "polygon": [
-          { "x": 3680.0, "y": 1280.0 },
-          { "x": 4720.0, "y": 1280.0 },
-          { "x": 4720.0, "y": 2320.0 },
-          { "x": 3680.0, "y": 2320.0 }
+          {
+            "x": 3680,
+            "y": 1280
+          },
+          {
+            "x": 4720,
+            "y": 1280
+          },
+          {
+            "x": 4720,
+            "y": 2320
+          },
+          {
+            "x": 3680,
+            "y": 2320
+          }
         ],
-        "speed": 180.0,
+        "speed": 180,
         "minIdle": 0.8,
-        "maxIdle": 3.0,
-        "seed": 1003
+        "maxIdle": 3,
+        "seed": 1003,
+        "centerX": 0,
+        "centerY": 0,
+        "radius": 0,
+        "angularSpeed": 0,
+        "clockwise": false,
+        "startAngle": 0
       }
     },
     {
-      "radius": 18.0,
+      "radius": 18,
       "color": "#f2661a",
       "behavior": {
         "type": "wander",
         "polygon": [
-          { "x": 3680.0, "y": 1280.0 },
-          { "x": 4720.0, "y": 1280.0 },
-          { "x": 4720.0, "y": 2320.0 },
-          { "x": 3680.0, "y": 2320.0 }
+          {
+            "x": 3680,
+            "y": 1280
+          },
+          {
+            "x": 4720,
+            "y": 1280
+          },
+          {
+            "x": 4720,
+            "y": 2320
+          },
+          {
+            "x": 3680,
+            "y": 2320
+          }
         ],
-        "speed": 350.0,
+        "speed": 350,
         "minIdle": 0.2,
-        "maxIdle": 1.0,
-        "seed": 1004
+        "maxIdle": 1,
+        "seed": 1004,
+        "centerX": 0,
+        "centerY": 0,
+        "radius": 0,
+        "angularSpeed": 0,
+        "clockwise": false,
+        "startAngle": 0
       }
     },
     {
-      "radius": 30.0,
+      "radius": 30,
       "color": "#4dcc80",
       "behavior": {
         "type": "orbiter",
-        "centerX": 1800.0,
-        "centerY": 3000.0,
-        "radius": 350.0,
+        "speed": 0,
+        "minIdle": 0,
+        "maxIdle": 0,
+        "seed": 0,
+        "centerX": 1800,
+        "centerY": 3000,
+        "radius": 350,
         "angularSpeed": 1.1,
         "clockwise": true,
-        "startAngle": 0.0
+        "startAngle": 0
       }
     }
   ],
-
   "spawners": [
     {
-      "enemyIndices": [0, 1, 2, 3, 4, 5, 6, 7],
+      "enemyIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
       "condition": "immediate"
     }
-  ],
-
-  "triggers": [],
-  "doors": []
+  ]
 }

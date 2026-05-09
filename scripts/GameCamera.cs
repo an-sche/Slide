@@ -17,6 +17,8 @@ public partial class GameCamera : Camera2D
     private bool    _isMiddleMousePanning;
     private Vector2 _panStartMousePos;
     private Vector2 _panStartCameraPos;
+    private Rect2   _levelBounds;
+    private bool    _hasLevelBounds;
 
     public void Initialize(Node2D unit)
     {
@@ -26,12 +28,25 @@ public partial class GameCamera : Camera2D
         Zoom            = Vector2.One * DefaultZoom;
     }
 
+    public void SetLevelBounds(Rect2 bounds)
+    {
+        _levelBounds    = bounds;
+        _hasLevelBounds = true;
+
+        // Disable Godot's built-in hard limits — we apply a softer clamp ourselves.
+        LimitLeft   = -10_000_000;
+        LimitTop    = -10_000_000;
+        LimitRight  =  10_000_000;
+        LimitBottom =  10_000_000;
+    }
+
     public override void _Process(double delta)
     {
         if (!GetWindow().HasFocus()) return;
         if (_isSpaceHeld)
         {
             if (_unit != null) GlobalPosition = _unit.GlobalPosition;
+            ClampPosition();
             return;
         }
 
@@ -39,6 +54,30 @@ public partial class GameCamera : Camera2D
 
         if (_isLockedToUnit && _unit != null)
             GlobalPosition = _unit.GlobalPosition;
+
+        ClampPosition();
+    }
+
+    private void ClampPosition()
+    {
+        if (!_hasLevelBounds) return;
+
+        var   viewport = GetViewport().GetVisibleRect().Size;
+        float halfW    = viewport.X * 0.5f / Zoom.X;
+        float halfH    = viewport.Y * 0.5f / Zoom.Y;
+
+        // Allow the camera to go off the edge, but stop before the map
+        // leaves the screen entirely. The map must always have at least
+        // one tile's worth of pixels visible.
+        float margin = GameplayConstants.CellSize;
+        GlobalPosition = new Vector2(
+            Mathf.Clamp(GlobalPosition.X,
+                _levelBounds.Position.X - halfW + margin,
+                _levelBounds.End.X      + halfW - margin),
+            Mathf.Clamp(GlobalPosition.Y,
+                _levelBounds.Position.Y - halfH + margin,
+                _levelBounds.End.Y      + halfH - margin)
+        );
     }
 
     public override void _Input(InputEvent @event)

@@ -11,6 +11,7 @@ public static class LevelLoader
     {
         public Vector2   StartPosition;
         public EndBlock? EndBlock;
+        public Rect2     LevelBounds;
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -29,7 +30,7 @@ public static class LevelLoader
     {
         var result = new LoadResult();
 
-        BuildSurfaces(data, levelDir, parent);
+        result.LevelBounds = BuildSurfaces(data, levelDir, parent);
 
         foreach (var e in data.Entities)
         {
@@ -69,11 +70,11 @@ public static class LevelLoader
 
     // --- Surface zone construction ---
 
-    private static void BuildSurfaces(LevelData data, string levelDir, Node parent)
+    private static Rect2 BuildSurfaces(LevelData data, string levelDir, Node parent)
     {
         string imagePath = levelDir + "/" + data.Bitmap;
         var    image     = Image.LoadFromFile(imagePath);
-        float  cs        = data.CellSize;
+        float  cs        = GameplayConstants.CellSize;
         int    w         = image.GetWidth();
         int    h         = image.GetHeight();
 
@@ -99,6 +100,8 @@ public static class LevelLoader
                 });
             }
         }
+
+        return new Rect2(0, 0, w * cs, h * cs);
     }
 
     // --- Enemy construction ---

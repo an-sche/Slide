@@ -10,6 +10,7 @@ public partial class Editor
         Color[] colors = SlotColors[(int)_mode];
         if (_selectedSlot >= colors.Length) return;
         _canvas.PaintBrush(px, colors[_selectedSlot]);
+        SetDirty();
     }
 
     private void AdjustBrush(int delta)

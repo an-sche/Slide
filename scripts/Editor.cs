@@ -21,6 +21,29 @@ public partial class Editor : Control
     private LevelData? _levelData;
     private string     _levelDir  = "";
     private string     _levelPath = "";
+    private bool       _dirty;
+
+    private void SetDirty()
+    {
+        _dirty = true;
+        UpdateTitleLabel();
+    }
+
+    private void ClearDirty()
+    {
+        _dirty = false;
+        UpdateTitleLabel();
+    }
+
+    private void UpdateTitleLabel()
+    {
+        string name = _levelData?.Name ?? "";
+        if (string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(_levelPath))
+            name = _levelPath.GetFile().GetBaseName();
+        if (string.IsNullOrEmpty(name))
+            name = "(unnamed)";
+        _titleLabel.Text = _dirty ? name + " *" : name;
+    }
 
     public override void _Ready()
     {

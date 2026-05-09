@@ -11,6 +11,7 @@ public partial class World : Node2D
     private Unit?            _localUnit;
     private bool             _levelCompleted;
     private Vector2          _startPosition;
+    private Rect2            _levelBounds;
 
     private const float WipeDelay = GameplayConstants.WipeDelay;
     private SceneTreeTimer? _wipeTimer;
@@ -36,6 +37,7 @@ public partial class World : Node2D
         if (GameSetup.IsPlaytest) AddPlaytestBanner();
         var result = LevelLoader.Load(levelPath, this);
         _startPosition = result.StartPosition;
+        _levelBounds   = result.LevelBounds;
         if (result.EndBlock != null)
             result.EndBlock.LevelCompleted += OnLevelCompleted;
 
@@ -106,6 +108,7 @@ public partial class World : Node2D
         _camera = new GameCamera();
         AddChild(_camera);
         _camera.Initialize(unit);
+        _camera.SetLevelBounds(_levelBounds);
 
         _hud = new Hud();
         AddChild(_hud);

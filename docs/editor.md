@@ -120,7 +120,6 @@ Painting writes surface type colors directly into the PNG bitmap. Each pixel enc
 |-------|--------|
 | Left-click | Paint pixel(s) under cursor with selected surface type |
 | Left-click + drag | Paint continuously while dragging |
-| Right-click | Set pixel(s) to Void (erase) |
 | `[` / `]` | Decrease / increase brush radius |
 
 **Brush:** The brush is a filled circle. Radius 0 paints a single pixel. Higher radii paint all pixels within that radius. A white circle preview follows the cursor, showing exactly which pixels will be painted.
@@ -138,8 +137,6 @@ Entities snap to the tile grid (center of the nearest tile cell) by default. Hol
 | Input | Action |
 |-------|--------|
 | Left-click | Place selected entity at cursor |
-| Right-click entity | Delete entity |
-| Left-click + drag entity | Reposition |
 
 **Constraints:**
 - Only one Start Block and one End Block are allowed per level. Placing a second replaces the existing one.

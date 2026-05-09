@@ -6,6 +6,7 @@ namespace Slide;
 public partial class CanvasView : Control
 {
     public event Action<Vector2I>? PixelClicked;
+    public event Action<Vector2I>? PixelLeftPressed;
 
     private Image?        _image;
     private ImageTexture? _texture;
@@ -158,6 +159,7 @@ public partial class CanvasView : Control
         switch (@event)
         {
             case InputEventMouseButton mb when mb.Pressed && mb.ButtonIndex == MouseButton.Left:
+                PixelLeftPressed?.Invoke(ToPixel(mb.Position));
                 PixelClicked?.Invoke(ToPixel(mb.Position));
                 GetViewport().SetInputAsHandled();
                 break;

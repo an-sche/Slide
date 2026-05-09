@@ -20,7 +20,8 @@ public class DonutAbility : Ability
         _maxCooldown = Cooldowns[level - 1];
         _cooldown    = _maxCooldown;
 
-        var velocity = Unit.IsOnGround ? Vector2.Zero : Unit.Facing * DonutSpeed;
+        var dir      = Unit.Velocity.LengthSquared() > 0.001f ? Unit.Velocity.Normalized() : Unit.Facing;
+        var velocity = Unit.IsOnGround ? Vector2.Zero : dir * DonutSpeed;
         Unit.Projectiles.SpawnDonut(Unit.GlobalPosition, velocity, Durations[level - 1]);
     }
 
