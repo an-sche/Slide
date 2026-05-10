@@ -11,3 +11,5 @@ public readonly record struct EditorOverlay(
     string       Label,
     bool         Selected = false
 );
+
+public readonly record struct EditorLine(Vector2 WorldFrom, Vector2 WorldTo, Color Color);

@@ -1,5 +1,4 @@
 using System;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Slide;
@@ -12,9 +11,8 @@ public class LevelData
     public string? Description { get; set; }
     public string  Bitmap      { get; set; } = "";
 
-    public EntityData[]  Entities { get; set; } = [];
-    public EnemyData[]   Enemies  { get; set; } = [];
-    public SpawnerData[] Spawners { get; set; } = [];
+    public EntityData[] Entities { get; set; } = [];
+    public EnemyData[]  Enemies  { get; set; } = [];
 }
 
 public class EntityData
@@ -28,11 +26,30 @@ public class EntityData
 
 public class EnemyData
 {
-    public string       Id       { get; set; } = Guid.NewGuid().ToString();
-    public string?      Name     { get; set; }
-    public float        Radius   { get; set; }
-    public string       Color    { get; set; } = "#e63333";
-    public BehaviorData Behavior { get; set; } = null!;
+    public string               Id       { get; set; } = Guid.NewGuid().ToString();
+    public string?              Name     { get; set; }
+    public float                Radius   { get; set; }
+    public string               Color    { get; set; } = "#e63333";
+    public BehaviorData         Behavior { get; set; } = null!;
+    public SpawnConditionData?  Spawn    { get; set; }
+}
+
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(ImmediateSpawnData), "immediate")]
+[JsonDerivedType(typeof(TimedSpawnData),     "timed")]
+[JsonDerivedType(typeof(TriggerSpawnData),   "trigger")]
+public abstract class SpawnConditionData { }
+
+public class ImmediateSpawnData : SpawnConditionData { }
+
+public class TimedSpawnData : SpawnConditionData
+{
+    public float Delay { get; set; }
+}
+
+public class TriggerSpawnData : SpawnConditionData
+{
+    public string TriggerId { get; set; } = "";
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
@@ -119,8 +136,3 @@ public class Vec2Data
     public float Y { get; set; }
 }
 
-public class SpawnerData
-{
-    public int[]       EnemyIndices { get; set; } = [];
-    public JsonElement Condition    { get; set; }
-}

@@ -238,6 +238,11 @@ public partial class Editor
         _selectionNameEdit.TextChanged += OnSelectionNameChanged;
         details.AddChild(_selectionNameEdit);
 
+        _behaviorConfigContainer = new VBoxContainer();
+        _behaviorConfigContainer.AddThemeConstantOverride("separation", 4);
+        _behaviorConfigContainer.Visible = false;
+        details.AddChild(_behaviorConfigContainer);
+
         details.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
 
         var deleteStyle = new StyleBoxFlat

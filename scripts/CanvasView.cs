@@ -20,7 +20,9 @@ public partial class CanvasView : Control
     private Label         _coordLabel  = null!;
     private int           _brushRadius = 0;
     private float         _cellSize    = 1f;
-    private EditorOverlay[] _overlays  = [];
+    private EditorOverlay[]  _overlays              = [];
+    private EditorLine[]     _lines                 = [];
+    private Vector2?         _ghostLineWorldFrom;
 
     public CanvasView()
     {
@@ -52,12 +54,15 @@ public partial class CanvasView : Control
 
     public Image? GetImage() => _image;
 
-    public void SetOverlays(EditorOverlay[] overlays, float cellSize)
+    public void SetOverlays(EditorOverlay[] overlays, EditorLine[] lines, float cellSize)
     {
         _overlays = overlays;
-        _cellSize  = cellSize;
+        _lines    = lines;
+        _cellSize = cellSize;
         QueueRedraw();
     }
+
+    public void SetGhostLine(Vector2? worldFrom) => _ghostLineWorldFrom = worldFrom;
 
     public int BrushRadius => _brushRadius;
 
@@ -140,7 +145,16 @@ public partial class CanvasView : Control
                 DrawLine(new Vector2(x0, y0 + y * _zoom), new Vector2(x1, y0 + y * _zoom), grid);
         }
 
-        // Entity overlays
+        // Path lines between waypoints
+        foreach (var line in _lines)
+            DrawLine(WorldToScreen(line.WorldFrom), WorldToScreen(line.WorldTo), line.Color, 1.5f);
+
+        // Ghost line: last-placed waypoint → cursor during placement
+        if (_ghostLineWorldFrom.HasValue)
+            DrawLine(WorldToScreen(_ghostLineWorldFrom.Value), GetLocalMousePosition(),
+                     new Color(1f, 1f, 1f, 0.35f), 1.5f);
+
+        // Entity/enemy overlays
         foreach (var ov in _overlays)
             DrawOverlay(WorldToScreen(ov.WorldPos), ov);
 

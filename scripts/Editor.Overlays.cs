@@ -7,9 +7,16 @@ public partial class Editor
 {
     private void RefreshOverlays()
     {
+        RefreshCanvasOverlays();
+        RefreshSelectionPanel();
+    }
+
+    private void RefreshCanvasOverlays()
+    {
         if (_levelData == null) return;
 
-        var list = new List<EditorOverlay>();
+        var overlays = new List<EditorOverlay>();
+        var lines    = new List<EditorLine>();
 
         for (int i = 0; i < _levelData.Entities.Length; i++)
         {
@@ -24,20 +31,52 @@ public partial class Editor
             };
             string kind  = EntityKindLabel(e.Kind);
             string label = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
-            list.Add(new EditorOverlay(pos, color, shape, label, Selected: i == _selectedIndex));
+            overlays.Add(new EditorOverlay(pos, color, shape, label, Selected: i == _selectedIndex));
         }
 
         for (int i = 0; i < _levelData.Enemies.Length; i++)
         {
-            var    e          = _levelData.Enemies[i];
-            int    overlayIdx = _levelData.Entities.Length + i;
-            string kind       = EnemyKindLabel(e.Behavior);
-            string label      = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
-            list.Add(new EditorOverlay(EnemyOrigin(e.Behavior), Color.FromHtml(e.Color), OverlayShape.Circle, label, Selected: overlayIdx == _selectedIndex));
+            var  e          = _levelData.Enemies[i];
+            int  overlayIdx = _levelData.Entities.Length + i;
+            bool selected   = overlayIdx == _selectedIndex;
+            var  color      = Color.FromHtml(e.Color);
+
+            if (e.Behavior is PatrolBehaviorData patrol)
+            {
+                for (int w = 0; w < patrol.Waypoints.Length; w++)
+                {
+                    var    wpPos = new Vector2(patrol.Waypoints[w].X, patrol.Waypoints[w].Y);
+                    string label = w == 0
+                        ? (string.IsNullOrEmpty(e.Name) ? "Patrol" : e.Name)
+                        : (w + 1).ToString();
+                    overlays.Add(new EditorOverlay(wpPos, color, OverlayShape.Circle, label,
+                        Selected: selected && w == 0));
+                }
+
+                for (int w = 0; w < patrol.Waypoints.Length - 1; w++)
+                {
+                    var from = new Vector2(patrol.Waypoints[w].X, patrol.Waypoints[w].Y);
+                    var to   = new Vector2(patrol.Waypoints[w + 1].X, patrol.Waypoints[w + 1].Y);
+                    lines.Add(new EditorLine(from, to, new Color(color.R, color.G, color.B, 0.7f)));
+                }
+
+                if (patrol.EndBehavior == "loop" && patrol.Waypoints.Length > 1)
+                {
+                    var from = new Vector2(patrol.Waypoints[^1].X, patrol.Waypoints[^1].Y);
+                    var to   = new Vector2(patrol.Waypoints[0].X, patrol.Waypoints[0].Y);
+                    lines.Add(new EditorLine(from, to, new Color(color.R, color.G, color.B, 0.30f)));
+                }
+            }
+            else
+            {
+                string kind  = EnemyKindLabel(e.Behavior);
+                string label = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
+                overlays.Add(new EditorOverlay(EnemyOrigin(e.Behavior), color, OverlayShape.Circle, label,
+                    Selected: selected));
+            }
         }
 
-        _canvas.SetOverlays([.. list], GameplayConstants.CellSize);
-        RefreshSelectionPanel();
+        _canvas.SetOverlays([..overlays], [..lines], GameplayConstants.CellSize);
     }
 
     private void ClearSelection()
@@ -67,6 +106,7 @@ public partial class Editor
         {
             _selectionHint.Visible    = true;
             _selectionDetails.Visible = false;
+            PopulateBehaviorConfig();
             return;
         }
 
@@ -90,6 +130,8 @@ public partial class Editor
             _selectionKindLabel.Text = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
             _selectionPosLabel.Text  = $"Tile ({(int)(pos.X / cellSize)}, {(int)(pos.Y / cellSize)})";
         }
+
+        PopulateBehaviorConfig();
     }
 
     private static string EntityKindLabel(string kind) => kind switch

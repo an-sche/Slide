@@ -7,6 +7,7 @@ public partial class Editor
 {
     private void OnPixelRightClicked(Vector2I px, Vector2 screenPos)
     {
+        if (_placementMode != EnemyPlacementMode.None) return;
         if (_mode is not (EditorMode.Entities or EditorMode.Enemies) || _levelData == null) return;
 
         float cellSize    = GameplayConstants.CellSize;
@@ -118,7 +119,9 @@ public partial class Editor
 
     private void OnPixelLeftPressed(Vector2I px)
     {
-        if (_mode != EditorMode.Entities || _levelData == null) return;
+        if (_levelData == null) return;
+        if (_mode == EditorMode.Enemies) { OnEnemyLeftPressed(px); return; }
+        if (_mode != EditorMode.Entities) return;
 
         float cellSize = GameplayConstants.CellSize;
         var   world    = new Vector2((px.X + 0.5f) * cellSize, (px.Y + 0.5f) * cellSize);

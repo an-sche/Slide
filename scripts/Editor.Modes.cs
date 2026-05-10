@@ -53,6 +53,7 @@ public partial class Editor
 
     private void SetMode(EditorMode mode)
     {
+        FinalizePlacementSilent();
         _mode = mode;
 
         _brushSection.Visible = mode == EditorMode.Paint;

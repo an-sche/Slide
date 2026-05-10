@@ -27,6 +27,9 @@ public partial class Editor : Control
     private Label         _selectionKindLabel   = null!;
     private Label         _selectionPosLabel    = null!;
     private LineEdit      _selectionNameEdit    = null!;
+    private VBoxContainer _behaviorConfigContainer = null!;
+    private EnemyPlacementMode _placementMode   = EnemyPlacementMode.None;
+    private EnemyData?    _placementTarget;
     private LevelData? _levelData;
     private string     _levelDir  = "";
     private string     _levelPath = "";
@@ -96,6 +99,13 @@ public partial class Editor : Control
         if (key.Keycode == Key.Bracketleft)  { AdjustBrush(-1); GetViewport().SetInputAsHandled(); return; }
         if (key.Keycode == Key.Bracketright) { AdjustBrush(+1); GetViewport().SetInputAsHandled(); return; }
 
+        if (key.Keycode == Key.Enter && _placementMode != EnemyPlacementMode.None)
+        {
+            FinalizePlacement();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
         if (key.Keycode == Key.Delete && _selectedIndex >= 0)
         {
             DeleteSelected();
@@ -112,6 +122,12 @@ public partial class Editor : Control
 
         if (key.Keycode == Key.Escape)
         {
+            if (_placementMode != EnemyPlacementMode.None)
+            {
+                FinalizePlacement();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
             GetTree().ChangeSceneToFile("res://scenes/MainMenu.tscn");
             GetViewport().SetInputAsHandled();
         }

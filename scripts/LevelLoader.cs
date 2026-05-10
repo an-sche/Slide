@@ -51,17 +51,11 @@ public static class LevelLoader
             }
         }
 
-        foreach (var spawner in data.Spawners)
+        foreach (var e in data.Enemies)
         {
-            bool immediate = spawner.Condition.ValueKind == JsonValueKind.String
-                && spawner.Condition.GetString() == "immediate";
-            if (!immediate) continue;
-
-            foreach (int idx in spawner.EnemyIndices)
-            {
-                if (idx < data.Enemies.Length)
-                    parent.AddChild(BuildEnemy(data.Enemies[idx]));
-            }
+            if (e.Spawn is null or ImmediateSpawnData)
+                parent.AddChild(BuildEnemy(e));
+            // TimedSpawn and TriggerSpawn handled when those systems are built
         }
 
         return result;
