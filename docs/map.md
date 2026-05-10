@@ -5,7 +5,7 @@
 Maps are stored as JSON files paired with a PNG bitmap. The two files share the same base name and live in the same directory (e.g. `test.json` + `test.png`).
 
 - The **PNG bitmap** defines the surface layout. Each pixel is one tile cell; its RGB color determines the surface type. The bitmap is authored directly in the level editor by painting pixels.
-- The **JSON file** stores everything else: metadata, cell size, entity positions, enemy definitions, spawners, triggers, and doors.
+- The **JSON file** stores everything else: metadata, cell size, entity positions, enemy definitions, triggers, and doors.
 - At load time, `LevelLoader` reads the PNG row by row, run-length encodes adjacent same-type pixels into rectangular `SurfaceZone` nodes (`Area2D` + `RectangleShape2D`), and places all entities from the JSON.
 - Surface type detection at runtime uses a **point query** at the unit's center position — not the unit's collision circle. This means the unit's surface is determined by exactly where its center sits, not what its edges are touching.
 
@@ -32,7 +32,6 @@ Maps are stored as JSON files paired with a PNG bitmap. The two files share the 
   "cellSize": 4.0,
   "entities":  [...],
   "enemies":   [...],
-  "spawners":  [...],
   "triggers":  [...],
   "doors":     [...]
 }
@@ -47,8 +46,7 @@ Maps are stored as JSON files paired with a PNG bitmap. The two files share the 
 | `bitmap` | string | Filename of the paired PNG (relative to the JSON file). |
 | `cellSize` | float | World units per pixel. Default `4.0`. |
 | `entities` | array | Start block, end block, bonuses. |
-| `enemies` | array | Enemy definitions (behavior, radius, color). |
-| `spawners` | array | Conditions that bring enemies into the scene. |
+| `enemies` | array | Enemy definitions. Each enemy carries its own spawn condition. |
 | `triggers` | array | Interactive objects that fire a list of actions when activated. |
 | `doors` | array | Surface zones toggled open/closed by trigger actions. |
 
@@ -106,23 +104,49 @@ Any pixel whose RGB does not match one of the above (within ±1 per channel) is 
 
 ## enemies
 
-Each entry defines one enemy's appearance and behavior. Enemies are not placed in the scene at level load — they wait until a spawner activates them.
+Each entry defines one enemy's appearance, behavior, and when it enters the scene. Enemies with no `spawn` field (or `"immediate"`) are placed at level load. Timed and trigger-based enemies wait until their condition is met.
 
 ```json
 "enemies": [
   {
+    "id": "abc123",
     "radius": 28.0,
     "color": "#cc3311",
     "behavior": { ... }
+  },
+  {
+    "id": "def456",
+    "radius": 20.0,
+    "color": "#cc3311",
+    "behavior": { ... },
+    "spawn": { "type": "timed", "delay": 15.0 }
+  },
+  {
+    "id": "ghi789",
+    "radius": 20.0,
+    "color": "#cc3311",
+    "behavior": { ... },
+    "spawn": { "type": "trigger", "triggerId": "btn_gate" }
   }
 ]
 ```
 
 | Field | Type | Notes |
 |-------|------|-------|
+| `id` | string | GUID, auto-assigned by the editor. Used by `despawnEnemies` trigger actions. |
 | `radius` | float | Collision and visual radius in world units. |
 | `color` | string | Hex `"#rrggbb"`. |
 | `behavior` | object | One of the behavior objects below. |
+| `spawn` | object? | Omit (or use `"immediate"`) to spawn at level load. See spawn conditions below. |
+
+### Spawn conditions
+
+| `type` | Additional fields | Effect |
+|--------|-------------------|--------|
+| *(omitted)* | — | Spawns at level load. This is the default for all editor-placed enemies. |
+| `"immediate"` | — | Explicit immediate spawn; equivalent to omitting the field. |
+| `"timed"` | `delay` (float, seconds) | Spawns after a delay from level start. |
+| `"trigger"` | `triggerId` (string) | Spawns when the named trigger fires. No separate trigger action needed — the enemy listens for the trigger automatically. |
 
 ### patrol
 
@@ -265,26 +289,6 @@ Patrols a waypoint route but switches to full chase when a player enters the det
 
 ---
 
-## spawners
-
-Spawners control when enemies enter the scene. Each spawner lists enemy indices (into the `enemies` array) and a condition.
-
-```json
-"spawners": [
-  { "enemyIndices": [0, 1, 2], "condition": "immediate" },
-  { "enemyIndices": [3],       "condition": { "type": "timed", "delay": 30.0 } },
-  { "enemyIndices": [4, 5],    "condition": { "type": "trigger", "triggerId": "btn_gate" } }
-]
-```
-
-| Condition | Schema | Effect |
-|-----------|--------|--------|
-| Immediate | `"immediate"` | Spawns when the level loads. |
-| Timed | `{ "type": "timed", "delay": N }` | Spawns `N` seconds after level start. |
-| Trigger | `{ "type": "trigger", "triggerId": "..." }` | Spawns when the named trigger fires. |
-
----
-
 ## triggers
 
 ```json
@@ -310,9 +314,10 @@ Spawners control when enemies enter the scene. Each spawner lists enemy indices 
 | `openDoor` | `doorId` | Sets door to open state. |
 | `closeDoor` | `doorId` | Sets door to closed state. |
 | `toggleDoor` | `doorId` | Flips door between open and closed. |
-| `spawnWave` | `spawnerIndex` | Immediately activates a spawner by index. |
-| `despawnEnemies` | `enemyIndices` | Removes the listed enemies from the scene. |
+| `despawnEnemies` | `enemyIds` (array of strings) | Removes the listed enemies from the scene by GUID. |
 | `fireTrigger` | `triggerId` | Fires another trigger's action list. |
+
+> **Trigger-based enemy spawning:** set `"spawn": { "type": "trigger", "triggerId": "..." }` on the enemy itself. No explicit spawn action on the trigger is needed — the enemy listens for the named trigger automatically.
 
 ---
 

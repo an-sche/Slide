@@ -180,14 +180,14 @@ All new behaviors implement `IEnemyBehavior` and are fully compatible with the e
 
 ## Milestone 8 — Level editor
 
-Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.png`). The PNG bitmap defines the surface layout (each pixel = one tile cell, RGB = surface type). The JSON stores metadata, entities, enemies, spawners, triggers, and doors. Workshop upload (Milestone 9) reuses the same files.
+Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.png`). The PNG bitmap defines the surface layout (each pixel = one tile cell, RGB = surface type). The JSON stores metadata, entities, enemies (each carrying their own spawn condition), triggers, and doors. Workshop upload (Milestone 9) reuses the same files.
 
 ### 8a — Level file format & runtime loader ✓
 - [x] Full JSON + PNG schema defined in `docs/map.md`: PNG bitmap for surfaces, JSON for everything else
 - [x] At load time, `LevelLoader` reads the PNG row by row, run-length encodes adjacent same-type pixels into rectangular `SurfaceZone` nodes (`Area2D` + `RectangleShape2D`)
 - [x] Surface type detection uses `±1` per-channel tolerance in `SurfaceConstants.FromColor` to handle float truncation when saving painted pixels
 - [x] Surface type at runtime determined by a point query at the unit's center (not the unit's collision circle)
-- [x] `LevelLoader` wires up entities, enemies (inactive until spawner fires), spawner conditions (immediate / timed / trigger), trigger actions, and doors
+- [x] `LevelLoader` spawns entities and all enemies whose `spawn` field is null or `"immediate"`; timed and trigger-based spawn conditions are deferred to when those systems are built
 - [x] `World` accepts an optional level path via `GameSetup.PlaytestPath`; falls back to `res://levels/test.json` if none provided
 
 ### 8b — Editor scene & pixel painter ✓
@@ -214,7 +214,7 @@ Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.pn
 - [ ] Patrol path editor: click to add waypoints sequentially; drag to reposition; per-waypoint speed field
 - [ ] Wander polygon editor: click to add vertices; drag to reposition; close polygon with double-click
 - [ ] Chaser / guard detection and give-up radii shown as overlay circles in the editor viewport
-- [ ] Spawner panel: assign enemies to spawner slots, set condition (immediate / timed / trigger)
+- [ ] Spawn condition field per enemy in the options panel: Immediate (default), Timed (delay in seconds), or On Trigger (pick trigger ID from dropdown)
 - [ ] Trigger panel: place button triggers, link actions (open/close door, spawn wave, fire trigger)
 
 ### 8e — Save, load, and play ✓
