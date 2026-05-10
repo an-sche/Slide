@@ -6,7 +6,6 @@ public partial class Editor
 {
     private const int SlotW            = 78;
     private const int SlotH            = 66;
-    private const int ConfigWidth      = 160;
     private const int OptionsPanelWidth = 220;
 
     private Control BuildTopBar()
@@ -108,7 +107,7 @@ public partial class Editor
         _canvas.SetAnchorsPreset(LayoutPreset.FullRect);
         _canvas.PixelClicked      += OnPixelClicked;
         _canvas.PixelLeftPressed  += OnPixelLeftPressed;
-        _canvas.PixelRightClicked += (px, screenPos) => OnPixelRightClicked(px, screenPos);
+        _canvas.PixelRightClicked += OnPixelRightClicked;
         parent.AddChild(_canvas);
 
         _hint = new Label
@@ -253,18 +252,18 @@ public partial class Editor
             CornerRadiusTopLeft    = 3, CornerRadiusTopRight    = 3,
             CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
         };
-        _deleteButton = new Button
+        var deleteBtn = new Button
         {
             Text                = "Delete",
             CustomMinimumSize   = new Vector2(0, 30),
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
-        _deleteButton.AddThemeStyleboxOverride("normal",  deleteStyle);
-        _deleteButton.AddThemeStyleboxOverride("hover",   deleteHover);
-        _deleteButton.AddThemeStyleboxOverride("pressed", deleteStyle);
-        _deleteButton.AddThemeStyleboxOverride("focus",   new StyleBoxEmpty());
-        _deleteButton.Pressed += DeleteSelected;
-        details.AddChild(_deleteButton);
+        deleteBtn.AddThemeStyleboxOverride("normal",  deleteStyle);
+        deleteBtn.AddThemeStyleboxOverride("hover",   deleteHover);
+        deleteBtn.AddThemeStyleboxOverride("pressed", deleteStyle);
+        deleteBtn.AddThemeStyleboxOverride("focus",   new StyleBoxEmpty());
+        deleteBtn.Pressed += DeleteSelected;
+        details.AddChild(deleteBtn);
 
         section.AddChild(details);
         return section;

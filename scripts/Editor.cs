@@ -27,7 +27,6 @@ public partial class Editor : Control
     private Label         _selectionKindLabel   = null!;
     private Label         _selectionPosLabel    = null!;
     private LineEdit      _selectionNameEdit    = null!;
-    private Button        _deleteButton         = null!;
     private LevelData? _levelData;
     private string     _levelDir  = "";
     private string     _levelPath = "";

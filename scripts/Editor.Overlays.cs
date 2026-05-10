@@ -15,39 +15,25 @@ public partial class Editor
         {
             var e   = _levelData.Entities[i];
             var pos = new Vector2(e.X, e.Y);
-            var (color, shape, label) = e.Kind switch
+            var (color, shape) = e.Kind switch
             {
-                "start" => (new Color(0.20f, 0.90f, 0.30f), OverlayShape.Diamond, "Start"),
-                "end"   => (new Color(1.00f, 0.80f, 0.10f), OverlayShape.Diamond, "End"),
-                "bonus" => (new Color(1.00f, 0.85f, 0.10f), OverlayShape.Circle,  "Bonus"),
-                _       => (Colors.White,                    OverlayShape.Circle,  e.Kind),
+                "start" => (new Color(0.20f, 0.90f, 0.30f), OverlayShape.Diamond),
+                "end"   => (new Color(1.00f, 0.80f, 0.10f), OverlayShape.Diamond),
+                "bonus" => (new Color(1.00f, 0.85f, 0.10f), OverlayShape.Circle),
+                _       => (Colors.White,                    OverlayShape.Circle),
             };
-            string displayLabel = string.IsNullOrEmpty(e.Name) ? label : $"{label} - {e.Name}";
-            list.Add(new EditorOverlay(pos, color, shape, displayLabel, Selected: i == _selectedIndex));
+            string kind  = EntityKindLabel(e.Kind);
+            string label = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
+            list.Add(new EditorOverlay(pos, color, shape, label, Selected: i == _selectedIndex));
         }
 
-        // Enemies — drawn at their start position with a label indicating behavior type.
         for (int i = 0; i < _levelData.Enemies.Length; i++)
         {
-            var e           = _levelData.Enemies[i];
-            int overlayIdx  = _levelData.Entities.Length + i;
-            var pos = e.Behavior.Type switch
-            {
-                "patrol"  => e.Behavior.Waypoints?.Length > 0
-                                 ? new Vector2(e.Behavior.Waypoints[0].X, e.Behavior.Waypoints[0].Y)
-                                 : Vector2.Zero,
-                "orbiter" => new Vector2(e.Behavior.CenterX, e.Behavior.CenterY),
-                "wander"  => e.Behavior.StartX.HasValue
-                                 ? new Vector2(e.Behavior.StartX.Value, e.Behavior.StartY!.Value)
-                                 : (e.Behavior.Polygon?.Length > 0
-                                        ? new Vector2(e.Behavior.Polygon[0].X, e.Behavior.Polygon[0].Y)
-                                        : Vector2.Zero),
-                _         => Vector2.Zero,
-            };
-            string type         = e.Behavior.Type;
-            string enemyKind    = char.ToUpper(type[0]) + type[1..];
-            string enemyLabel   = string.IsNullOrEmpty(e.Name) ? enemyKind : $"{enemyKind} - {e.Name}";
-            list.Add(new EditorOverlay(pos, ParseColor(e.Color), OverlayShape.Circle, enemyLabel, Selected: overlayIdx == _selectedIndex));
+            var    e          = _levelData.Enemies[i];
+            int    overlayIdx = _levelData.Entities.Length + i;
+            string kind       = EnemyKindLabel(e.Behavior);
+            string label      = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
+            list.Add(new EditorOverlay(EnemyOrigin(e.Behavior), Color.FromHtml(e.Color), OverlayShape.Circle, label, Selected: overlayIdx == _selectedIndex));
         }
 
         _canvas.SetOverlays([.. list], GameplayConstants.CellSize);
@@ -57,7 +43,7 @@ public partial class Editor
     private void ClearSelection()
     {
         _selectedIndex = -1;
-        RefreshSelectionPanel();
+        RefreshOverlays();
         SyncNameField();
     }
 
@@ -91,50 +77,46 @@ public partial class Editor
 
         if (_selectedIndex < _levelData.Entities.Length)
         {
-            var e    = _levelData.Entities[_selectedIndex];
-            string kind = e.Kind switch
-            {
-                "start" => "Start",
-                "end"   => "End",
-                "bonus" => "Bonus",
-                _       => e.Kind,
-            };
+            var    e    = _levelData.Entities[_selectedIndex];
+            string kind = EntityKindLabel(e.Kind);
             _selectionKindLabel.Text = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
-            int tx = (int)(e.X / cellSize);
-            int ty = (int)(e.Y / cellSize);
-            _selectionPosLabel.Text = $"Tile ({tx}, {ty})";
+            _selectionPosLabel.Text  = $"Tile ({(int)(e.X / cellSize)}, {(int)(e.Y / cellSize)})";
         }
         else
         {
-            var e   = _levelData.Enemies[_selectedIndex - _levelData.Entities.Length];
-            var pos = e.Behavior.Type switch
-            {
-                "patrol"  => e.Behavior.Waypoints?.Length > 0
-                                 ? new Vector2(e.Behavior.Waypoints[0].X, e.Behavior.Waypoints[0].Y)
-                                 : Vector2.Zero,
-                "orbiter" => new Vector2(e.Behavior.CenterX, e.Behavior.CenterY),
-                "wander"  => e.Behavior.StartX.HasValue
-                                 ? new Vector2(e.Behavior.StartX.Value, e.Behavior.StartY!.Value)
-                                 : (e.Behavior.Polygon?.Length > 0
-                                        ? new Vector2(e.Behavior.Polygon[0].X, e.Behavior.Polygon[0].Y)
-                                        : Vector2.Zero),
-                _         => Vector2.Zero,
-            };
-            string type = e.Behavior.Type;
-            string kind = char.ToUpper(type[0]) + type[1..];
+            var    e    = _levelData.Enemies[_selectedIndex - _levelData.Entities.Length];
+            string kind = EnemyKindLabel(e.Behavior);
+            var    pos  = EnemyOrigin(e.Behavior);
             _selectionKindLabel.Text = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
-            int tx = (int)(pos.X / cellSize);
-            int ty = (int)(pos.Y / cellSize);
-            _selectionPosLabel.Text = $"Tile ({tx}, {ty})";
+            _selectionPosLabel.Text  = $"Tile ({(int)(pos.X / cellSize)}, {(int)(pos.Y / cellSize)})";
         }
     }
 
-    private static Color ParseColor(string hex)
+    private static string EntityKindLabel(string kind) => kind switch
     {
-        hex = hex.TrimStart('#');
-        return new Color(
-            int.Parse(hex[0..2], System.Globalization.NumberStyles.HexNumber) / 255f,
-            int.Parse(hex[2..4], System.Globalization.NumberStyles.HexNumber) / 255f,
-            int.Parse(hex[4..6], System.Globalization.NumberStyles.HexNumber) / 255f);
+        "start" => "Start",
+        "end"   => "End",
+        "bonus" => "Bonus",
+        _       => kind,
+    };
+
+    private static string EnemyKindLabel(BehaviorData b)
+    {
+        string t = b.Type;
+        return string.IsNullOrEmpty(t) ? "" : char.ToUpper(t[0]) + t[1..];
     }
+
+    private static Vector2 EnemyOrigin(BehaviorData b) => b.Type switch
+    {
+        "patrol"  => b.Waypoints?.Length > 0
+                         ? new Vector2(b.Waypoints[0].X, b.Waypoints[0].Y)
+                         : Vector2.Zero,
+        "orbiter" => new Vector2(b.CenterX, b.CenterY),
+        "wander"  => b.StartX.HasValue
+                         ? new Vector2(b.StartX.Value, b.StartY!.Value)
+                         : (b.Polygon?.Length > 0
+                                ? new Vector2(b.Polygon[0].X, b.Polygon[0].Y)
+                                : Vector2.Zero),
+        _         => Vector2.Zero,
+    };
 }

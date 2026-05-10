@@ -17,10 +17,10 @@ public partial class Editor
 
         for (int i = 0; i < _levelData.Entities.Length; i++)
         {
-            var e = _levelData.Entities[i];
-            float d = new Vector2(e.X, e.Y).DistanceSquaredTo(world);
+            var   e    = _levelData.Entities[i];
+            float d    = new Vector2(e.X, e.Y).DistanceSquaredTo(world);
             if (d > pickRadiusSq) continue;
-            string kind = e.Kind switch { "start" => "Start", "end" => "End", "bonus" => "Bonus", var k => k };
+            string kind  = EntityKindLabel(e.Kind);
             string label = string.IsNullOrEmpty(e.Name)
                 ? $"{kind} ({(int)(e.X / cellSize)}, {(int)(e.Y / cellSize)})"
                 : $"{kind} - {e.Name}";
@@ -29,24 +29,11 @@ public partial class Editor
 
         for (int i = 0; i < _levelData.Enemies.Length; i++)
         {
-            var e   = _levelData.Enemies[i];
-            var pos = e.Behavior.Type switch
-            {
-                "patrol"  => e.Behavior.Waypoints?.Length > 0
-                                 ? new Vector2(e.Behavior.Waypoints[0].X, e.Behavior.Waypoints[0].Y)
-                                 : Vector2.Zero,
-                "orbiter" => new Vector2(e.Behavior.CenterX, e.Behavior.CenterY),
-                "wander"  => e.Behavior.StartX.HasValue
-                                 ? new Vector2(e.Behavior.StartX.Value, e.Behavior.StartY!.Value)
-                                 : (e.Behavior.Polygon?.Length > 0
-                                        ? new Vector2(e.Behavior.Polygon[0].X, e.Behavior.Polygon[0].Y)
-                                        : Vector2.Zero),
-                _         => Vector2.Zero,
-            };
-            float d = pos.DistanceSquaredTo(world);
+            var    e    = _levelData.Enemies[i];
+            var    pos  = EnemyOrigin(e.Behavior);
+            float  d    = pos.DistanceSquaredTo(world);
             if (d > pickRadiusSq) continue;
-            string t     = e.Behavior.Type;
-            string kind  = char.ToUpper(t[0]) + t[1..];
+            string kind  = EnemyKindLabel(e.Behavior);
             string label = string.IsNullOrEmpty(e.Name)
                 ? $"{kind} ({(int)(pos.X / cellSize)}, {(int)(pos.Y / cellSize)})"
                 : $"{kind} - {e.Name}";
@@ -81,12 +68,8 @@ public partial class Editor
         foreach (var (_, label) in candidates)
             popup.AddItem(label);
 
-        popup.IndexPressed += idx =>
-        {
-            Select(candidates[(int)idx].OverlayIndex);
-            popup.QueueFree();
-        };
-        popup.PopupHide += () => popup.QueueFree();
+        popup.IndexPressed += idx => Select(candidates[(int)idx].OverlayIndex);
+        popup.PopupHide    += () => popup.QueueFree();
 
         AddChild(popup);
         popup.Position = (Vector2I)screenPos;
@@ -103,20 +86,9 @@ public partial class Editor
         else
             _levelData.Enemies[_selectedIndex - _levelData.Entities.Length].Name = name;
 
-        // Update the kind label live without rebuilding the whole panel.
-        string kind;
-        if (_selectedIndex < _levelData.Entities.Length)
-        {
-            kind = _levelData.Entities[_selectedIndex].Kind switch
-            {
-                "start" => "Start", "end" => "End", "bonus" => "Bonus", var k => k,
-            };
-        }
-        else
-        {
-            string t = _levelData.Enemies[_selectedIndex - _levelData.Entities.Length].Behavior.Type;
-            kind = char.ToUpper(t[0]) + t[1..];
-        }
+        string kind = _selectedIndex < _levelData.Entities.Length
+            ? EntityKindLabel(_levelData.Entities[_selectedIndex].Kind)
+            : EnemyKindLabel(_levelData.Enemies[_selectedIndex - _levelData.Entities.Length].Behavior);
 
         _selectionKindLabel.Text = string.IsNullOrEmpty(name) ? kind : $"{kind} - {name}";
         RefreshOverlays();
@@ -129,21 +101,19 @@ public partial class Editor
 
         if (_selectedIndex < _levelData.Entities.Length)
         {
-            var list = new System.Collections.Generic.List<EntityData>(_levelData.Entities);
+            var list = new List<EntityData>(_levelData.Entities);
             list.RemoveAt(_selectedIndex);
             _levelData.Entities = [.. list];
         }
         else
         {
-            int ei   = _selectedIndex - _levelData.Entities.Length;
-            var list = new System.Collections.Generic.List<EnemyData>(_levelData.Enemies);
-            list.RemoveAt(ei);
+            var list = new List<EnemyData>(_levelData.Enemies);
+            list.RemoveAt(_selectedIndex - _levelData.Entities.Length);
             _levelData.Enemies = [.. list];
         }
 
-        _selectedIndex = -1;
-        RefreshOverlays();
         SetDirty();
+        ClearSelection();
     }
 
     private void OnPixelLeftPressed(Vector2I px)

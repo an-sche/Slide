@@ -91,7 +91,6 @@ public partial class Editor
         _hint.Visible = false;
         ClearDirty();
         ClearSelection();
-        RefreshOverlays();
     }
 
     private void OnLevelSettings()
