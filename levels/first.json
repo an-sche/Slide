@@ -3,7 +3,57 @@
   "name": "",
   "author": "",
   "bitmap": "first.png",
-  "entities": [],
+  "entities": [
+    {
+      "id": "99fc3ce3-cb88-4e37-8b2d-73966a1767dc",
+      "kind": "end",
+      "name": "DNE",
+      "x": 1870,
+      "y": 1878
+    },
+    {
+      "id": "71f2dea7-a407-421c-9ce5-eaf4c2161795",
+      "kind": "bonus",
+      "x": 306,
+      "y": 374
+    },
+    {
+      "id": "048f1a71-db32-41fc-8b2e-6f471a12e6fd",
+      "kind": "bonus",
+      "x": 770,
+      "y": 942
+    },
+    {
+      "id": "cf24fe3e-4ab4-4d68-877b-f9baa0ddfaf4",
+      "kind": "bonus",
+      "x": 1190,
+      "y": 1130
+    },
+    {
+      "id": "b17a5625-cb57-4ba2-b0a3-cb59afd048ac",
+      "kind": "bonus",
+      "x": 1302,
+      "y": 1490
+    },
+    {
+      "id": "e3e334c6-c4b4-473e-a3f3-f93618e8df19",
+      "kind": "bonus",
+      "x": 1646,
+      "y": 1562
+    },
+    {
+      "id": "975ad8b9-0a46-4f53-bee1-a09098b184ed",
+      "kind": "start",
+      "x": 66,
+      "y": 74
+    },
+    {
+      "id": "df187254-6c14-4f33-bd79-5e835d993dd0",
+      "kind": "bonus",
+      "x": 598,
+      "y": 582
+    }
+  ],
   "enemies": [],
   "spawners": []
 }

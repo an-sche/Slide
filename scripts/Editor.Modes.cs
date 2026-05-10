@@ -55,6 +55,9 @@ public partial class Editor
     {
         _mode = mode;
 
+        _brushSection.Visible = mode == EditorMode.Paint;
+        ClearSelection();
+
         for (int i = 0; i < _modeTabs.Length; i++)
             _modeTabStyles[i].BgColor = i == (int)mode ? ActiveTabBg : InactiveTabBg;
 

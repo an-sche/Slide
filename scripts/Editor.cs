@@ -5,7 +5,8 @@ namespace Slide;
 public partial class Editor : Control
 {
     private EditorMode _mode         = EditorMode.Paint;
-    private int        _selectedSlot = 0;
+    private int        _selectedSlot  = 0;
+    private int        _selectedIndex = -1;
 
     private readonly Button[]       _modeTabs      = new Button[4];
     private readonly StyleBoxFlat[] _modeTabStyles = new StyleBoxFlat[4];
@@ -14,10 +15,19 @@ public partial class Editor : Control
     private readonly ColorRect[]    _slotSwatches  = new ColorRect[8];
     private readonly Label[]        _slotNames     = new Label[8];
 
-    private CanvasView _canvas     = null!;
-    private Label      _hint       = null!;
-    private Label      _titleLabel = null!;
-    private Label      _brushLabel = null!;
+    private CanvasView    _canvas             = null!;
+    private Label         _hint               = null!;
+    private Label         _titleLabel         = null!;
+    private Label         _brushLabel         = null!;
+    private VBoxContainer _optionsPanelContent  = null!;
+    private Control       _brushSection         = null!;
+    private Control       _selectionSection     = null!;
+    private Label         _selectionHint        = null!;
+    private Control       _selectionDetails     = null!;
+    private Label         _selectionKindLabel   = null!;
+    private Label         _selectionPosLabel    = null!;
+    private LineEdit      _selectionNameEdit    = null!;
+    private Button        _deleteButton         = null!;
     private LevelData? _levelData;
     private string     _levelDir  = "";
     private string     _levelPath = "";
@@ -62,9 +72,7 @@ public partial class Editor : Control
 
         vbox.AddChild(BuildTopBar());
 
-        var viewport = new Control { SizeFlagsVertical = SizeFlags.ExpandFill };
-        vbox.AddChild(viewport);
-        BuildViewportArea(viewport);
+        vbox.AddChild(BuildMiddleRow());
 
         vbox.AddChild(BuildBottomBar());
 
@@ -88,6 +96,13 @@ public partial class Editor : Control
 
         if (key.Keycode == Key.Bracketleft)  { AdjustBrush(-1); GetViewport().SetInputAsHandled(); return; }
         if (key.Keycode == Key.Bracketright) { AdjustBrush(+1); GetViewport().SetInputAsHandled(); return; }
+
+        if (key.Keycode == Key.Delete && _selectedIndex >= 0)
+        {
+            DeleteSelected();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
 
         if (key.Keycode == Key.Tab)
         {

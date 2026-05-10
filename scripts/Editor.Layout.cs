@@ -4,9 +4,10 @@ namespace Slide;
 
 public partial class Editor
 {
-    private const int SlotW       = 78;
-    private const int SlotH       = 66;
-    private const int ConfigWidth = 160;
+    private const int SlotW            = 78;
+    private const int SlotH            = 66;
+    private const int ConfigWidth      = 160;
+    private const int OptionsPanelWidth = 220;
 
     private Control BuildTopBar()
     {
@@ -57,12 +58,57 @@ public partial class Editor
         return panel;
     }
 
+    private Control BuildMiddleRow()
+    {
+        var hbox = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
+        hbox.AddThemeConstantOverride("separation", 0);
+
+        var viewport = new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        hbox.AddChild(viewport);
+        BuildViewportArea(viewport);
+
+        hbox.AddChild(BuildOptionsPanel());
+        return hbox;
+    }
+
+    private Control BuildOptionsPanel()
+    {
+        var borderStyle = new StyleBoxFlat
+        {
+            BgColor          = new Color(0.13f, 0.13f, 0.16f),
+            BorderWidthLeft  = 1,
+            BorderColor      = new Color(0.22f, 0.22f, 0.28f),
+        };
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(OptionsPanelWidth, 0) };
+        panel.AddThemeStyleboxOverride("panel", borderStyle);
+
+        var margin = new MarginContainer();
+        margin.AddThemeConstantOverride("margin_top",    10);
+        margin.AddThemeConstantOverride("margin_left",   10);
+        margin.AddThemeConstantOverride("margin_right",  10);
+        margin.AddThemeConstantOverride("margin_bottom", 10);
+        panel.AddChild(margin);
+
+        _optionsPanelContent = new VBoxContainer();
+        _optionsPanelContent.AddThemeConstantOverride("separation", 8);
+        margin.AddChild(_optionsPanelContent);
+
+        _brushSection = BuildBrushSection();
+        _optionsPanelContent.AddChild(_brushSection);
+
+        _selectionSection = BuildSelectionSection();
+        _optionsPanelContent.AddChild(_selectionSection);
+
+        return panel;
+    }
+
     private void BuildViewportArea(Control parent)
     {
         _canvas = new CanvasView();
         _canvas.SetAnchorsPreset(LayoutPreset.FullRect);
-        _canvas.PixelClicked     += OnPixelClicked;
-        _canvas.PixelLeftPressed += OnPixelLeftPressed;
+        _canvas.PixelClicked      += OnPixelClicked;
+        _canvas.PixelLeftPressed  += OnPixelLeftPressed;
+        _canvas.PixelRightClicked += (px, screenPos) => OnPixelRightClicked(px, screenPos);
         parent.AddChild(_canvas);
 
         _hint = new Label
@@ -84,17 +130,12 @@ public partial class Editor
         var panel      = new PanelContainer();
         panel.AddThemeStyleboxOverride("panel", panelStyle);
 
-        // Three-column layout: mirror spacer | palette (centered) | config panel
         var layout = new HBoxContainer();
         layout.AddThemeConstantOverride("separation", 0);
         panel.AddChild(layout);
 
-        layout.AddChild(new Control { CustomMinimumSize = new Vector2(ConfigWidth + 8, 0) }); // mirror
-
         var center = new CenterContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         layout.AddChild(center);
-
-        layout.AddChild(BuildConfigPanel());
 
         var hbox = new HBoxContainer();
         hbox.AddThemeConstantOverride("separation", 6);
@@ -156,36 +197,97 @@ public partial class Editor
         return panel;
     }
 
-    private Control BuildConfigPanel()
+    private Control BuildSelectionSection()
     {
-        var box = new VBoxContainer();
-        box.CustomMinimumSize = new Vector2(ConfigWidth, 0);
-        box.AddThemeConstantOverride("separation", 6);
+        var section = new VBoxContainer();
+        section.AddThemeConstantOverride("separation", 6);
 
-        var margin = new MarginContainer();
-        margin.AddThemeConstantOverride("margin_top",    8);
-        margin.AddThemeConstantOverride("margin_bottom", 8);
-        margin.AddThemeConstantOverride("margin_left",   8);
-        margin.AddThemeConstantOverride("margin_right",  8);
-        margin.AddChild(box);
+        _selectionHint = new Label
+        {
+            Text                = "Right-click to select",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AutowrapMode        = TextServer.AutowrapMode.WordSmart,
+        };
+        _selectionHint.AddThemeFontSizeOverride("font_size", 12);
+        _selectionHint.AddThemeColorOverride("font_color", new Color(0.40f, 0.40f, 0.45f));
+        section.AddChild(_selectionHint);
 
-        var brushRow = new VBoxContainer();
-        brushRow.AddThemeConstantOverride("separation", 4);
-        box.AddChild(brushRow);
+        var details = new VBoxContainer();
+        details.AddThemeConstantOverride("separation", 4);
+        _selectionDetails = details;
 
-        var brushTitle = new Label { Text = "Brush Size" };
-        brushTitle.AddThemeFontSizeOverride("font_size", 11);
-        brushTitle.AddThemeColorOverride("font_color", new Color(0.60f, 0.60f, 0.65f));
-        brushRow.AddChild(brushTitle);
+        _selectionKindLabel = new Label { Text = "" };
+        _selectionKindLabel.AddThemeFontSizeOverride("font_size", 16);
+        _selectionKindLabel.AddThemeColorOverride("font_color", new Color(0.95f, 0.95f, 1.00f));
+        details.AddChild(_selectionKindLabel);
 
-        var brushControls = new HBoxContainer();
-        brushControls.AddThemeConstantOverride("separation", 4);
-        brushRow.AddChild(brushControls);
+        _selectionPosLabel = new Label { Text = "" };
+        _selectionPosLabel.AddThemeFontSizeOverride("font_size", 12);
+        _selectionPosLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.55f, 0.60f));
+        details.AddChild(_selectionPosLabel);
+
+        var nameLabel = new Label { Text = "Name" };
+        nameLabel.AddThemeFontSizeOverride("font_size", 11);
+        nameLabel.AddThemeColorOverride("font_color", new Color(0.60f, 0.60f, 0.65f));
+        details.AddChild(nameLabel);
+
+        _selectionNameEdit = new LineEdit
+        {
+            PlaceholderText     = "optional",
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        _selectionNameEdit.TextChanged += OnSelectionNameChanged;
+        details.AddChild(_selectionNameEdit);
+
+        details.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
+
+        var deleteStyle = new StyleBoxFlat
+        {
+            BgColor                = new Color(0.55f, 0.15f, 0.15f),
+            CornerRadiusTopLeft    = 3, CornerRadiusTopRight    = 3,
+            CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
+        };
+        var deleteHover = new StyleBoxFlat
+        {
+            BgColor                = new Color(0.70f, 0.20f, 0.20f),
+            CornerRadiusTopLeft    = 3, CornerRadiusTopRight    = 3,
+            CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
+        };
+        _deleteButton = new Button
+        {
+            Text                = "Delete",
+            CustomMinimumSize   = new Vector2(0, 30),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        _deleteButton.AddThemeStyleboxOverride("normal",  deleteStyle);
+        _deleteButton.AddThemeStyleboxOverride("hover",   deleteHover);
+        _deleteButton.AddThemeStyleboxOverride("pressed", deleteStyle);
+        _deleteButton.AddThemeStyleboxOverride("focus",   new StyleBoxEmpty());
+        _deleteButton.Pressed += DeleteSelected;
+        details.AddChild(_deleteButton);
+
+        section.AddChild(details);
+        return section;
+    }
+
+    private Control BuildBrushSection()
+    {
+        var section = new VBoxContainer();
+        section.AddThemeConstantOverride("separation", 4);
+
+        var title = new Label { Text = "Brush Size" };
+        title.AddThemeFontSizeOverride("font_size", 11);
+        title.AddThemeColorOverride("font_color", new Color(0.60f, 0.60f, 0.65f));
+        section.AddChild(title);
+
+        var controls = new HBoxContainer();
+        controls.AddThemeConstantOverride("separation", 4);
+        section.AddChild(controls);
 
         var minusBtn = new Button { Text = "−", CustomMinimumSize = new Vector2(30, 28) };
         minusBtn.AddThemeFontSizeOverride("font_size", 16);
         minusBtn.Pressed += () => AdjustBrush(-1);
-        brushControls.AddChild(minusBtn);
+        controls.AddChild(minusBtn);
 
         _brushLabel = new Label
         {
@@ -195,14 +297,14 @@ public partial class Editor
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
         _brushLabel.AddThemeFontSizeOverride("font_size", 15);
-        brushControls.AddChild(_brushLabel);
+        controls.AddChild(_brushLabel);
 
         var plusBtn = new Button { Text = "+", CustomMinimumSize = new Vector2(30, 28) };
         plusBtn.AddThemeFontSizeOverride("font_size", 16);
         plusBtn.Pressed += () => AdjustBrush(+1);
-        brushControls.AddChild(plusBtn);
+        controls.AddChild(plusBtn);
 
-        return margin;
+        return section;
     }
 
     private static Button MakeTopBarButton(string text)

@@ -7,6 +7,7 @@ public partial class CanvasView : Control
 {
     public event Action<Vector2I>? PixelClicked;
     public event Action<Vector2I>? PixelLeftPressed;
+    public event Action<Vector2I, Vector2>? PixelRightClicked;
 
     private Image?        _image;
     private ImageTexture? _texture;
@@ -164,6 +165,11 @@ public partial class CanvasView : Control
                 GetViewport().SetInputAsHandled();
                 break;
 
+            case InputEventMouseButton mb when mb.Pressed && mb.ButtonIndex == MouseButton.Right:
+                PixelRightClicked?.Invoke(ToPixel(mb.Position), mb.GlobalPosition);
+                GetViewport().SetInputAsHandled();
+                break;
+
             case InputEventMouseMotion motion when motion.ButtonMask.HasFlag(MouseButtonMask.Left):
                 PixelClicked?.Invoke(ToPixel(motion.Position));
                 GetViewport().SetInputAsHandled();
@@ -202,14 +208,17 @@ public partial class CanvasView : Control
 
     private void DrawOverlay(Vector2 sp, EditorOverlay ov)
     {
-        const float R     = 8f;
-        var         white = new Color(1f, 1f, 1f, 0.7f);
+        const float R      = 8f;
+        var         white  = new Color(1f, 1f, 1f, 0.7f);
+        var         sel    = new Color(1f, 0.9f, 0.2f);
 
         switch (ov.Shape)
         {
             case OverlayShape.Circle:
                 DrawCircle(sp, R, ov.Color);
                 DrawArc(sp, R, 0, Mathf.Tau, 32, white, 1.5f);
+                if (ov.Selected)
+                    DrawArc(sp, R + 4f, 0, Mathf.Tau, 32, sel, 2f);
                 break;
 
             case OverlayShape.Diamond:
@@ -222,6 +231,18 @@ public partial class CanvasView : Control
                 ];
                 DrawColoredPolygon(pts, ov.Color);
                 DrawPolyline([..pts, pts[0]], white, 1.5f);
+                if (ov.Selected)
+                {
+                    float s = R + 4f;
+                    Vector2[] sel_pts =
+                    [
+                        sp + new Vector2(0,  -s),
+                        sp + new Vector2(s,   0),
+                        sp + new Vector2(0,   s),
+                        sp + new Vector2(-s,  0),
+                    ];
+                    DrawPolyline([..sel_pts, sel_pts[0]], sel, 2f);
+                }
                 break;
         }
 

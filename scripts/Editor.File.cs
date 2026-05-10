@@ -90,6 +90,7 @@ public partial class Editor
         _canvas.LoadImage(image);
         _hint.Visible = false;
         ClearDirty();
+        ClearSelection();
         RefreshOverlays();
     }
 
@@ -202,6 +203,7 @@ public partial class Editor
         _canvas.LoadImage(image);
         _hint.Visible = false;
         ClearDirty();
+        ClearSelection();
         RefreshOverlays();
     }
 

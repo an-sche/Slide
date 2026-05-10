@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 
 namespace Slide;
@@ -17,13 +18,17 @@ public class LevelData
 
 public class EntityData
 {
-    public string Kind { get; set; } = "";
-    public float  X    { get; set; }
-    public float  Y    { get; set; }
+    public string  Id   { get; set; } = Guid.NewGuid().ToString();
+    public string  Kind { get; set; } = "";
+    public string? Name { get; set; }
+    public float   X    { get; set; }
+    public float   Y    { get; set; }
 }
 
 public class EnemyData
 {
+    public string       Id       { get; set; } = Guid.NewGuid().ToString();
+    public string?      Name     { get; set; }
     public float        Radius   { get; set; }
     public string       Color    { get; set; } = "#e63333";
     public BehaviorData Behavior { get; set; } = new();

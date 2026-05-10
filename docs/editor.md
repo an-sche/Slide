@@ -3,21 +3,17 @@
 ## Layout
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│  [New] [Open] [Save] [Play]  │  Paint │ Entities │ Enemies │ Triggers  │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│                         VIEWPORT                                 │
-│                      (map canvas)                                │
-│                                                    ┌───────────┐ │
-│                                                    │ Properties│ │
-│                                                    │   Panel   │ │
-│                                                    │ (appears  │ │
-│                                                    │ on select)│ │
-│                                                    └───────────┘ │
-├──────────────────────────────────────────────────────────────────┤
-│   [1] [2] [3] [4] [5] [6] [7] [8]   ←  hotbar, changes per mode │
-└──────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│  [New] [Open] [Save] [Play]  │  Paint │ Entities │ Enemies │ Triggers   │
+├──────────────────────────────────────────────────────────────┬──────────┤
+│                                                              │ Options  │
+│                         VIEWPORT                             │  Panel   │
+│                      (map canvas)                            │ (220 px) │
+│                                                              │          │
+│                                                              │          │
+├──────────────────────────────────────────────────────────────┴──────────┤
+│         [1] [2] [3] [4] [5] [6] [7] [8]   ←  hotbar, changes per mode  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -124,7 +120,7 @@ Painting writes surface type colors directly into the PNG bitmap. Each pixel enc
 
 **Brush:** The brush is a filled circle. Radius 0 paints a single pixel. Higher radii paint all pixels within that radius. A white circle preview follows the cursor, showing exactly which pixels will be painted.
 
-**Config panel (bottom-right):** Shows the current brush size with `−` / `+` buttons as an alternative to the bracket shortcuts.
+**Options panel (right sidebar):** In Paint mode shows the current brush size with `−` / `+` buttons as an alternative to the bracket shortcuts.
 
 **What you see:** The viewport renders the PNG bitmap directly — the colors you paint are the colors that appear in-game as surface zones. No baking or export step is needed; Save writes the PNG and JSON together.
 
@@ -132,17 +128,21 @@ Painting writes surface type colors directly into the PNG bitmap. Each pixel enc
 
 ## Entities mode
 
-Entities snap to the tile grid (center of the nearest tile cell) by default. Hold `Alt` to place at free-float world position.
-
 | Input | Action |
 |-------|--------|
-| Left-click | Place selected entity at cursor |
+| Left-click | Place selected entity at cursor (snaps to tile center) |
+| Right-click | Select nearest entity within ~4 cells; clears selection if none nearby |
+| Delete | Remove the selected entity |
 
 **Constraints:**
 - Only one Start Block and one End Block are allowed per level. Placing a second replaces the existing one.
 - Bonuses are unlimited.
 
-**Indicators:** Start Block shows a green arrow pointing right. End Block shows the gold star pattern used in-game. Bonuses show the star placeholder. All match their in-game visuals exactly.
+**Selection:** Right-clicking near multiple overlapping entities shows a disambiguation popup listing each candidate by name or tile position — click one to select it. The selected entity gets a yellow ring on the canvas.
+
+**Options panel (right sidebar):** When an entity is selected, the panel shows its kind, tile position, an editable Name field, and a Delete button. Names display as "Kind - Name" (e.g. "Bonus - hidden gem") in both the panel and the canvas overlay label.
+
+**Entity IDs:** Every entity is assigned a GUID at placement time. This ID is stable across renames and is how the trigger system will reference doors and targets.
 
 ---
 
@@ -236,11 +236,18 @@ With the Triggers mode active, dashed lines connect each button to the doors and
 
 ---
 
-## Properties panel
+## Options panel
 
-The properties panel slides in from the right edge when an enemy, entity, or trigger is selected. It closes when you click empty space in the viewport or press `Escape`.
+The options panel is a fixed 220px right sidebar. Its content changes based on mode and selection:
 
-Multiple enemies/triggers can be selected with `Shift+click`. The properties panel shows only the fields common to all selected items (batch editing). Behavior-specific fields are hidden for mixed-type selections.
+| State | Panel shows |
+|-------|-------------|
+| Paint mode | Brush size (`−` / `+` buttons, or `[` / `]` keys) |
+| Entities/Enemies/Triggers — nothing selected | "Right-click to select" hint |
+| Entity selected | Kind label (e.g. "Bonus - hidden gem"), tile position, Name field, Delete button |
+| Enemy selected | Behavior type label, tile position, Name field, Delete button (behavior config fields coming in Milestone 8d) |
+
+Selection is cleared when switching modes or opening a different level.
 
 ---
 

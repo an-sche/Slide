@@ -194,16 +194,20 @@ Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.pn
 - [x] Separate `Editor` scene accessible from main menu ("Edit Levels")
 - [x] `CanvasView` control: pan (middle mouse drag), zoom (scroll wheel), pixel grid overlay at high zoom
 - [x] Left-click / drag to paint pixels with the selected surface type; circle brush of configurable radius
-- [x] `[` / `]` keys and `−` / `+` buttons in the config panel to adjust brush radius
+- [x] `[` / `]` keys and `−` / `+` buttons to adjust brush radius
 - [x] Palette panel listing all surface types with color swatches and number-key shortcuts
-- [x] Config panel in the bottom-right for brush and other per-mode settings
-- [x] Editor split into partial classes: `Editor.cs`, `Editor.Layout.cs`, `Editor.Modes.cs`, `Editor.Paint.cs`, `Editor.File.cs`, `Editor.Overlays.cs`
+- [x] Fixed 220px right-side options panel: brush controls in Paint mode; entity/enemy properties in other modes
+- [x] Editor split into partial classes: `Editor.cs`, `Editor.Layout.cs`, `Editor.Modes.cs`, `Editor.Paint.cs`, `Editor.File.cs`, `Editor.Overlays.cs`, `Editor.Entities.cs`
 - [x] Entity overlays rendered on the canvas (start diamond, end diamond, bonus circles, enemy circles) via `EditorOverlay` record
 
-### 8c — Entity placement
-- [ ] Place / delete: StartBlock, EndBlock, Bonus in Entities mode — left-click to place, right-click to remove
-- [ ] Single-instance constraint on Start and End (placing a second replaces the existing one)
-- [ ] Placed entities persisted to `_levelData.Entities` and saved to JSON
+### 8c — Entity placement ✓
+- [x] Left-click to place StartBlock, EndBlock, Bonus; right-click to select; Delete key or panel button to remove
+- [x] Single-instance constraint on Start and End (placing a second replaces the existing one)
+- [x] Placed entities persisted to `_levelData.Entities` and saved to JSON
+- [x] `EntityData` and `EnemyData` each get a GUID `Id` (auto-generated at placement) for stable trigger linking
+- [x] Optional `Name` field on entities and enemies; displayed as "Kind - Name" in overlays and options panel
+- [x] Options panel shows selected entity's kind, tile position, editable name field, and Delete button
+- [x] Disambiguation popup when right-clicking near multiple overlapping entities/enemies — lists candidates by name or tile position; click one to select
 
 ### 8d — Enemy placement & spawner/trigger wiring
 - [ ] Place any enemy type from the enemy palette in Enemies mode; configure radius, color, and behavior params in a side panel
