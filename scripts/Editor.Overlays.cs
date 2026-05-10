@@ -100,23 +100,29 @@ public partial class Editor
         _       => kind,
     };
 
-    private static string EnemyKindLabel(BehaviorData b)
+    private static string EnemyKindLabel(BehaviorData b) => b switch
     {
-        string t = b.Type;
-        return string.IsNullOrEmpty(t) ? "" : char.ToUpper(t[0]) + t[1..];
-    }
+        PatrolBehaviorData  => "Patrol",
+        WanderBehaviorData  => "Wander",
+        OrbiterBehaviorData => "Orbiter",
+        ChaserBehaviorData  => "Chaser",
+        BouncerBehaviorData => "Bouncer",
+        SniperBehaviorData  => "Sniper",
+        GuardBehaviorData   => "Guard",
+        _                   => "",
+    };
 
-    private static Vector2 EnemyOrigin(BehaviorData b) => b.Type switch
+    private static Vector2 EnemyOrigin(BehaviorData b) => b switch
     {
-        "patrol"  => b.Waypoints?.Length > 0
-                         ? new Vector2(b.Waypoints[0].X, b.Waypoints[0].Y)
-                         : Vector2.Zero,
-        "orbiter" => new Vector2(b.CenterX, b.CenterY),
-        "wander"  => b.StartX.HasValue
-                         ? new Vector2(b.StartX.Value, b.StartY!.Value)
-                         : (b.Polygon?.Length > 0
-                                ? new Vector2(b.Polygon[0].X, b.Polygon[0].Y)
-                                : Vector2.Zero),
-        _         => Vector2.Zero,
+        PatrolBehaviorData  p => p.Waypoints.Length > 0 ? new Vector2(p.Waypoints[0].X, p.Waypoints[0].Y) : Vector2.Zero,
+        OrbiterBehaviorData o => new Vector2(o.CenterX, o.CenterY),
+        WanderBehaviorData  w => w.StartX.HasValue
+                                     ? new Vector2(w.StartX.Value, w.StartY!.Value)
+                                     : (w.Polygon.Length > 0 ? new Vector2(w.Polygon[0].X, w.Polygon[0].Y) : Vector2.Zero),
+        ChaserBehaviorData  c => new Vector2(c.StartX, c.StartY),
+        BouncerBehaviorData n => new Vector2(n.StartX, n.StartY),
+        SniperBehaviorData  s => new Vector2(s.X, s.Y),
+        GuardBehaviorData   g => g.Waypoints.Length > 0 ? new Vector2(g.Waypoints[0].X, g.Waypoints[0].Y) : Vector2.Zero,
+        _                     => Vector2.Zero,
     };
 }

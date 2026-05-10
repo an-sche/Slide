@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Globalization;
 using System.Text.Json;
 
 namespace Slide;
@@ -108,51 +107,41 @@ public static class LevelLoader
 
     private static Enemy BuildEnemy(EnemyData data)
     {
-        var behavior = BuildBehavior(data.Behavior);
         var enemy = new Enemy
         {
             Radius   = data.Radius,
-            Color    = ParseColor(data.Color),
-            Behavior = behavior,
+            Color    = Color.FromHtml(data.Color),
+            Behavior = BuildBehavior(data.Behavior),
         };
-        if (data.Behavior.Type == "patrol" && data.Behavior.Waypoints?.Length > 0)
-            enemy.Position = new Vector2(data.Behavior.Waypoints[0].X, data.Behavior.Waypoints[0].Y);
+        if (data.Behavior is PatrolBehaviorData p && p.Waypoints.Length > 0)
+            enemy.Position = new Vector2(p.Waypoints[0].X, p.Waypoints[0].Y);
         return enemy;
     }
 
-    private static IEnemyBehavior BuildBehavior(BehaviorData b) => b.Type switch
+    private static IEnemyBehavior BuildBehavior(BehaviorData b) => b switch
     {
-        "patrol"  => BuildPatrol(b),
-        "wander"  => BuildWander(b),
-        "orbiter" => BuildOrbiter(b),
-        _         => throw new InvalidOperationException($"Unknown enemy behavior type: '{b.Type}'"),
+        PatrolBehaviorData  p => BuildPatrol(p),
+        WanderBehaviorData  w => BuildWander(w),
+        OrbiterBehaviorData o => BuildOrbiter(o),
+        _ => throw new InvalidOperationException($"Unknown behavior type: {b.GetType().Name}"),
     };
 
-    private static IEnemyBehavior BuildPatrol(BehaviorData b)
+    private static IEnemyBehavior BuildPatrol(PatrolBehaviorData b)
     {
-        var waypoints = Array.ConvertAll(b.Waypoints!, w => new Waypoint(new Vector2(w.X, w.Y), w.Speed));
+        var waypoints = Array.ConvertAll(b.Waypoints, w => new Waypoint(new Vector2(w.X, w.Y), w.Speed));
         var end = b.EndBehavior == "loop" ? PatrolEndBehavior.Loop : PatrolEndBehavior.Disappear;
         return new PatrolBehavior(waypoints, end);
     }
 
-    private static IEnemyBehavior BuildWander(BehaviorData b)
+    private static IEnemyBehavior BuildWander(WanderBehaviorData b)
     {
-        var polygon = Array.ConvertAll(b.Polygon!, v => new Vector2(v.X, v.Y));
+        var polygon = Array.ConvertAll(b.Polygon, v => new Vector2(v.X, v.Y));
         Vector2? start = (b.StartX.HasValue && b.StartY.HasValue)
             ? new Vector2(b.StartX.Value, b.StartY.Value)
             : (Vector2?)null;
         return new RandomWanderBehavior(polygon, b.Speed, b.MinIdle, b.MaxIdle, start, b.Seed);
     }
 
-    private static IEnemyBehavior BuildOrbiter(BehaviorData b) =>
+    private static IEnemyBehavior BuildOrbiter(OrbiterBehaviorData b) =>
         new OrbiterBehavior(new Vector2(b.CenterX, b.CenterY), b.Radius, b.AngularSpeed, b.Clockwise, b.StartAngle);
-
-    private static Color ParseColor(string hex)
-    {
-        hex = hex.TrimStart('#');
-        return new Color(
-            int.Parse(hex[0..2], NumberStyles.HexNumber) / 255f,
-            int.Parse(hex[2..4], NumberStyles.HexNumber) / 255f,
-            int.Parse(hex[4..6], NumberStyles.HexNumber) / 255f);
-    }
 }

@@ -99,28 +99,10 @@
       "behavior": {
         "type": "patrol",
         "waypoints": [
-          {
-            "x": 2500,
-            "y": 1800,
-            "speed": 250
-          },
-          {
-            "x": 3500,
-            "y": 1800,
-            "speed": 250
-          }
+          { "x": 2500, "y": 1800, "speed": 250 },
+          { "x": 3500, "y": 1800, "speed": 250 }
         ],
-        "endBehavior": "loop",
-        "speed": 0,
-        "minIdle": 0,
-        "maxIdle": 0,
-        "seed": 0,
-        "centerX": 0,
-        "centerY": 0,
-        "radius": 0,
-        "angularSpeed": 0,
-        "clockwise": false,
-        "startAngle": 0
+        "endBehavior": "loop"
       }
     },
     {
@@ -130,28 +112,10 @@
       "behavior": {
         "type": "patrol",
         "waypoints": [
-          {
-            "x": 3200,
-            "y": 1600,
-            "speed": 350
-          },
-          {
-            "x": 3200,
-            "y": 2000,
-            "speed": 350
-          }
+          { "x": 3200, "y": 1600, "speed": 350 },
+          { "x": 3200, "y": 2000, "speed": 350 }
         ],
-        "endBehavior": "loop",
-        "speed": 0,
-        "minIdle": 0,
-        "maxIdle": 0,
-        "seed": 0,
-        "centerX": 0,
-        "centerY": 0,
-        "radius": 0,
-        "angularSpeed": 0,
-        "clockwise": false,
-        "startAngle": 0
+        "endBehavior": "loop"
       }
     },
     {
@@ -161,38 +125,12 @@
       "behavior": {
         "type": "patrol",
         "waypoints": [
-          {
-            "x": 2800,
-            "y": 2000,
-            "speed": 180
-          },
-          {
-            "x": 3400,
-            "y": 2000,
-            "speed": 180
-          },
-          {
-            "x": 3400,
-            "y": 1600,
-            "speed": 180
-          },
-          {
-            "x": 2800,
-            "y": 1600,
-            "speed": 180
-          }
+          { "x": 2800, "y": 2000, "speed": 180 },
+          { "x": 3400, "y": 2000, "speed": 180 },
+          { "x": 3400, "y": 1600, "speed": 180 },
+          { "x": 2800, "y": 1600, "speed": 180 }
         ],
-        "endBehavior": "loop",
-        "speed": 0,
-        "minIdle": 0,
-        "maxIdle": 0,
-        "seed": 0,
-        "centerX": 0,
-        "centerY": 0,
-        "radius": 0,
-        "angularSpeed": 0,
-        "clockwise": false,
-        "startAngle": 0
+        "endBehavior": "loop"
       }
     },
     {
@@ -202,33 +140,15 @@
       "behavior": {
         "type": "wander",
         "polygon": [
-          {
-            "x": 3680,
-            "y": 1280
-          },
-          {
-            "x": 4720,
-            "y": 1280
-          },
-          {
-            "x": 4720,
-            "y": 2320
-          },
-          {
-            "x": 3680,
-            "y": 2320
-          }
+          { "x": 3680, "y": 1280 },
+          { "x": 4720, "y": 1280 },
+          { "x": 4720, "y": 2320 },
+          { "x": 3680, "y": 2320 }
         ],
         "speed": 120,
         "minIdle": 1.5,
         "maxIdle": 4,
-        "seed": 1001,
-        "centerX": 0,
-        "centerY": 0,
-        "radius": 0,
-        "angularSpeed": 0,
-        "clockwise": false,
-        "startAngle": 0
+        "seed": 1001
       }
     },
     {
@@ -238,33 +158,15 @@
       "behavior": {
         "type": "wander",
         "polygon": [
-          {
-            "x": 3680,
-            "y": 1280
-          },
-          {
-            "x": 4720,
-            "y": 1280
-          },
-          {
-            "x": 4720,
-            "y": 2320
-          },
-          {
-            "x": 3680,
-            "y": 2320
-          }
+          { "x": 3680, "y": 1280 },
+          { "x": 4720, "y": 1280 },
+          { "x": 4720, "y": 2320 },
+          { "x": 3680, "y": 2320 }
         ],
         "speed": 280,
         "minIdle": 0.3,
         "maxIdle": 1.5,
-        "seed": 1002,
-        "centerX": 0,
-        "centerY": 0,
-        "radius": 0,
-        "angularSpeed": 0,
-        "clockwise": false,
-        "startAngle": 0
+        "seed": 1002
       }
     },
     {
@@ -274,33 +176,15 @@
       "behavior": {
         "type": "wander",
         "polygon": [
-          {
-            "x": 3680,
-            "y": 1280
-          },
-          {
-            "x": 4720,
-            "y": 1280
-          },
-          {
-            "x": 4720,
-            "y": 2320
-          },
-          {
-            "x": 3680,
-            "y": 2320
-          }
+          { "x": 3680, "y": 1280 },
+          { "x": 4720, "y": 1280 },
+          { "x": 4720, "y": 2320 },
+          { "x": 3680, "y": 2320 }
         ],
         "speed": 180,
         "minIdle": 0.8,
         "maxIdle": 3,
-        "seed": 1003,
-        "centerX": 0,
-        "centerY": 0,
-        "radius": 0,
-        "angularSpeed": 0,
-        "clockwise": false,
-        "startAngle": 0
+        "seed": 1003
       }
     },
     {
@@ -310,33 +194,15 @@
       "behavior": {
         "type": "wander",
         "polygon": [
-          {
-            "x": 3680,
-            "y": 1280
-          },
-          {
-            "x": 4720,
-            "y": 1280
-          },
-          {
-            "x": 4720,
-            "y": 2320
-          },
-          {
-            "x": 3680,
-            "y": 2320
-          }
+          { "x": 3680, "y": 1280 },
+          { "x": 4720, "y": 1280 },
+          { "x": 4720, "y": 2320 },
+          { "x": 3680, "y": 2320 }
         ],
         "speed": 350,
         "minIdle": 0.2,
         "maxIdle": 1,
-        "seed": 1004,
-        "centerX": 0,
-        "centerY": 0,
-        "radius": 0,
-        "angularSpeed": 0,
-        "clockwise": false,
-        "startAngle": 0
+        "seed": 1004
       }
     },
     {
@@ -345,10 +211,6 @@
       "color": "#4dcc80",
       "behavior": {
         "type": "orbiter",
-        "speed": 0,
-        "minIdle": 0,
-        "maxIdle": 0,
-        "seed": 0,
         "centerX": 1800,
         "centerY": 3000,
         "radius": 350,
@@ -360,16 +222,7 @@
   ],
   "spawners": [
     {
-      "enemyIndices": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7
-      ],
+      "enemyIndices": [ 0, 1, 2, 3, 4, 5, 6, 7 ],
       "condition": "immediate"
     }
   ]
