@@ -84,6 +84,7 @@ public partial class GameCamera : Camera2D
     {
         if (!GetWindow().HasFocus()) return;
         HandleSpaceInput(@event);
+        HandleLockToggle(@event);
         HandleMiddleMousePan(@event);
         HandleZoom(@event);
     }
@@ -97,8 +98,15 @@ public partial class GameCamera : Camera2D
 
         if (key.Pressed && _unit != null)
             GlobalPosition = _unit.GlobalPosition;
-        else if (!key.Pressed)
-            _isLockedToUnit = false;
+    }
+
+    private void HandleLockToggle(InputEvent @event)
+    {
+        if (@event is not InputEventKey { Keycode: Key.C, Pressed: true, Echo: false }) return;
+
+        _isLockedToUnit = !_isLockedToUnit;
+        if (_isLockedToUnit && _unit != null)
+            GlobalPosition = _unit.GlobalPosition;
     }
 
     private void HandleMiddleMousePan(InputEvent @event)
