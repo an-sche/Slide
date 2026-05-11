@@ -10,7 +10,7 @@ public partial class Editor
     [
         ["Ground", "Slidy", "Fast", "Confusing", "FastConf", "Straight", "Kill", "Void"],
         ["Start", "End", "Bonus"],
-        ["Patrol", "Wander", "Orbiter", "Chaser", "Bouncer", "Sniper", "Guard"],
+        ["Patrol", "Wander", "Orbiter"],
         ["Button", "Door"],
     ];
 
@@ -35,10 +35,6 @@ public partial class Editor
             new Color(0.88f, 0.28f, 0.18f),
             new Color(0.88f, 0.18f, 0.48f),
             new Color(0.28f, 0.80f, 0.48f),
-            new Color(0.80f, 0.48f, 0.08f),
-            new Color(0.18f, 0.58f, 0.90f),
-            new Color(0.90f, 0.80f, 0.08f),
-            new Color(0.68f, 0.18f, 0.90f),
         ],
         [
             new Color(0.18f, 0.78f, 0.78f),
@@ -75,6 +71,14 @@ public partial class Editor
         }
 
         SelectSlot(0);
+    }
+
+    private void ArmPlacement()
+    {
+        if (_mode is not (EditorMode.Entities or EditorMode.Enemies)) return;
+        if (_placementMode != EnemyPlacementMode.None)
+            FinalizePlacement();
+        _placementArmed = true;
     }
 
     private void SelectSlot(int index)

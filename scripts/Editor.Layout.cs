@@ -189,7 +189,10 @@ public partial class Editor
             slot.GuiInput += e =>
             {
                 if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+                {
                     SelectSlot(captured);
+                    ArmPlacement();
+                }
             };
         }
 
@@ -220,10 +223,30 @@ public partial class Editor
         _selectionKindLabel.AddThemeColorOverride("font_color", new Color(0.95f, 0.95f, 1.00f));
         details.AddChild(_selectionKindLabel);
 
-        _selectionPosLabel = new Label { Text = "" };
-        _selectionPosLabel.AddThemeFontSizeOverride("font_size", 12);
-        _selectionPosLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.55f, 0.60f));
-        details.AddChild(_selectionPosLabel);
+        var posRow = new HBoxContainer();
+        posRow.AddThemeConstantOverride("separation", 4);
+
+        var xLabel = new Label { Text = "X", VerticalAlignment = VerticalAlignment.Center };
+        xLabel.AddThemeFontSizeOverride("font_size", 11);
+        xLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.55f, 0.60f));
+
+        _selectionXEdit = new LineEdit { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _selectionXEdit.AddThemeFontSizeOverride("font_size", 12);
+        _selectionXEdit.TextChanged += _ => OnSelectionPositionChanged();
+
+        var yLabel = new Label { Text = "Y", VerticalAlignment = VerticalAlignment.Center };
+        yLabel.AddThemeFontSizeOverride("font_size", 11);
+        yLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.55f, 0.60f));
+
+        _selectionYEdit = new LineEdit { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _selectionYEdit.AddThemeFontSizeOverride("font_size", 12);
+        _selectionYEdit.TextChanged += _ => OnSelectionPositionChanged();
+
+        posRow.AddChild(xLabel);
+        posRow.AddChild(_selectionXEdit);
+        posRow.AddChild(yLabel);
+        posRow.AddChild(_selectionYEdit);
+        details.AddChild(posRow);
 
         var nameLabel = new Label { Text = "Name" };
         nameLabel.AddThemeFontSizeOverride("font_size", 11);

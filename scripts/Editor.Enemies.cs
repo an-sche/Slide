@@ -21,6 +21,8 @@ public partial class Editor
             return;
         }
 
+        if (!_placementArmed) return;
+
         EnemyData? enemy = _selectedSlot switch
         {
             0 => CreatePatrolEnemy(world),
@@ -78,6 +80,7 @@ public partial class Editor
     {
         _placementMode   = EnemyPlacementMode.None;
         _placementTarget = null;
+        _placementArmed  = false;
         _canvas.SetGhostLine(null);
     }
 

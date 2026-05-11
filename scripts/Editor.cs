@@ -25,8 +25,11 @@ public partial class Editor : Control
     private Label         _selectionHint        = null!;
     private Control       _selectionDetails     = null!;
     private Label         _selectionKindLabel   = null!;
-    private Label         _selectionPosLabel    = null!;
+    private LineEdit      _selectionXEdit       = null!;
+    private LineEdit      _selectionYEdit       = null!;
     private LineEdit      _selectionNameEdit    = null!;
+    private bool          _syncingFields;
+    private bool          _placementArmed;
     private VBoxContainer _behaviorConfigContainer = null!;
     private EnemyPlacementMode _placementMode   = EnemyPlacementMode.None;
     private EnemyData?    _placementTarget;
@@ -80,7 +83,9 @@ public partial class Editor : Control
 
         SetMode(EditorMode.Paint);
 
-        if (!string.IsNullOrEmpty(GameSetup.LastEditorLevelPath))
+        if (GameSetup.PlaytestRestore != null)
+            RestorePlaytestSnapshot();
+        else if (!string.IsNullOrEmpty(GameSetup.LastEditorLevelPath))
             LoadLevelFile(GameSetup.LastEditorLevelPath);
     }
 
@@ -94,7 +99,7 @@ public partial class Editor : Control
             Key.Key5 => 4, Key.Key6 => 5, Key.Key7 => 6, Key.Key8 => 7,
             _ => -1,
         };
-        if (slot >= 0) { SelectSlot(slot); GetViewport().SetInputAsHandled(); return; }
+        if (slot >= 0) { SelectSlot(slot); ArmPlacement(); GetViewport().SetInputAsHandled(); return; }
 
         if (key.Keycode == Key.Bracketleft)  { AdjustBrush(-1); GetViewport().SetInputAsHandled(); return; }
         if (key.Keycode == Key.Bracketright) { AdjustBrush(+1); GetViewport().SetInputAsHandled(); return; }

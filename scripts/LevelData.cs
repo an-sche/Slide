@@ -56,10 +56,6 @@ public class TriggerSpawnData : SpawnConditionData
 [JsonDerivedType(typeof(PatrolBehaviorData),  "patrol")]
 [JsonDerivedType(typeof(WanderBehaviorData),  "wander")]
 [JsonDerivedType(typeof(OrbiterBehaviorData), "orbiter")]
-[JsonDerivedType(typeof(ChaserBehaviorData),  "chaser")]
-[JsonDerivedType(typeof(BouncerBehaviorData), "bouncer")]
-[JsonDerivedType(typeof(SniperBehaviorData),  "sniper")]
-[JsonDerivedType(typeof(GuardBehaviorData),   "guard")]
 public abstract class BehaviorData { }
 
 public class PatrolBehaviorData : BehaviorData
@@ -89,39 +85,6 @@ public class OrbiterBehaviorData : BehaviorData
     public float StartAngle   { get; set; }
 }
 
-public class ChaserBehaviorData : BehaviorData
-{
-    public float StartX          { get; set; }
-    public float StartY          { get; set; }
-    public float Speed           { get; set; }
-    public float DetectionRadius { get; set; }
-    public float GiveUpRadius    { get; set; }
-}
-
-public class BouncerBehaviorData : BehaviorData
-{
-    public float StartX { get; set; }
-    public float StartY { get; set; }
-    public float Angle  { get; set; }
-    public float Speed  { get; set; }
-}
-
-public class SniperBehaviorData : BehaviorData
-{
-    public float X            { get; set; }
-    public float Y            { get; set; }
-    public float Range        { get; set; }
-    public float FireInterval { get; set; }
-    public float AimDuration  { get; set; }
-}
-
-public class GuardBehaviorData : BehaviorData
-{
-    public WaypointData[] Waypoints       { get; set; } = [];
-    public float          DetectionRadius { get; set; }
-    public float          GiveUpRadius    { get; set; }
-    public float          AlertSpeed      { get; set; }
-}
 
 public class WaypointData
 {

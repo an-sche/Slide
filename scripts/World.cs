@@ -35,7 +35,10 @@ public partial class World : Node2D
 
         string levelPath = GameSetup.IsPlaytest ? GameSetup.PlaytestPath! : "res://levels/test.json";
         if (GameSetup.IsPlaytest) AddPlaytestBanner();
-        var result = LevelLoader.Load(levelPath, this);
+        var snap   = GameSetup.PlaytestRestore;
+        var result = snap != null
+            ? LevelLoader.Load(snap.LevelData, snap.Image, this)
+            : LevelLoader.Load(levelPath, this);
         _startPosition = result.StartPosition;
         _levelBounds   = result.LevelBounds;
         if (result.EndBlock != null)

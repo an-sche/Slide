@@ -113,24 +113,20 @@ public partial class Editor
         _selectionHint.Visible    = false;
         _selectionDetails.Visible = true;
 
-        float cellSize = GameplayConstants.CellSize;
-
         if (_selectedIndex < _levelData.Entities.Length)
         {
             var    e    = _levelData.Entities[_selectedIndex];
             string kind = EntityKindLabel(e.Kind);
             _selectionKindLabel.Text = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
-            _selectionPosLabel.Text  = $"Tile ({(int)(e.X / cellSize)}, {(int)(e.Y / cellSize)})";
         }
         else
         {
             var    e    = _levelData.Enemies[_selectedIndex - _levelData.Entities.Length];
             string kind = EnemyKindLabel(e.Behavior);
-            var    pos  = EnemyOrigin(e.Behavior);
             _selectionKindLabel.Text = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
-            _selectionPosLabel.Text  = $"Tile ({(int)(pos.X / cellSize)}, {(int)(pos.Y / cellSize)})";
         }
 
+        SyncPositionFields();
         PopulateBehaviorConfig();
     }
 
@@ -147,10 +143,6 @@ public partial class Editor
         PatrolBehaviorData  => "Patrol",
         WanderBehaviorData  => "Wander",
         OrbiterBehaviorData => "Orbiter",
-        ChaserBehaviorData  => "Chaser",
-        BouncerBehaviorData => "Bouncer",
-        SniperBehaviorData  => "Sniper",
-        GuardBehaviorData   => "Guard",
         _                   => "",
     };
 
@@ -161,10 +153,6 @@ public partial class Editor
         WanderBehaviorData  w => w.StartX.HasValue
                                      ? new Vector2(w.StartX.Value, w.StartY!.Value)
                                      : (w.Polygon.Length > 0 ? new Vector2(w.Polygon[0].X, w.Polygon[0].Y) : Vector2.Zero),
-        ChaserBehaviorData  c => new Vector2(c.StartX, c.StartY),
-        BouncerBehaviorData n => new Vector2(n.StartX, n.StartY),
-        SniperBehaviorData  s => new Vector2(s.X, s.Y),
-        GuardBehaviorData   g => g.Waypoints.Length > 0 ? new Vector2(g.Waypoints[0].X, g.Waypoints[0].Y) : Vector2.Zero,
         _                     => Vector2.Zero,
     };
 }

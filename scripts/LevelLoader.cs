@@ -25,11 +25,17 @@ public static class LevelLoader
         return Populate(data, path.GetBaseDir(), parent);
     }
 
-    private static LoadResult Populate(LevelData data, string levelDir, Node parent)
+    public static LoadResult Load(LevelData data, Image image, Node parent) =>
+        Populate(data, image, parent);
+
+    private static LoadResult Populate(LevelData data, string levelDir, Node parent) =>
+        Populate(data, Image.LoadFromFile(levelDir + "/" + data.Bitmap), parent);
+
+    private static LoadResult Populate(LevelData data, Image image, Node parent)
     {
         var result = new LoadResult();
 
-        result.LevelBounds = BuildSurfaces(data, levelDir, parent);
+        result.LevelBounds = BuildSurfaces(image, parent);
 
         foreach (var e in data.Entities)
         {
@@ -63,10 +69,8 @@ public static class LevelLoader
 
     // --- Surface zone construction ---
 
-    private static Rect2 BuildSurfaces(LevelData data, string levelDir, Node parent)
+    private static Rect2 BuildSurfaces(Image image, Node parent)
     {
-        string imagePath = levelDir + "/" + data.Bitmap;
-        var    image     = Image.LoadFromFile(imagePath);
         float  cs        = GameplayConstants.CellSize;
         int    w         = image.GetWidth();
         int    h         = image.GetHeight();

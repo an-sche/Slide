@@ -188,6 +188,24 @@ public partial class Editor
         dialog.PopupCentered(new Vector2I(700, 500));
     }
 
+    private void RestorePlaytestSnapshot()
+    {
+        var snap = GameSetup.PlaytestRestore!;
+        GameSetup.PlaytestRestore = null;
+
+        _levelData = snap.LevelData;
+        _levelPath = snap.LevelPath;
+        _levelDir  = snap.LevelPath.GetBaseDir();
+        GameSetup.LastEditorLevelPath = snap.LevelPath;
+
+        _canvas.LoadImage(snap.Image);
+        _hint.Visible = false;
+        ClearSelection();
+        RefreshOverlays();
+
+        if (snap.WasDirty) SetDirty(); else ClearDirty();
+    }
+
     private void LoadLevelFile(string path)
     {
         GameSetup.LastEditorLevelPath = path;
@@ -255,10 +273,13 @@ public partial class Editor
 
     private void OnPlay()
     {
-        if (string.IsNullOrEmpty(_levelPath)) return;
+        if (string.IsNullOrEmpty(_levelPath) || _levelData == null) return;
 
-        // Auto-save the PNG so the World loads the current painted state.
-        _canvas.GetImage()?.SavePng(_levelPath.GetBaseName() + ".png");
+        var image = _canvas.GetImage();
+        if (image == null) return;
+
+        // Hold direct references — no disk writes, GameSetup survives scene changes.
+        GameSetup.PlaytestRestore = new GameSetup.EditorSnapshot(_levelPath, _levelData, image, _dirty);
 
         GameSetup.PlaytestPath = _levelPath;
         RunState.Reset();

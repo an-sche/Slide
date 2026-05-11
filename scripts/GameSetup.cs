@@ -19,4 +19,8 @@ public static class GameSetup
 
     // Persists the last level opened in the editor so it survives scene reloads.
     public static string? LastEditorLevelPath { get; set; }
+
+    // In-memory snapshot taken before playtesting so unsaved changes survive the round-trip.
+    public record EditorSnapshot(string LevelPath, LevelData LevelData, Godot.Image Image, bool WasDirty);
+    public static EditorSnapshot? PlaytestRestore { get; set; }
 }

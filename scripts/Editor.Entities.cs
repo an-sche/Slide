@@ -121,7 +121,7 @@ public partial class Editor
     {
         if (_levelData == null) return;
         if (_mode == EditorMode.Enemies) { OnEnemyLeftPressed(px); return; }
-        if (_mode != EditorMode.Entities) return;
+        if (_mode != EditorMode.Entities || !_placementArmed) return;
 
         float cellSize = GameplayConstants.CellSize;
         var   world    = new Vector2((px.X + 0.5f) * cellSize, (px.Y + 0.5f) * cellSize);
@@ -142,8 +142,60 @@ public partial class Editor
 
         entities.Add(new EntityData { Kind = kind, X = world.X, Y = world.Y });
         _levelData.Entities = [.. entities];
+        _placementArmed = false;
 
         RefreshOverlays();
         SetDirty();
+    }
+
+    private void SyncPositionFields()
+    {
+        if (_selectedIndex < 0 || _levelData == null)
+            return;
+
+        float   cellSize = GameplayConstants.CellSize;
+        Vector2 pos      = _selectedIndex < _levelData.Entities.Length
+            ? new Vector2(_levelData.Entities[_selectedIndex].X, _levelData.Entities[_selectedIndex].Y)
+            : EnemyOrigin(_levelData.Enemies[_selectedIndex - _levelData.Entities.Length].Behavior);
+
+        _syncingFields       = true;
+        _selectionXEdit.Text = ((int)(pos.X / cellSize)).ToString();
+        _selectionYEdit.Text = ((int)(pos.Y / cellSize)).ToString();
+        _syncingFields       = false;
+    }
+
+    private void OnSelectionPositionChanged()
+    {
+        if (_syncingFields || _selectedIndex < 0 || _levelData == null) return;
+        if (!int.TryParse(_selectionXEdit.Text, out int tx)) return;
+        if (!int.TryParse(_selectionYEdit.Text, out int ty)) return;
+
+        float   cellSize = GameplayConstants.CellSize;
+        Vector2 world    = new Vector2((tx + 0.5f) * cellSize, (ty + 0.5f) * cellSize);
+
+        if (_selectedIndex < _levelData.Entities.Length)
+        {
+            var e = _levelData.Entities[_selectedIndex];
+            e.X = world.X;
+            e.Y = world.Y;
+        }
+        else
+        {
+            SetEnemyOrigin(_levelData.Enemies[_selectedIndex - _levelData.Entities.Length], world);
+        }
+
+        RefreshCanvasOverlays();
+        SetDirty();
+    }
+
+    private static void SetEnemyOrigin(EnemyData enemy, Vector2 world)
+    {
+        switch (enemy.Behavior)
+        {
+            case PatrolBehaviorData  p when p.Waypoints.Length > 0: p.Waypoints[0].X = world.X; p.Waypoints[0].Y = world.Y; break;
+            case OrbiterBehaviorData o: o.CenterX = world.X; o.CenterY = world.Y; break;
+            case WanderBehaviorData  w when w.StartX.HasValue: w.StartX = world.X; w.StartY = world.Y; break;
+            case WanderBehaviorData  w when w.Polygon.Length > 0: w.Polygon[0].X = world.X; w.Polygon[0].Y = world.Y; break;
+        }
     }
 }
