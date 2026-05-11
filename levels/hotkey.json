@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "name": "",
+  "author": "",
+  "bitmap": "hotkey.png",
+  "entities": [
+    {
+      "id": "56f2af47-25a7-4736-8ea3-6ff6fe2e70e7",
+      "kind": "start",
+      "x": 162,
+      "y": 162
+    },
+    {
+      "id": "fb4e37b5-8d14-4f5b-964f-108716dda541",
+      "kind": "end",
+      "x": 1058,
+      "y": 1802
+    },
+    {
+      "id": "b2395471-1923-4870-8781-d83c79eadadf",
+      "kind": "bonus",
+      "x": 1098,
+      "y": 1038
+    },
+    {
+      "id": "36d629d6-fcbc-4a44-bb54-b941173171b1",
+      "kind": "bonus",
+      "x": 698,
+      "y": 1074
+    }
+  ],
+  "enemies": []
+}

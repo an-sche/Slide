@@ -20,17 +20,17 @@ public partial class Editor
 
         hbox.AddChild(new Control { CustomMinimumSize = new Vector2(8, 0) });
 
-        var newBtn      = MakeTopBarButton("New", "Ctrl+n");      newBtn.Pressed      += OnNew;           hbox.AddChild(newBtn);
-        var openBtn     = MakeTopBarButton("Open", "Ctrl+o");     openBtn.Pressed     += OnOpen;          hbox.AddChild(openBtn);
-        var saveBtn     = MakeTopBarButton("Save", "Ctrl+s");     saveBtn.Pressed     += OnSave;          hbox.AddChild(saveBtn);
-        var saveAsBtn   = MakeTopBarButton("Save As", "Ctrl+Shift+s");  saveAsBtn.Pressed   += OnSaveAs;        hbox.AddChild(saveAsBtn);
-        var settingsBtn = MakeTopBarButton("Settings", "Ctrl+,"); settingsBtn.Pressed += OnLevelSettings; hbox.AddChild(settingsBtn);
-        var playBtn     = MakeTopBarButton("Play", "F5");     playBtn.Pressed     += OnPlay;          hbox.AddChild(playBtn);
+        var newBtn      = MakeTopBarButton("New", new InputEventKey { Keycode = Key.N, CtrlPressed = true });      newBtn.Pressed      += OnNew;           hbox.AddChild(newBtn);
+        var openBtn     = MakeTopBarButton("Open", new InputEventKey { Keycode = Key.O, CtrlPressed = true });     openBtn.Pressed     += OnOpen;          hbox.AddChild(openBtn);
+        var saveBtn     = MakeTopBarButton("Save", new InputEventKey { Keycode = Key.S, CtrlPressed = true });     saveBtn.Pressed     += OnSave;          hbox.AddChild(saveBtn);
+        var saveAsBtn   = MakeTopBarButton("Save As", new InputEventKey { Keycode = Key.S, CtrlPressed = true, ShiftPressed = true });  saveAsBtn.Pressed   += OnSaveAs;        hbox.AddChild(saveAsBtn);
+        var settingsBtn = MakeTopBarButton("Settings", new InputEventKey { Keycode = Key.Comma, CtrlPressed = true }); settingsBtn.Pressed += OnLevelSettings; hbox.AddChild(settingsBtn);
+        var playBtn     = MakeTopBarButton("Play", new InputEventKey { Keycode = Key.F5 });     playBtn.Pressed     += OnPlay;          hbox.AddChild(playBtn);
 
         hbox.AddChild(new VSeparator { CustomMinimumSize = new Vector2(0, 28) });
 
-        _undoBtn          = MakeTopBarButton("Undo", "Ctrl+z"); _undoBtn.Pressed += () => _undoStack.Undo(); hbox.AddChild(_undoBtn);
-        _redoBtn          = MakeTopBarButton("Redo", "Ctrl+y"); _redoBtn.Pressed += () => _undoStack.Redo(); hbox.AddChild(_redoBtn);
+        _undoBtn          = MakeTopBarButton("Undo", new InputEventKey { Keycode = Key.Z, CtrlPressed = true }); _undoBtn.Pressed += () => _undoStack.Undo(); hbox.AddChild(_undoBtn);
+        _redoBtn          = MakeTopBarButton("Redo", new InputEventKey { Keycode = Key.Y, CtrlPressed = true }); _redoBtn.Pressed += () => _undoStack.Redo(); hbox.AddChild(_redoBtn);
         _undoBtn.Disabled = true;
         _redoBtn.Disabled = true;
 
@@ -348,10 +348,21 @@ public partial class Editor
         return section;
     }
 
-    private static Button MakeTopBarButton(string text, string key = "")
+    private static Button MakeTopBarButton(string text, InputEventKey? shortcut = null)
     {
-        var t = key == "" ? text : $"{text}\n({key})";
-        var btn = new Button { Text = text, CustomMinimumSize = new Vector2(72, 50) };
+        var t = shortcut is null ? text : $"{text}\n({shortcut.AsText()})";
+        var btn = new Button 
+        { 
+            Text = t, 
+            CustomMinimumSize = new Vector2(72, 50),
+        };
+
+        if (shortcut is not null)
+        {
+            var s = new Shortcut() { Events = [shortcut] };
+            btn.Shortcut = s;
+            btn.ShortcutFeedback = true;
+        }
         btn.AddThemeFontSizeOverride("font_size", 15);
         return btn;
     }
