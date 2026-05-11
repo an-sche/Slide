@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 
 namespace Slide;
@@ -8,6 +9,7 @@ public partial class CanvasView : Control
     public event Action<Vector2I>? PixelClicked;
     public event Action<Vector2I>? PixelLeftPressed;
     public event Action<Vector2I, Vector2>? PixelRightClicked;
+    public event Action?           StrokeEnded;
 
     private Image?        _image;
     private ImageTexture? _texture;
@@ -64,17 +66,25 @@ public partial class CanvasView : Control
 
     public void SetGhostLine(Vector2? worldFrom) => _ghostLineWorldFrom = worldFrom;
 
-    public int BrushRadius => _brushRadius;
+    public Color GetPixel(Vector2I px) => _image?.GetPixel(px.X, px.Y) ?? Colors.Black;
 
-    public void AdjustBrushRadius(int delta)
+    public void SetPixel(Vector2I px, Color color)
     {
-        _brushRadius = Mathf.Max(0, _brushRadius + delta);
+        if (_image == null) return;
+        if ((uint)px.X >= (uint)_image.GetWidth() || (uint)px.Y >= (uint)_image.GetHeight()) return;
+        _image.SetPixel(px.X, px.Y, color);
+    }
+
+    public void FlushTexture()
+    {
+        if (_image == null || _texture == null) return;
+        _texture.Update(_image);
         QueueRedraw();
     }
 
-    public void PaintBrush(Vector2I center, Color color)
+    public IEnumerable<Vector2I> BrushPixels(Vector2I center)
     {
-        if (_image == null) return;
+        if (_image == null || _brushRadius < 0) yield break;
         int r = _brushRadius;
         int w = _image.GetWidth(), h = _image.GetHeight();
         for (int dy = -r; dy <= r; dy++)
@@ -83,9 +93,20 @@ public partial class CanvasView : Control
             if (dx * dx + dy * dy > r * r) continue;
             int px = center.X + dx, py = center.Y + dy;
             if ((uint)px >= (uint)w || (uint)py >= (uint)h) continue;
-            _image.SetPixel(px, py, color);
+            yield return new Vector2I(px, py);
         }
-        _texture!.Update(_image);
+    }
+
+    public int BrushRadius
+    {
+        get => _brushRadius;
+        set { _brushRadius = value; QueueRedraw(); }
+    }
+
+    public void AdjustBrushRadius(int delta)
+    {
+        if (_brushRadius < 0) return;
+        _brushRadius = Mathf.Max(0, _brushRadius + delta);
         QueueRedraw();
     }
 
@@ -159,6 +180,7 @@ public partial class CanvasView : Control
             DrawOverlay(WorldToScreen(ov.WorldPos), ov);
 
         // Brush preview
+        if (_brushRadius < 0) return;
         var mouse    = GetLocalMousePosition();
         var cursorPx = ToPixel(mouse);
         if ((uint)cursorPx.X < (uint)_image.GetWidth() && (uint)cursorPx.Y < (uint)_image.GetHeight())
@@ -166,6 +188,7 @@ public partial class CanvasView : Control
             var   screenCenter = new Vector2(cursorPx.X + 0.5f, cursorPx.Y + 0.5f) * _zoom + _offset;
             float screenRadius = (_brushRadius + 0.5f) * _zoom;
             DrawArc(screenCenter, screenRadius, 0, Mathf.Tau, 64, new Color(1f, 1f, 1f, 0.8f), 1.5f);
+
         }
     }
 
@@ -176,6 +199,11 @@ public partial class CanvasView : Control
             case InputEventMouseButton mb when mb.Pressed && mb.ButtonIndex == MouseButton.Left:
                 PixelLeftPressed?.Invoke(ToPixel(mb.Position));
                 PixelClicked?.Invoke(ToPixel(mb.Position));
+                GetViewport().SetInputAsHandled();
+                break;
+
+            case InputEventMouseButton mb when !mb.Pressed && mb.ButtonIndex == MouseButton.Left:
+                StrokeEnded?.Invoke();
                 GetViewport().SetInputAsHandled();
                 break;
 

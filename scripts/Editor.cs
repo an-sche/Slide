@@ -16,6 +16,8 @@ public partial class Editor : Control
     private readonly Label[]        _slotNames     = new Label[8];
 
     private CanvasView    _canvas             = null!;
+    private Button        _undoBtn            = null!;
+    private Button        _redoBtn            = null!;
     private Label         _hint               = null!;
     private Label         _titleLabel         = null!;
     private Label         _brushLabel         = null!;
@@ -30,23 +32,26 @@ public partial class Editor : Control
     private LineEdit      _selectionNameEdit    = null!;
     private bool          _syncingFields;
     private bool          _placementArmed;
+    private bool          _editingPosition;
+    private Godot.Vector2 _posEditStart;
+    private bool          _editingName;
+    private string?       _nameEditStart;
     private VBoxContainer _behaviorConfigContainer = null!;
     private EnemyPlacementMode _placementMode   = EnemyPlacementMode.None;
     private EnemyData?    _placementTarget;
     private LevelData? _levelData;
     private string     _levelDir  = "";
     private string     _levelPath = "";
-    private bool       _dirty;
+    // Only set when restoring from a playtest snapshot that was dirty — not from undo operations.
+    private bool      _playtestDirty;
+    private UndoStack _undoStack = null!;
 
-    private void SetDirty()
-    {
-        _dirty = true;
-        UpdateTitleLabel();
-    }
+    private bool IsDirty => _playtestDirty || _undoStack.IsModified;
 
     private void ClearDirty()
     {
-        _dirty = false;
+        _playtestDirty = false;
+        _undoStack.MarkSavePoint();
         UpdateTitleLabel();
     }
 
@@ -57,11 +62,14 @@ public partial class Editor : Control
             name = _levelPath.GetFile().GetBaseName();
         if (string.IsNullOrEmpty(name))
             name = "(unnamed)";
-        _titleLabel.Text = _dirty ? name + " *" : name;
+        _titleLabel.Text    = IsDirty ? name + " *" : name;
+        _undoBtn.Disabled   = !_undoStack.CanUndo;
+        _redoBtn.Disabled   = !_undoStack.CanRedo;
     }
 
     public override void _Ready()
     {
+        _undoStack = new UndoStack(UpdateTitleLabel);
         var window = GetTree().Root;
         Size = (Vector2)window.Size;
         window.SizeChanged += () => { if (IsInsideTree()) Size = (Vector2)GetTree().Root.Size; };
@@ -92,6 +100,19 @@ public partial class Editor : Control
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
+
+        if (key.CtrlPressed && key.Keycode == Key.Z && !key.ShiftPressed)
+        {
+            _undoStack.Undo();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+        if (key.CtrlPressed && key.Keycode == Key.Y)
+        {
+            _undoStack.Redo();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
 
         int slot = key.Keycode switch
         {

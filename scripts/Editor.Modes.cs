@@ -52,7 +52,10 @@ public partial class Editor
         FinalizePlacementSilent();
         _mode = mode;
 
-        _brushSection.Visible = mode == EditorMode.Paint;
+        bool isPaint = mode == EditorMode.Paint;
+        _brushSection.Visible  = isPaint;
+        _canvas.BrushRadius    = isPaint ? 0 : -1;
+        if (isPaint) _brushLabel.Text = "0";
         ClearSelection();
 
         for (int i = 0; i < _modeTabs.Length; i++)
@@ -79,13 +82,23 @@ public partial class Editor
         if (_placementMode != EnemyPlacementMode.None)
             FinalizePlacement();
         _placementArmed = true;
+        RefreshSlotBorders();
     }
 
     private void SelectSlot(int index)
     {
         if (index >= SlotLabels[(int)_mode].Length) return;
-        for (int i = 0; i < 8; i++)
-            _slotStyles[i].BorderColor = i == index ? SelectedBorder : UnselectedBorder;
         _selectedSlot = index;
+        RefreshSlotBorders();
+    }
+
+    private void RefreshSlotBorders()
+    {
+        bool entityMode = _mode is EditorMode.Entities or EditorMode.Enemies;
+        for (int i = 0; i < 8; i++)
+        {
+            bool armed = i == _selectedSlot && (!entityMode || _placementArmed);
+            _slotStyles[i].BorderColor = armed ? SelectedBorder : UnselectedBorder;
+        }
     }
 }

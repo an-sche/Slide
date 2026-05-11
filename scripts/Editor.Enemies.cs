@@ -7,6 +7,9 @@ public partial class Editor
 {
     private enum EnemyPlacementMode { None, PlacingWaypoints }
 
+    private EnemyData[]?    _enemyPlacementSnapshot;
+    private WaypointData[]? _waypointAddSnapshot;
+
     // ── Placement ────────────────────────────────────────────────────────────
 
     private void OnEnemyLeftPressed(Vector2I px)
@@ -30,14 +33,14 @@ public partial class Editor
         };
         if (enemy == null) return;
 
-        _placementTarget = enemy;
+        _enemyPlacementSnapshot = _levelData.Enemies;
+        _placementTarget        = enemy;
         var list = new List<EnemyData>(_levelData.Enemies) { enemy };
         _levelData.Enemies = [..list];
-        _selectedIndex = _levelData.Entities.Length + _levelData.Enemies.Length - 1;
+        _selectedIndex     = _levelData.Entities.Length + _levelData.Enemies.Length - 1;
 
         RefreshOverlays();
         SyncNameField();
-        SetDirty();
     }
 
     private EnemyData CreatePatrolEnemy(Vector2 world)
@@ -66,22 +69,55 @@ public partial class Editor
         patrol.Waypoints = [..waypoints];
         _canvas.SetGhostLine(world);
         RefreshOverlays();
-        SetDirty();
     }
 
     private void FinalizePlacement()
     {
         if (_placementMode == EnemyPlacementMode.None) return;
+
+        if (_enemyPlacementSnapshot != null)
+        {
+            var before = _enemyPlacementSnapshot;
+            var after  = _levelData!.Enemies;
+            int selIdx = _selectedIndex;
+            _enemyPlacementSnapshot = null;
+            FinalizePlacementSilent();
+            Select(selIdx);  // apply initial display: RefreshOverlays + SyncNameField
+            _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                () => { _levelData!.Enemies = after;  Select(selIdx);   },
+                () => { _levelData!.Enemies = before; ClearSelection(); }
+            ));
+            return;
+        }
+
+        if (_waypointAddSnapshot != null && _placementTarget != null)
+        {
+            var patrol = (PatrolBehaviorData)_placementTarget.Behavior;
+            var before = _waypointAddSnapshot;
+            var after  = patrol.Waypoints;
+            _waypointAddSnapshot = null;
+            FinalizePlacementSilent();
+            RefreshOverlays();  // rebuild panel without "placing waypoints" hint
+            _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                () => { patrol.Waypoints = after;  RefreshOverlays(); },
+                () => { patrol.Waypoints = before; RefreshOverlays(); }
+            ));
+            return;
+        }
+
         FinalizePlacementSilent();
         RefreshOverlays();
     }
 
     private void FinalizePlacementSilent()
     {
-        _placementMode   = EnemyPlacementMode.None;
-        _placementTarget = null;
-        _placementArmed  = false;
+        _placementMode           = EnemyPlacementMode.None;
+        _placementTarget         = null;
+        _placementArmed          = false;
+        _enemyPlacementSnapshot  = null;
+        _waypointAddSnapshot     = null;
         _canvas.SetGhostLine(null);
+        RefreshSlotBorders();
     }
 
     // ── Options panel ─────────────────────────────────────────────────────────
@@ -125,18 +161,27 @@ public partial class Editor
         };
         radiusLabel.AddThemeFontSizeOverride("font_size", 14);
         var radiusPlus = new Button { Text = "+", CustomMinimumSize = new Vector2(28, 24) };
+
         radiusMinus.Pressed += () =>
         {
-            enemy.Radius = Mathf.Max(4f, enemy.Radius - 2f);
-            radiusLabel.Text = ((int)enemy.Radius).ToString();
-            SetDirty();
+            float before = enemy.Radius;
+            float after  = Mathf.Max(4f, before - 2f);
+            if (after == before) return;
+            _undoStack.Execute(new SimpleCommand(
+                () => { enemy.Radius = after;  RefreshOverlays(); },
+                () => { enemy.Radius = before; RefreshOverlays(); }
+            ));
         };
         radiusPlus.Pressed += () =>
         {
-            enemy.Radius += 2f;
-            radiusLabel.Text = ((int)enemy.Radius).ToString();
-            SetDirty();
+            float before = enemy.Radius;
+            float after  = before + 2f;
+            _undoStack.Execute(new SimpleCommand(
+                () => { enemy.Radius = after;  RefreshOverlays(); },
+                () => { enemy.Radius = before; RefreshOverlays(); }
+            ));
         };
+
         radiusRow.AddChild(radiusMinus);
         radiusRow.AddChild(radiusLabel);
         radiusRow.AddChild(radiusPlus);
@@ -144,17 +189,36 @@ public partial class Editor
 
         // Common: Color
         _behaviorConfigContainer.AddChild(MakeBehaviorLabel("Color"));
-        var colorBtn = new ColorPickerButton
+        Color colorBefore  = Color.FromHtml(enemy.Color);
+        bool  colorEditing = false;
+        var   colorBtn     = new ColorPickerButton
         {
-            Color               = Color.FromHtml(enemy.Color),
+            Color               = colorBefore,
             CustomMinimumSize   = new Vector2(0, 28),
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
         colorBtn.ColorChanged += c =>
         {
+            if (!colorEditing)
+            {
+                colorBefore  = Color.FromHtml(enemy.Color);
+                colorEditing = true;
+            }
             enemy.Color = "#" + c.ToHtml(false).ToLower();
             RefreshCanvasOverlays();
-            SetDirty();
+        };
+        colorBtn.PopupClosed += () =>
+        {
+            if (!colorEditing) return;
+            colorEditing = false;
+            Color before = colorBefore;
+            Color after  = colorBtn.Color;
+            if (before == after) return;
+            // Color already applied via ColorChanged — just track for undo.
+            _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                () => { enemy.Color = "#" + after.ToHtml(false).ToLower();  RefreshOverlays(); },
+                () => { enemy.Color = "#" + before.ToHtml(false).ToLower(); RefreshOverlays(); }
+            ));
         };
         _behaviorConfigContainer.AddChild(colorBtn);
 
@@ -204,8 +268,24 @@ public partial class Editor
         loopBtn.ButtonPressed      = patrol.EndBehavior != "disappear";
         disappearBtn.ButtonPressed = patrol.EndBehavior == "disappear";
 
-        loopBtn.Pressed      += () => { patrol.EndBehavior = "loop";      SetDirty(); };
-        disappearBtn.Pressed += () => { patrol.EndBehavior = "disappear"; SetDirty(); };
+        loopBtn.Pressed += () =>
+        {
+            if (patrol.EndBehavior == "loop") return;
+            string before = patrol.EndBehavior;
+            _undoStack.Execute(new SimpleCommand(
+                () => { patrol.EndBehavior = "loop";      RefreshOverlays(); },
+                () => { patrol.EndBehavior = before;      RefreshOverlays(); }
+            ));
+        };
+        disappearBtn.Pressed += () =>
+        {
+            if (patrol.EndBehavior == "disappear") return;
+            string before = patrol.EndBehavior;
+            _undoStack.Execute(new SimpleCommand(
+                () => { patrol.EndBehavior = "disappear"; RefreshOverlays(); },
+                () => { patrol.EndBehavior = before;      RefreshOverlays(); }
+            ));
+        };
 
         endRow.AddChild(loopBtn);
         endRow.AddChild(disappearBtn);
@@ -256,24 +336,41 @@ public partial class Editor
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
             speedEdit.AddThemeFontSizeOverride("font_size", 11);
+
+            float speedBefore = 0f;
+            speedEdit.FocusEntered += () => speedBefore = patrol.Waypoints[captured].Speed;
+            speedEdit.FocusExited  += () =>
+            {
+                string text = speedEdit.Text;
+                if (!float.TryParse(text, out float speedAfter)) return;
+                speedAfter = Mathf.Max(1f, speedAfter);
+                if (speedAfter == speedBefore) return;
+                float sb = speedBefore, sa = speedAfter;
+                int   wi = captured;
+                // Speed already applied via TextChanged — just track for undo.
+                _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                    () => { patrol.Waypoints[wi].Speed = sa; RefreshSelectionPanel(); },
+                    () => { patrol.Waypoints[wi].Speed = sb; RefreshSelectionPanel(); }
+                ));
+            };
             speedEdit.TextChanged += val =>
             {
                 if (float.TryParse(val, out float spd))
-                {
                     patrol.Waypoints[captured].Speed = Mathf.Max(1f, spd);
-                    SetDirty();
-                }
             };
 
             var delBtn = new Button { Text = "×", CustomMinimumSize = new Vector2(22, 0) };
             delBtn.AddThemeFontSizeOverride("font_size", 13);
             delBtn.Pressed += () =>
             {
-                var wps = new List<WaypointData>(patrol.Waypoints);
+                var before = patrol.Waypoints;
+                var wps    = new List<WaypointData>(patrol.Waypoints);
                 wps.RemoveAt(captured);
-                patrol.Waypoints = [..wps];
-                RefreshOverlays();
-                SetDirty();
+                var after  = wps.ToArray();
+                _undoStack.Execute(new SimpleCommand(
+                    () => { patrol.Waypoints = after;  RefreshOverlays(); },
+                    () => { patrol.Waypoints = before; RefreshOverlays(); }
+                ));
             };
 
             row.AddChild(numLabel);
@@ -294,7 +391,7 @@ public partial class Editor
         addBtn.AddThemeFontSizeOverride("font_size", 12);
         addBtn.Pressed += () =>
         {
-            // Start ghost line from the last existing waypoint
+            _waypointAddSnapshot = patrol.Waypoints;
             if (patrol.Waypoints.Length > 0)
             {
                 var last = patrol.Waypoints[^1];

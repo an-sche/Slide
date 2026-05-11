@@ -10,7 +10,7 @@ public partial class Editor
 {
     private void ConfirmDiscardIfDirty(Action callback)
     {
-        if (!_dirty) { callback(); return; }
+        if (!IsDirty) { callback(); return; }
 
         var dlg = new ConfirmationDialog
         {
@@ -44,14 +44,13 @@ public partial class Editor
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 8);
             var lbl = new Label { Text = labelText, CustomMinimumSize = new Vector2(60, 0) };
-            spin.MinValue = 8; spin.MaxValue = 2048; spin.Step = 1;
             row.AddChild(lbl); row.AddChild(spin);
             vbox.AddChild(row);
             result = spin;
         }
 
-        AddRow("Width",  new SpinBox { Value = 500 }, out var widthSpin);
-        AddRow("Height", new SpinBox { Value = 500 }, out var heightSpin);
+        AddRow("Width",  new SpinBox { MinValue = 8, MaxValue = 2048, Step = 1, Value = 500 }, out var widthSpin);
+        AddRow("Height", new SpinBox { MinValue = 8, MaxValue = 2048, Step = 1, Value = 500 }, out var heightSpin);
 
         var hint = new Label
         {
@@ -88,7 +87,9 @@ public partial class Editor
         GameSetup.LastEditorLevelPath = "";
 
         _canvas.LoadImage(image);
-        _hint.Visible = false;
+        _hint.Visible  = false;
+        _activeStroke  = null;
+        _undoStack.Clear();
         ClearDirty();
         ClearSelection();
     }
@@ -110,7 +111,7 @@ public partial class Editor
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 8);
             row.AddChild(new Label { Text = labelText, CustomMinimumSize = new Vector2(100, 0) });
-            var spin = new SpinBox { Value = current, MinValue = 8, MaxValue = 2048, Step = 1 };
+            var spin = new SpinBox { MinValue = 8, MaxValue = 2048, Step = 1, Value = current };
             row.AddChild(spin);
             vbox.AddChild(row);
             return spin;
@@ -149,7 +150,6 @@ public partial class Editor
                 ApplyResize(newW, newH);
             }
 
-            SetDirty();
             dlg.QueueFree();
         };
         dlg.Canceled += () => dlg.QueueFree();
@@ -162,14 +162,16 @@ public partial class Editor
         var old = _canvas.GetImage()!;
         if (newW == old.GetWidth() && newH == old.GetHeight()) return;
 
-        var newImage = Image.CreateEmpty(newW, newH, false, Image.Format.Rgb8);
-        newImage.Fill(new Color(0.04f, 0.04f, 0.04f));
+        var before = (Image)old.Duplicate();
 
-        int copyW = Mathf.Min(old.GetWidth(),  newW);
-        int copyH = Mathf.Min(old.GetHeight(), newH);
-        newImage.BlitRect(old, new Rect2I(0, 0, copyW, copyH), Vector2I.Zero);
+        var after = Image.CreateEmpty(newW, newH, false, Image.Format.Rgb8);
+        after.Fill(new Color(0.04f, 0.04f, 0.04f));
+        after.BlitRect(old, new Rect2I(0, 0, Mathf.Min(old.GetWidth(), newW), Mathf.Min(old.GetHeight(), newH)), Vector2I.Zero);
 
-        _canvas.LoadImage(newImage);
+        _undoStack.Execute(new SimpleCommand(
+            () => _canvas.LoadImage((Image)after.Duplicate()),
+            () => _canvas.LoadImage((Image)before.Duplicate())
+        ));
     }
 
     private void OnOpen() => ConfirmDiscardIfDirty(ShowOpenDialog);
@@ -200,10 +202,11 @@ public partial class Editor
 
         _canvas.LoadImage(snap.Image);
         _hint.Visible = false;
+        _activeStroke = null;
         ClearSelection();
         RefreshOverlays();
 
-        if (snap.WasDirty) SetDirty(); else ClearDirty();
+        if (snap.WasDirty) { _playtestDirty = true; UpdateTitleLabel(); } else ClearDirty();
     }
 
     private void LoadLevelFile(string path)
@@ -218,7 +221,9 @@ public partial class Editor
         string pngPath = path.GetBaseName() + ".png";
         var    image   = Image.LoadFromFile(pngPath);
         _canvas.LoadImage(image);
-        _hint.Visible = false;
+        _hint.Visible  = false;
+        _activeStroke  = null;
+        _undoStack.Clear();
         ClearDirty();
         ClearSelection();
         RefreshOverlays();
@@ -279,7 +284,7 @@ public partial class Editor
         if (image == null) return;
 
         // Hold direct references — no disk writes, GameSetup survives scene changes.
-        GameSetup.PlaytestRestore = new GameSetup.EditorSnapshot(_levelPath, _levelData, image, _dirty);
+        GameSetup.PlaytestRestore = new GameSetup.EditorSnapshot(_levelPath, _levelData, image, IsDirty);
 
         GameSetup.PlaytestPath = _levelPath;
         RunState.Reset();

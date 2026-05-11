@@ -80,41 +80,71 @@ public partial class Editor
     private void OnSelectionNameChanged(string value)
     {
         if (_selectedIndex < 0 || _levelData == null) return;
-        string? name = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-        if (_selectedIndex < _levelData.Entities.Length)
-            _levelData.Entities[_selectedIndex].Name = name;
-        else
-            _levelData.Enemies[_selectedIndex - _levelData.Entities.Length].Name = name;
-
-        string kind = _selectedIndex < _levelData.Entities.Length
-            ? EntityKindLabel(_levelData.Entities[_selectedIndex].Kind)
-            : EnemyKindLabel(_levelData.Enemies[_selectedIndex - _levelData.Entities.Length].Behavior);
-
-        _selectionKindLabel.Text = string.IsNullOrEmpty(name) ? kind : $"{kind} - {name}";
+        ApplyNameToSelected(value);
         RefreshOverlays();
-        SetDirty();
+    }
+
+    private void OnNameEditFocusEntered()
+    {
+        if (_editingName) return;
+        _nameEditStart = GetSelectedName();
+        _editingName   = true;
+    }
+
+    private void OnNameEditFocusExited()
+    {
+        _editingName = false;
+        if (_selectedIndex < 0 || _levelData == null) return;
+
+        string? finalName = GetSelectedName();
+        if (finalName == _nameEditStart) return;
+
+        string? startName = _nameEditStart;
+        int     idx       = _selectedIndex;
+        _undoStack.Execute(new SimpleCommand(
+            () => { ApplyNameAt(idx, finalName); RefreshOverlays(); SyncNameField(); },
+            () => { ApplyNameAt(idx, startName); RefreshOverlays(); SyncNameField(); }
+        ));
     }
 
     private void DeleteSelected()
     {
         if (_selectedIndex < 0 || _levelData == null) return;
 
+        var entitySnapshot = _levelData.Entities;
+        var enemySnapshot  = _levelData.Enemies;
+        int restoreIdx     = _selectedIndex;
+
+        EntityData[]? newEntities = null;
+        EnemyData[]?  newEnemies  = null;
+
         if (_selectedIndex < _levelData.Entities.Length)
         {
             var list = new List<EntityData>(_levelData.Entities);
             list.RemoveAt(_selectedIndex);
-            _levelData.Entities = [.. list];
+            newEntities = [.. list];
         }
         else
         {
             var list = new List<EnemyData>(_levelData.Enemies);
             list.RemoveAt(_selectedIndex - _levelData.Entities.Length);
-            _levelData.Enemies = [.. list];
+            newEnemies = [.. list];
         }
 
-        SetDirty();
-        ClearSelection();
+        _undoStack.Execute(new SimpleCommand(
+            () =>
+            {
+                if (newEntities != null) _levelData.Entities = newEntities;
+                if (newEnemies  != null) _levelData.Enemies  = newEnemies;
+                ClearSelection();
+            },
+            () =>
+            {
+                _levelData.Entities = entitySnapshot;
+                _levelData.Enemies  = enemySnapshot;
+                Select(restoreIdx);
+            }
+        ));
     }
 
     private void OnPixelLeftPressed(Vector2I px)
@@ -135,17 +165,20 @@ public partial class Editor
         };
         if (string.IsNullOrEmpty(kind)) return;
 
-        var entities = new List<EntityData>(_levelData.Entities);
-
+        var before   = _levelData.Entities;
+        var entities = new List<EntityData>(before);
         if (kind is "start" or "end")
             entities.RemoveAll(e => e.Kind == kind);
-
         entities.Add(new EntityData { Kind = kind, X = world.X, Y = world.Y });
-        _levelData.Entities = [.. entities];
-        _placementArmed = false;
+        var after = entities.ToArray();
 
-        RefreshOverlays();
-        SetDirty();
+        _undoStack.Execute(new SimpleCommand(
+            () => { _levelData.Entities = after;  RefreshOverlays(); },
+            () => { _levelData.Entities = before; RefreshOverlays(); }
+        ));
+
+        _placementArmed = false;
+        RefreshSlotBorders();
     }
 
     private void SyncPositionFields()
@@ -164,28 +197,93 @@ public partial class Editor
         _syncingFields       = false;
     }
 
+    private void OnPositionFieldFocusEntered()
+    {
+        if (_editingPosition) return;
+        _posEditStart    = GetSelectedWorldPos();
+        _editingPosition = true;
+    }
+
+    private void OnPositionFieldFocusExited()
+    {
+        // Wait until focus has left both fields before committing.
+        if (_selectionXEdit.HasFocus() || _selectionYEdit.HasFocus()) return;
+        _editingPosition = false;
+        if (_selectedIndex < 0 || _levelData == null) return;
+
+        Vector2 finalPos = GetSelectedWorldPos();
+        if (finalPos == _posEditStart) return;
+
+        Vector2 startPos = _posEditStart;
+        int     idx      = _selectedIndex;
+        _undoStack.Execute(new SimpleCommand(
+            () => { ApplyPositionAt(idx, finalPos); RefreshCanvasOverlays(); SyncPositionFields(); },
+            () => { ApplyPositionAt(idx, startPos); RefreshCanvasOverlays(); SyncPositionFields(); }
+        ));
+    }
+
     private void OnSelectionPositionChanged()
     {
         if (_syncingFields || _selectedIndex < 0 || _levelData == null) return;
         if (!int.TryParse(_selectionXEdit.Text, out int tx)) return;
         if (!int.TryParse(_selectionYEdit.Text, out int ty)) return;
 
-        float   cellSize = GameplayConstants.CellSize;
-        Vector2 world    = new Vector2((tx + 0.5f) * cellSize, (ty + 0.5f) * cellSize);
+        float   cs    = GameplayConstants.CellSize;
+        Vector2 world = new Vector2((tx + 0.5f) * cs, (ty + 0.5f) * cs);
+        ApplyPositionAt(_selectedIndex, world);
+        RefreshCanvasOverlays();
+    }
 
-        if (_selectedIndex < _levelData.Entities.Length)
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private Vector2 GetSelectedWorldPos()
+    {
+        if (_selectedIndex < 0 || _levelData == null) return Vector2.Zero;
+        return _selectedIndex < _levelData.Entities.Length
+            ? new Vector2(_levelData.Entities[_selectedIndex].X, _levelData.Entities[_selectedIndex].Y)
+            : EnemyOrigin(_levelData.Enemies[_selectedIndex - _levelData.Entities.Length].Behavior);
+    }
+
+    private void ApplyPositionAt(int idx, Vector2 world)
+    {
+        if (_levelData == null) return;
+        if (idx < _levelData.Entities.Length)
         {
-            var e = _levelData.Entities[_selectedIndex];
-            e.X = world.X;
-            e.Y = world.Y;
+            _levelData.Entities[idx].X = world.X;
+            _levelData.Entities[idx].Y = world.Y;
         }
         else
         {
-            SetEnemyOrigin(_levelData.Enemies[_selectedIndex - _levelData.Entities.Length], world);
+            SetEnemyOrigin(_levelData.Enemies[idx - _levelData.Entities.Length], world);
         }
+    }
 
-        RefreshCanvasOverlays();
-        SetDirty();
+    private string? GetSelectedName()
+    {
+        if (_selectedIndex < 0 || _levelData == null) return null;
+        return _selectedIndex < _levelData.Entities.Length
+            ? _levelData.Entities[_selectedIndex].Name
+            : _levelData.Enemies[_selectedIndex - _levelData.Entities.Length].Name;
+    }
+
+    private void ApplyNameToSelected(string value)
+    {
+        if (_selectedIndex < 0 || _levelData == null) return;
+        ApplyNameAt(_selectedIndex, string.IsNullOrWhiteSpace(value) ? null : value.Trim());
+    }
+
+    private void ApplyNameAt(int idx, string? name)
+    {
+        if (_levelData == null) return;
+        if (idx < _levelData.Entities.Length)
+            _levelData.Entities[idx].Name = name;
+        else
+            _levelData.Enemies[idx - _levelData.Entities.Length].Name = name;
+
+        string kind = idx < _levelData.Entities.Length
+            ? EntityKindLabel(_levelData.Entities[idx].Kind)
+            : EnemyKindLabel(_levelData.Enemies[idx - _levelData.Entities.Length].Behavior);
+        _selectionKindLabel.Text = string.IsNullOrEmpty(name) ? kind : $"{kind} - {name}";
     }
 
     private static void SetEnemyOrigin(EnemyData enemy, Vector2 world)

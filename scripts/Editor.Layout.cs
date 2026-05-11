@@ -20,12 +20,19 @@ public partial class Editor
 
         hbox.AddChild(new Control { CustomMinimumSize = new Vector2(8, 0) });
 
-        var newBtn      = MakeTopBarButton("New");      newBtn.Pressed      += OnNew;           hbox.AddChild(newBtn);
-        var openBtn     = MakeTopBarButton("Open");     openBtn.Pressed     += OnOpen;          hbox.AddChild(openBtn);
-        var saveBtn     = MakeTopBarButton("Save");     saveBtn.Pressed     += OnSave;          hbox.AddChild(saveBtn);
-        var saveAsBtn   = MakeTopBarButton("Save As");  saveAsBtn.Pressed   += OnSaveAs;        hbox.AddChild(saveAsBtn);
-        var settingsBtn = MakeTopBarButton("Settings"); settingsBtn.Pressed += OnLevelSettings; hbox.AddChild(settingsBtn);
-        var playBtn     = MakeTopBarButton("Play");     playBtn.Pressed     += OnPlay;          hbox.AddChild(playBtn);
+        var newBtn      = MakeTopBarButton("New", "Ctrl+n");      newBtn.Pressed      += OnNew;           hbox.AddChild(newBtn);
+        var openBtn     = MakeTopBarButton("Open", "Ctrl+o");     openBtn.Pressed     += OnOpen;          hbox.AddChild(openBtn);
+        var saveBtn     = MakeTopBarButton("Save", "Ctrl+s");     saveBtn.Pressed     += OnSave;          hbox.AddChild(saveBtn);
+        var saveAsBtn   = MakeTopBarButton("Save As", "Ctrl+Shift+s");  saveAsBtn.Pressed   += OnSaveAs;        hbox.AddChild(saveAsBtn);
+        var settingsBtn = MakeTopBarButton("Settings", "Ctrl+,"); settingsBtn.Pressed += OnLevelSettings; hbox.AddChild(settingsBtn);
+        var playBtn     = MakeTopBarButton("Play", "F5");     playBtn.Pressed     += OnPlay;          hbox.AddChild(playBtn);
+
+        hbox.AddChild(new VSeparator { CustomMinimumSize = new Vector2(0, 28) });
+
+        _undoBtn          = MakeTopBarButton("Undo", "Ctrl+z"); _undoBtn.Pressed += () => _undoStack.Undo(); hbox.AddChild(_undoBtn);
+        _redoBtn          = MakeTopBarButton("Redo", "Ctrl+y"); _redoBtn.Pressed += () => _undoStack.Redo(); hbox.AddChild(_redoBtn);
+        _undoBtn.Disabled = true;
+        _redoBtn.Disabled = true;
 
         hbox.AddChild(new VSeparator { CustomMinimumSize = new Vector2(0, 28) });
 
@@ -108,6 +115,7 @@ public partial class Editor
         _canvas.PixelClicked      += OnPixelClicked;
         _canvas.PixelLeftPressed  += OnPixelLeftPressed;
         _canvas.PixelRightClicked += OnPixelRightClicked;
+        _canvas.StrokeEnded       += EndStroke;
         parent.AddChild(_canvas);
 
         _hint = new Label
@@ -232,7 +240,9 @@ public partial class Editor
 
         _selectionXEdit = new LineEdit { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         _selectionXEdit.AddThemeFontSizeOverride("font_size", 12);
-        _selectionXEdit.TextChanged += _ => OnSelectionPositionChanged();
+        _selectionXEdit.FocusEntered += OnPositionFieldFocusEntered;
+        _selectionXEdit.FocusExited  += OnPositionFieldFocusExited;
+        _selectionXEdit.TextChanged  += _ => OnSelectionPositionChanged();
 
         var yLabel = new Label { Text = "Y", VerticalAlignment = VerticalAlignment.Center };
         yLabel.AddThemeFontSizeOverride("font_size", 11);
@@ -240,7 +250,9 @@ public partial class Editor
 
         _selectionYEdit = new LineEdit { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         _selectionYEdit.AddThemeFontSizeOverride("font_size", 12);
-        _selectionYEdit.TextChanged += _ => OnSelectionPositionChanged();
+        _selectionYEdit.FocusEntered += OnPositionFieldFocusEntered;
+        _selectionYEdit.FocusExited  += OnPositionFieldFocusExited;
+        _selectionYEdit.TextChanged  += _ => OnSelectionPositionChanged();
 
         posRow.AddChild(xLabel);
         posRow.AddChild(_selectionXEdit);
@@ -258,7 +270,9 @@ public partial class Editor
             PlaceholderText     = "optional",
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
-        _selectionNameEdit.TextChanged += OnSelectionNameChanged;
+        _selectionNameEdit.FocusEntered += OnNameEditFocusEntered;
+        _selectionNameEdit.FocusExited  += OnNameEditFocusExited;
+        _selectionNameEdit.TextChanged  += OnSelectionNameChanged;
         details.AddChild(_selectionNameEdit);
 
         _behaviorConfigContainer = new VBoxContainer();
@@ -334,9 +348,10 @@ public partial class Editor
         return section;
     }
 
-    private static Button MakeTopBarButton(string text)
+    private static Button MakeTopBarButton(string text, string key = "")
     {
-        var btn = new Button { Text = text, CustomMinimumSize = new Vector2(72, 36) };
+        var t = key == "" ? text : $"{text}\n({key})";
+        var btn = new Button { Text = text, CustomMinimumSize = new Vector2(72, 50) };
         btn.AddThemeFontSizeOverride("font_size", 15);
         return btn;
     }
