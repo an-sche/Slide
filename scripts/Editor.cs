@@ -150,7 +150,7 @@ public partial class Editor : Control
         {
             if (_placementMode != EnemyPlacementMode.None)
             {
-                FinalizePlacement();
+                CancelPlacement();
                 GetViewport().SetInputAsHandled();
                 return;
             }

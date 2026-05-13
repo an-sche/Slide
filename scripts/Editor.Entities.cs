@@ -101,7 +101,8 @@ public partial class Editor
 
         string? startName = _nameEditStart;
         int     idx       = _selectedIndex;
-        _undoStack.Execute(new SimpleCommand(
+        // Name already applied live via OnSelectionNameChanged — just track for undo.
+        _undoStack.ExecuteAlreadyDone(new SimpleCommand(
             () => { ApplyNameAt(idx, finalName); RefreshOverlays(); SyncNameField(); },
             () => { ApplyNameAt(idx, startName); RefreshOverlays(); SyncNameField(); }
         ));
@@ -110,6 +111,17 @@ public partial class Editor
     private void DeleteSelected()
     {
         if (_selectedIndex < 0 || _levelData == null) return;
+
+        // Initial placement in progress → Delete cancels (discards partial enemy).
+        if (_enemyPlacementSnapshot != null)
+        {
+            CancelPlacement();
+            return;
+        }
+
+        // Any other active mode → clear it before proceeding with normal deletion.
+        if (_placementMode != EnemyPlacementMode.None)
+            FinalizePlacementSilent();
 
         var entitySnapshot = _levelData.Entities;
         var enemySnapshot  = _levelData.Enemies;
@@ -216,7 +228,8 @@ public partial class Editor
 
         Vector2 startPos = _posEditStart;
         int     idx      = _selectedIndex;
-        _undoStack.Execute(new SimpleCommand(
+        // Position already applied live via OnSelectionPositionChanged — just track for undo.
+        _undoStack.ExecuteAlreadyDone(new SimpleCommand(
             () => { ApplyPositionAt(idx, finalPos); RefreshCanvasOverlays(); SyncPositionFields(); },
             () => { ApplyPositionAt(idx, startPos); RefreshCanvasOverlays(); SyncPositionFields(); }
         ));

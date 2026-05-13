@@ -228,6 +228,32 @@ public partial class Editor
         RefreshOverlays();
     }
 
+    // Commit whatever is in progress (Enter / Done button).
+    // Cancel (Escape / Delete) — use CancelPlacement instead.
+    private void CancelPlacement()
+    {
+        if (_placementMode == EnemyPlacementMode.None) return;
+
+        // Initial enemy placement: discard the partially-built enemy.
+        if (_enemyPlacementSnapshot != null)
+        {
+            _levelData!.Enemies = _enemyPlacementSnapshot;
+            FinalizePlacementSilent();
+            ClearSelection();
+            return;
+        }
+
+        // Waypoint-add or polygon-edit session: restore the pre-session snapshot.
+        if (_waypointAddSnapshot != null && _placementTarget != null)
+            ((PatrolBehaviorData)_placementTarget.Behavior).Waypoints = _waypointAddSnapshot;
+
+        if (_polygonEditSnapshot != null && _placementTarget != null)
+            ((WanderBehaviorData)_placementTarget.Behavior).Polygon = _polygonEditSnapshot;
+
+        FinalizePlacementSilent();
+        RefreshOverlays();
+    }
+
     private void FinalizePlacementSilent()
     {
         _placementMode          = EnemyPlacementMode.None;
@@ -700,8 +726,8 @@ public partial class Editor
             if (sa == seedBefore) return;
             ulong sb = seedBefore;
             _undoStack.ExecuteAlreadyDone(new SimpleCommand(
-                () => { wander.Seed = sa; },
-                () => { wander.Seed = sb; }
+                () => { wander.Seed = sa; RefreshSelectionPanel(); },
+                () => { wander.Seed = sb; RefreshSelectionPanel(); }
             ));
         };
         seedEdit.TextChanged += val =>
