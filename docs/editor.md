@@ -76,10 +76,6 @@ The hotbar shows the items available in the current mode. Press the number key s
 | `1` | Patrol |
 | `2` | Wander |
 | `3` | Orbiter |
-| `4` | Chaser |
-| `5` | Bouncer |
-| `6` | Sniper |
-| `7` | Guard |
 
 ### Triggers mode
 
@@ -179,26 +175,6 @@ Right-click an existing enemy to select it and reopen its properties panel. Dele
 - Click **Pick Center** then click in the viewport to set the orbit center.
 - Radius, angular speed, clockwise toggle, start angle fields.
 - The orbit circle is always visible as an overlay in the viewport.
-
-**Chaser**
-- Click in viewport to set idle position, or enter coordinates manually.
-- Detection radius and give-up radius shown as two concentric circles on the enemy; drag the circle handles to resize.
-- Speed and give-up delay fields.
-
-**Bouncer**
-- Click in viewport to set start position.
-- Drag the bounding rectangle handles to set bounce area.
-- Direction angle dial or numeric field. Initial direction shown as an arrow on the enemy.
-- Speed field.
-
-**Sniper**
-- Click in viewport to set position, or enter manually.
-- Aim duration and cooldown fields.
-- A sample aim ray is shown rotating slowly in the editor viewport.
-
-**Guard**
-- Combines patrol waypoint editor (same as Patrol above) with detection/give-up radius circles (same as Chaser above).
-- Chase speed field (separate from patrol speed).
 
 ---
 

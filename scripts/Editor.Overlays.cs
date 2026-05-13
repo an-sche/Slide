@@ -67,6 +67,41 @@ public partial class Editor
                     lines.Add(new EditorLine(from, to, new Color(color.R, color.G, color.B, 0.30f)));
                 }
             }
+            else if (e.Behavior is WanderBehaviorData wander)
+            {
+                for (int v = 0; v < wander.Polygon.Length; v++)
+                {
+                    var from = new Vector2(wander.Polygon[v].X, wander.Polygon[v].Y);
+                    var to   = new Vector2(wander.Polygon[(v + 1) % wander.Polygon.Length].X,
+                                           wander.Polygon[(v + 1) % wander.Polygon.Length].Y);
+                    lines.Add(new EditorLine(from, to, new Color(color.R, color.G, color.B, selected ? 0.7f : 0.4f)));
+                }
+                var   origin    = wander.Polygon.Length > 0 ? new Vector2(wander.Polygon[0].X, wander.Polygon[0].Y) : Vector2.Zero;
+                string wLabel   = string.IsNullOrEmpty(e.Name) ? "Wander" : $"Wander - {e.Name}";
+                overlays.Add(new EditorOverlay(origin, color, OverlayShape.Circle, wLabel, Selected: selected));
+                if (wander.StartX.HasValue)
+                    overlays.Add(new EditorOverlay(new Vector2(wander.StartX.Value, wander.StartY!.Value),
+                        new Color(color.R, color.G, color.B, 0.6f), OverlayShape.Diamond, "start"));
+            }
+            else if (e.Behavior is OrbiterBehaviorData orbiter)
+            {
+                var   center = new Vector2(orbiter.CenterX, orbiter.CenterY);
+                string oLabel = string.IsNullOrEmpty(e.Name) ? "Orbiter" : $"Orbiter - {e.Name}";
+                overlays.Add(new EditorOverlay(center, color, OverlayShape.Circle, oLabel, Selected: selected));
+                if (orbiter.Radius > 0)
+                {
+                    float alpha = selected ? 0.55f : 0.28f;
+                    const int Segs = 32;
+                    for (int s = 0; s < Segs; s++)
+                    {
+                        float a0 = s       * Mathf.Tau / Segs;
+                        float a1 = (s + 1) * Mathf.Tau / Segs;
+                        var   p0 = center + new Vector2(Mathf.Cos(a0), Mathf.Sin(a0)) * orbiter.Radius;
+                        var   p1 = center + new Vector2(Mathf.Cos(a1), Mathf.Sin(a1)) * orbiter.Radius;
+                        lines.Add(new EditorLine(p0, p1, new Color(color.R, color.G, color.B, alpha)));
+                    }
+                }
+            }
             else
             {
                 string kind  = EnemyKindLabel(e.Behavior);
