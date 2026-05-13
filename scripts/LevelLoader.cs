@@ -127,7 +127,12 @@ public static class LevelLoader
     private static IEnemyBehavior BuildPatrol(PatrolBehaviorData b)
     {
         var waypoints = Array.ConvertAll(b.Waypoints, w => new Waypoint(new Vector2(w.X, w.Y), w.Speed));
-        var end = b.EndBehavior == "loop" ? PatrolEndBehavior.Loop : PatrolEndBehavior.Disappear;
+        var end = b.EndBehavior switch
+        {
+            "loop"    => PatrolEndBehavior.Loop,
+            "reverse" => PatrolEndBehavior.Reverse,
+            _         => PatrolEndBehavior.Disappear,
+        };
         return new PatrolBehavior(waypoints, end);
     }
 

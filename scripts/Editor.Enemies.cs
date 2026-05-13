@@ -46,7 +46,7 @@ public partial class Editor
             Behavior = new PatrolBehaviorData
             {
                 Waypoints   = [new WaypointData { X = world.X, Y = world.Y, Speed = 100f }],
-                EndBehavior = "loop",
+                EndBehavior = "reverse",
             },
         };
         BeginMultiClickPlacement(enemy);
@@ -407,14 +407,18 @@ public partial class Editor
         endRow.AddThemeConstantOverride("separation", 4);
 
         var loopBtn      = new Button { Text = "Loop",      ToggleMode = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        var reverseBtn   = new Button { Text = "Reverse",   ToggleMode = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
         var disappearBtn = new Button { Text = "Disappear", ToggleMode = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
         loopBtn.AddThemeFontSizeOverride("font_size", 12);
+        reverseBtn.AddThemeFontSizeOverride("font_size", 12);
         disappearBtn.AddThemeFontSizeOverride("font_size", 12);
 
         var btnGroup = new ButtonGroup();
         loopBtn.ButtonGroup      = btnGroup;
+        reverseBtn.ButtonGroup   = btnGroup;
         disappearBtn.ButtonGroup = btnGroup;
-        loopBtn.ButtonPressed      = patrol.EndBehavior != "disappear";
+        loopBtn.ButtonPressed      = patrol.EndBehavior == "loop";
+        reverseBtn.ButtonPressed   = patrol.EndBehavior == "reverse";
         disappearBtn.ButtonPressed = patrol.EndBehavior == "disappear";
 
         loopBtn.Pressed += () =>
@@ -423,6 +427,15 @@ public partial class Editor
             string before = patrol.EndBehavior;
             _undoStack.Execute(new SimpleCommand(
                 () => { patrol.EndBehavior = "loop";      RefreshOverlays(); },
+                () => { patrol.EndBehavior = before;      RefreshOverlays(); }
+            ));
+        };
+        reverseBtn.Pressed += () =>
+        {
+            if (patrol.EndBehavior == "reverse") return;
+            string before = patrol.EndBehavior;
+            _undoStack.Execute(new SimpleCommand(
+                () => { patrol.EndBehavior = "reverse";   RefreshOverlays(); },
                 () => { patrol.EndBehavior = before;      RefreshOverlays(); }
             ));
         };
@@ -437,6 +450,7 @@ public partial class Editor
         };
 
         endRow.AddChild(loopBtn);
+        endRow.AddChild(reverseBtn);
         endRow.AddChild(disappearBtn);
         _behaviorConfigContainer.AddChild(endRow);
 

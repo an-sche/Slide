@@ -4,13 +4,14 @@ namespace Slide;
 
 public record Waypoint(Vector2 Position, float Speed);
 
-public enum PatrolEndBehavior { Loop, Disappear }
+public enum PatrolEndBehavior { Loop, Reverse, Disappear }
 
 public class PatrolBehavior : IEnemyBehavior
 {
     private readonly Waypoint[]        _waypoints;
     private readonly PatrolEndBehavior _endBehavior;
     private int _current;
+    private int _direction = 1;
 
     public PatrolBehavior(Waypoint[] waypoints, PatrolEndBehavior endBehavior = PatrolEndBehavior.Loop)
     {
@@ -41,12 +42,22 @@ public class PatrolBehavior : IEnemyBehavior
 
     private void Advance(Enemy enemy)
     {
-        _current++;
-        if (_current < _waypoints.Length) return;
+        _current += _direction;
 
-        if (_endBehavior == PatrolEndBehavior.Loop)
-            _current = 0;
-        else
-            enemy.QueueFree();
+        if (_current >= 0 && _current < _waypoints.Length) return;
+
+        switch (_endBehavior)
+        {
+            case PatrolEndBehavior.Loop:
+                _current = 0;
+                break;
+            case PatrolEndBehavior.Reverse:
+                _direction = -_direction;
+                _current   = Mathf.Clamp(_current, 0, _waypoints.Length - 1);
+                break;
+            default:
+                enemy.QueueFree();
+                break;
+        }
     }
 }
