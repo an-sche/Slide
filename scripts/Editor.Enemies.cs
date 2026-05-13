@@ -443,6 +443,95 @@ public partial class Editor
         // Waypoint list
         _behaviorConfigContainer.AddChild(MakeBehaviorLabel($"Waypoints ({patrol.Waypoints.Length})"));
 
+        // All-speeds bulk field — only useful when there are 2+ waypoints
+        if (patrol.Waypoints.Length >= 2)
+        {
+            float firstSpd = patrol.Waypoints[0].Speed;
+            bool  allSame  = true;
+            foreach (var wp in patrol.Waypoints)
+                if (wp.Speed != firstSpd) { allSame = false; break; }
+
+            var allRow = new HBoxContainer();
+            allRow.AddThemeConstantOverride("separation", 4);
+
+            var allLbl = new Label { Text = "All speeds:", VerticalAlignment = VerticalAlignment.Center };
+            allLbl.AddThemeFontSizeOverride("font_size", 11);
+            allLbl.AddThemeColorOverride("font_color", new Color(0.55f, 0.55f, 0.60f));
+
+            var allEdit = new LineEdit
+            {
+                Text                = allSame ? ((int)firstSpd).ToString() : "",
+                PlaceholderText     = allSame ? "" : "mixed",
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            allEdit.AddThemeFontSizeOverride("font_size", 11);
+
+            float[]? allBefore     = null;
+            bool     allCommitting = false;
+
+            allEdit.FocusEntered += () =>
+            {
+                allBefore = new float[patrol.Waypoints.Length];
+                for (int i = 0; i < patrol.Waypoints.Length; i++)
+                    allBefore[i] = patrol.Waypoints[i].Speed;
+            };
+            allEdit.TextChanged += val =>
+            {
+                if (float.TryParse(val, out float spd))
+                {
+                    spd = Mathf.Max(1f, spd);
+                    foreach (var wp in patrol.Waypoints) wp.Speed = spd;
+                }
+            };
+
+            void CommitAllSpeeds()
+            {
+                if (allCommitting) return;
+                string text = allEdit.Text;
+                if (!float.TryParse(text, out float sa)) return;
+                sa = Mathf.Max(1f, sa);
+
+                // Apply to data (TextChanged may have already done this, but ensure it).
+                for (int i = 0; i < patrol.Waypoints.Length; i++)
+                    patrol.Waypoints[i].Speed = sa;
+
+                // Compare against the snapshot taken on FocusEntered, not current data.
+                var  before  = allBefore ?? new float[patrol.Waypoints.Length];
+                bool changed = before.Length != patrol.Waypoints.Length;
+                if (!changed)
+                    for (int i = 0; i < patrol.Waypoints.Length; i++)
+                        if ((i < before.Length ? before[i] : sa) != sa) { changed = true; break; }
+
+                if (changed)
+                {
+                    float[]? snapshot = allBefore;
+                    // Update allBefore so successive Enter presses diff from here.
+                    allBefore = new float[patrol.Waypoints.Length];
+                    for (int i = 0; i < patrol.Waypoints.Length; i++)
+                        allBefore[i] = sa;
+                    float   csa = sa;
+                    float[] cb  = snapshot ?? new float[0];
+                    _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                        () => { for (int i = 0; i < patrol.Waypoints.Length; i++) patrol.Waypoints[i].Speed = csa;  RefreshSelectionPanel(); },
+                        () => { for (int i = 0; i < patrol.Waypoints.Length; i++) patrol.Waypoints[i].Speed = cb[i]; RefreshSelectionPanel(); }
+                    ));
+                }
+
+                // Always refresh so per-waypoint fields show the committed value.
+                // Guard prevents the FocusExited fired when we remove controls from the tree.
+                allCommitting = true;
+                RefreshSelectionPanel();
+                allCommitting = false;
+            }
+
+            allEdit.FocusExited   += () => CommitAllSpeeds();
+            allEdit.TextSubmitted += _  => CommitAllSpeeds();
+
+            allRow.AddChild(allLbl);
+            allRow.AddChild(allEdit);
+            _behaviorConfigContainer.AddChild(allRow);
+        }
+
         float cellSize = GameplayConstants.CellSize;
         var   wpList   = new VBoxContainer();
         wpList.AddThemeConstantOverride("separation", 3);
