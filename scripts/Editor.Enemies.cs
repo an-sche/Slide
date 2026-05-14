@@ -6,12 +6,13 @@ namespace Slide;
 
 public partial class Editor
 {
-    private enum EnemyPlacementMode { None, PlacingWaypoints, PlacingPolygon, PickingCenter, PickingStartPos, PickingWaypointPos }
+    private enum EnemyPlacementMode { None, PlacingWaypoints, PlacingPolygon, PickingCenter, PickingStartPos, PickingWaypointPos, PickingPolygonVertex }
 
     private EnemyData[]?    _enemyPlacementSnapshot;
     private WaypointData[]? _waypointAddSnapshot;
     private Vec2Data[]?     _polygonEditSnapshot;
-    private int             _pickingWaypointIndex = -1;
+    private int             _pickingWaypointIndex     = -1;
+    private int             _pickingPolygonVertexIndex = -1;
 
     // ── Placement ────────────────────────────────────────────────────────────
 
@@ -27,7 +28,8 @@ public partial class Editor
             case EnemyPlacementMode.PlacingPolygon:     AppendOrClosePolygon(world);   return;
             case EnemyPlacementMode.PickingCenter:      ApplyPickedCenter(world);      return;
             case EnemyPlacementMode.PickingStartPos:    ApplyPickedStartPos(world);    return;
-            case EnemyPlacementMode.PickingWaypointPos: ApplyPickedWaypointPos(world); return;
+            case EnemyPlacementMode.PickingWaypointPos:   ApplyPickedWaypointPos(world);   return;
+            case EnemyPlacementMode.PickingPolygonVertex: ApplyPickedPolygonVertex(world); return;
         }
 
         if (!_placementArmed) return;
@@ -196,6 +198,25 @@ public partial class Editor
         ));
     }
 
+    private void ApplyPickedPolygonVertex(Vector2 world)
+    {
+        if (_placementTarget == null) return;
+        var wander = (WanderBehaviorData)_placementTarget.Behavior;
+        int idx    = _pickingPolygonVertexIndex;
+        if (idx < 0 || idx >= wander.Polygon.Length) { FinalizePlacementSilent(); RefreshOverlays(); return; }
+        var before = new Vector2(wander.Polygon[idx].X, wander.Polygon[idx].Y);
+        wander.Polygon[idx].X      = world.X;
+        wander.Polygon[idx].Y      = world.Y;
+        _placementMode             = EnemyPlacementMode.None;
+        _placementTarget           = null;
+        _pickingPolygonVertexIndex = -1;
+        RefreshOverlays();
+        _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+            () => { wander.Polygon[idx].X = world.X;  wander.Polygon[idx].Y = world.Y;  RefreshOverlays(); },
+            () => { wander.Polygon[idx].X = before.X; wander.Polygon[idx].Y = before.Y; RefreshOverlays(); }
+        ));
+    }
+
     private void FinalizePlacement()
     {
         if (_placementMode == EnemyPlacementMode.None) return;
@@ -284,7 +305,8 @@ public partial class Editor
         _enemyPlacementSnapshot = null;
         _waypointAddSnapshot    = null;
         _polygonEditSnapshot    = null;
-        _pickingWaypointIndex   = -1;
+        _pickingWaypointIndex      = -1;
+        _pickingPolygonVertexIndex = -1;
         _canvas.SetGhostLine(null);
         RefreshSlotBorders();
     }
@@ -861,6 +883,28 @@ public partial class Editor
             return;
         }
 
+        if (_placementMode == EnemyPlacementMode.PickingPolygonVertex)
+        {
+            var hint = new Label
+            {
+                Text         = $"Click canvas to set position for vertex {_pickingPolygonVertexIndex + 1}",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+            hint.AddThemeFontSizeOverride("font_size", 12);
+            hint.AddThemeColorOverride("font_color", new Color(0.65f, 0.75f, 0.90f));
+            _behaviorConfigContainer.AddChild(hint);
+            var cancelBtn = new Button { Text = "Cancel", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            cancelBtn.Pressed += () =>
+            {
+                _placementMode             = EnemyPlacementMode.None;
+                _placementTarget           = null;
+                _pickingPolygonVertexIndex = -1;
+                RefreshOverlays();
+            };
+            _behaviorConfigContainer.AddChild(cancelBtn);
+            return;
+        }
+
         // Polygon
         _behaviorConfigContainer.AddChild(MakeBehaviorLabel($"Polygon ({wander.Polygon.Length} vertices)"));
         var polyBtnRow = new HBoxContainer();
@@ -900,6 +944,120 @@ public partial class Editor
         }
 
         _behaviorConfigContainer.AddChild(polyBtnRow);
+        float cs      = GameplayConstants.CellSize;
+
+        // Vertex list
+        if (wander.Polygon.Length > 0)
+        {
+            var   vtxList = new VBoxContainer();
+            vtxList.AddThemeConstantOverride("separation", 3);
+
+            for (int v = 0; v < wander.Polygon.Length; v++)
+            {
+                int captured = v;
+
+                var row = new HBoxContainer();
+                row.AddThemeConstantOverride("separation", 2);
+
+                var numLabel = new Label
+                {
+                    Text              = $"{v + 1}",
+                    CustomMinimumSize = new Vector2(14, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                numLabel.AddThemeFontSizeOverride("font_size", 11);
+                numLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.55f, 0.60f));
+
+                var xEdit = new LineEdit
+                {
+                    Text              = ((int)(wander.Polygon[v].X / cs)).ToString(),
+                    PlaceholderText   = "X",
+                    CustomMinimumSize = new Vector2(32, 0),
+                };
+                xEdit.AddThemeFontSizeOverride("font_size", 11);
+                WireIntFilter(xEdit);
+
+                var yEdit = new LineEdit
+                {
+                    Text              = ((int)(wander.Polygon[v].Y / cs)).ToString(),
+                    PlaceholderText   = "Y",
+                    CustomMinimumSize = new Vector2(32, 0),
+                };
+                yEdit.AddThemeFontSizeOverride("font_size", 11);
+                WireIntFilter(yEdit);
+
+                Vector2 posBefore = new Vector2(wander.Polygon[v].X, wander.Polygon[v].Y);
+
+                xEdit.FocusEntered += () => posBefore = new Vector2(wander.Polygon[captured].X, wander.Polygon[captured].Y);
+                yEdit.FocusEntered += () => posBefore = new Vector2(wander.Polygon[captured].X, wander.Polygon[captured].Y);
+
+                xEdit.TextChanged += val =>
+                {
+                    if (int.TryParse(val, out int tx))
+                        wander.Polygon[captured].X = (tx + 0.5f) * cs;
+                    RefreshCanvasOverlays();
+                };
+                yEdit.TextChanged += val =>
+                {
+                    if (int.TryParse(val, out int ty))
+                        wander.Polygon[captured].Y = (ty + 0.5f) * cs;
+                    RefreshCanvasOverlays();
+                };
+
+                void CommitPos()
+                {
+                    if (_placementMode != EnemyPlacementMode.None) return;
+                    if (xEdit.HasFocus() || yEdit.HasFocus()) return;
+                    var finalPos = new Vector2(wander.Polygon[captured].X, wander.Polygon[captured].Y);
+                    if (finalPos == posBefore) return;
+                    Vector2 pb = posBefore, pa = finalPos;
+                    int     vi = captured;
+                    posBefore = pa;
+                    _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                        () => { wander.Polygon[vi].X = pa.X; wander.Polygon[vi].Y = pa.Y; RefreshOverlays(); },
+                        () => { wander.Polygon[vi].X = pb.X; wander.Polygon[vi].Y = pb.Y; RefreshOverlays(); }
+                    ));
+                }
+
+                xEdit.FocusExited   += CommitPos;
+                yEdit.FocusExited   += CommitPos;
+                xEdit.TextSubmitted += _ => CommitPos();
+                yEdit.TextSubmitted += _ => CommitPos();
+
+                var pickBtn = new Button { Text = "✏", CustomMinimumSize = new Vector2(22, 0) };
+                pickBtn.AddThemeFontSizeOverride("font_size", 13);
+                pickBtn.Pressed += () =>
+                {
+                    _pickingPolygonVertexIndex = captured;
+                    _placementMode             = EnemyPlacementMode.PickingPolygonVertex;
+                    _placementTarget           = enemy;
+                    RefreshOverlays();
+                };
+
+                var delBtn = new Button { Text = "×", CustomMinimumSize = new Vector2(20, 0), Disabled = wander.Polygon.Length <= 3 };
+                delBtn.AddThemeFontSizeOverride("font_size", 13);
+                delBtn.Pressed += () =>
+                {
+                    var before = wander.Polygon;
+                    var verts  = new List<Vec2Data>(wander.Polygon);
+                    verts.RemoveAt(captured);
+                    var after = verts.ToArray();
+                    _undoStack.Execute(new SimpleCommand(
+                        () => { wander.Polygon = after;  RefreshOverlays(); },
+                        () => { wander.Polygon = before; RefreshOverlays(); }
+                    ));
+                };
+
+                row.AddChild(numLabel);
+                row.AddChild(xEdit);
+                row.AddChild(yEdit);
+                row.AddChild(pickBtn);
+                row.AddChild(delBtn);
+                vtxList.AddChild(row);
+            }
+
+            _behaviorConfigContainer.AddChild(vtxList);
+        }
 
         // Speed
         _behaviorConfigContainer.AddChild(MakeBehaviorLabel("Speed"));
@@ -1025,7 +1183,6 @@ public partial class Editor
         _behaviorConfigContainer.AddChild(MakeBehaviorLabel("Start Position"));
         var startRow = new HBoxContainer();
         startRow.AddThemeConstantOverride("separation", 4);
-        float cs = GameplayConstants.CellSize;
         string startText = wander.StartX.HasValue
             ? $"({(int)(wander.StartX.Value / cs)}, {(int)(wander.StartY!.Value / cs)})"
             : "random";
@@ -1218,7 +1375,7 @@ public partial class Editor
         };
         angleEdit.TextChanged += val =>
         {
-            if (float.TryParse(val, out float deg)) orbiter.StartAngle = Mathf.DegToRad(deg);
+            if (float.TryParse(val, out float deg)) { orbiter.StartAngle = Mathf.DegToRad(deg); RefreshCanvasOverlays(); }
         };
         _behaviorConfigContainer.AddChild(angleEdit);
     }

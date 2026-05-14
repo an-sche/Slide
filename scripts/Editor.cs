@@ -125,6 +125,8 @@ public partial class Editor : Control
         if (key.Keycode == Key.Bracketleft)  { AdjustBrush(-1); GetViewport().SetInputAsHandled(); return; }
         if (key.Keycode == Key.Bracketright) { AdjustBrush(+1); GetViewport().SetInputAsHandled(); return; }
 
+        if (key.Keycode == Key.F) { _canvas.FitToView(); GetViewport().SetInputAsHandled(); return; }
+
         if (key.Keycode == Key.Enter && _placementMode != EnemyPlacementMode.None)
         {
             FinalizePlacement();
@@ -151,6 +153,22 @@ public partial class Editor : Control
             if (_placementMode != EnemyPlacementMode.None)
             {
                 CancelPlacement();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+            if (IsDirty)
+            {
+                var dlg = new ConfirmationDialog
+                {
+                    Title            = "Unsaved Changes",
+                    DialogText       = "You have unsaved changes. Exit without saving?",
+                    OkButtonText     = "Exit",
+                    CancelButtonText = "Cancel",
+                };
+                dlg.Confirmed += () => GetTree().ChangeSceneToFile("res://scenes/MainMenu.tscn");
+                dlg.Canceled  += () => dlg.QueueFree();
+                AddChild(dlg);
+                dlg.PopupCentered();
                 GetViewport().SetInputAsHandled();
                 return;
             }

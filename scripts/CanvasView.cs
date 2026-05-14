@@ -114,7 +114,7 @@ public partial class CanvasView : Control
         new(Mathf.FloorToInt((screenPos.X - _offset.X) / _zoom),
             Mathf.FloorToInt((screenPos.Y - _offset.Y) / _zoom));
 
-    private void FitToView()
+    public void FitToView()
     {
         if (_image == null || Size == Vector2.Zero) return;
         float sx = (Size.X - 40f) / _image.GetWidth();

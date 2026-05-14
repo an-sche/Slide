@@ -79,7 +79,7 @@ public partial class Editor
                 var   origin    = wander.Polygon.Length > 0 ? new Vector2(wander.Polygon[0].X, wander.Polygon[0].Y) : Vector2.Zero;
                 string wLabel   = string.IsNullOrEmpty(e.Name) ? "Wander" : $"Wander - {e.Name}";
                 overlays.Add(new EditorOverlay(origin, color, OverlayShape.Circle, wLabel, Selected: selected));
-                if (wander.StartX.HasValue)
+                if (wander.StartX.HasValue && wander.Polygon.Length > 0)
                     overlays.Add(new EditorOverlay(new Vector2(wander.StartX.Value, wander.StartY!.Value),
                         new Color(color.R, color.G, color.B, 0.6f), OverlayShape.Diamond, "start"));
             }
@@ -100,6 +100,11 @@ public partial class Editor
                         var   p1 = center + new Vector2(Mathf.Cos(a1), Mathf.Sin(a1)) * orbiter.Radius;
                         lines.Add(new EditorLine(p0, p1, new Color(color.R, color.G, color.B, alpha)));
                     }
+
+                    // Spoke from center to start angle position
+                    var startPt = center + new Vector2(Mathf.Cos(orbiter.StartAngle), Mathf.Sin(orbiter.StartAngle)) * orbiter.Radius;
+                    lines.Add(new EditorLine(center, startPt, new Color(color.R, color.G, color.B, selected ? 0.90f : 0.55f)));
+                    overlays.Add(new EditorOverlay(startPt, color, OverlayShape.Diamond, "", Selected: false));
                 }
             }
             else

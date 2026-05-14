@@ -26,6 +26,7 @@ public partial class Editor
         var saveAsBtn   = MakeTopBarButton("Save As", new InputEventKey { Keycode = Key.S, CtrlPressed = true, ShiftPressed = true });  saveAsBtn.Pressed   += OnSaveAs;        hbox.AddChild(saveAsBtn);
         var settingsBtn = MakeTopBarButton("Settings", new InputEventKey { Keycode = Key.Comma, CtrlPressed = true }); settingsBtn.Pressed += OnLevelSettings; hbox.AddChild(settingsBtn);
         var playBtn     = MakeTopBarButton("Play", new InputEventKey { Keycode = Key.F5 });     playBtn.Pressed     += OnPlay;          hbox.AddChild(playBtn);
+        var fitBtn      = MakeTopBarButton("Fit",  new InputEventKey { Keycode = Key.F });      fitBtn.Pressed      += () => _canvas.FitToView(); hbox.AddChild(fitBtn);
 
         hbox.AddChild(new VSeparator { CustomMinimumSize = new Vector2(0, 28) });
 
