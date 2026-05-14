@@ -32,14 +32,14 @@ The enemy follows an ordered list of waypoints. Each waypoint carries its own tr
 
 **Properties:**
 - `Waypoint[]` — ordered list; each waypoint has a `Position` (Vector2) and a `Speed` (float) to travel *to* it
-- `PatrolEndBehavior` — what happens when the last waypoint is reached:
-  - `Loop` — return to waypoint[0] and continue indefinitely
+- `PatrolEndBehavior` — what happens when the path end is reached:
+  - `Loop` — jump back to waypoint[0] and continue indefinitely
+  - `Reverse` — reverse direction and ping-pong along the same path
   - `Disappear` — enemy is instantly removed (future: smoke effect)
 
 **Notes:**
 - Enemy starts at `waypoint[0]` when placed
 - No idle time — the enemy moves continuously
-- Waypoints are defined in code for now; the level editor (Milestone 8) adds click-to-place
 
 ---
 
@@ -77,21 +77,12 @@ These are not yet implemented. Each will be an `IAttackBehavior` that can be com
 
 ## Level Designer Notes
 
-*(To be expanded when the level editor is built in Milestone 8)*
+See `editor.md` for the full editor workflow. Summary of what each enemy needs:
 
-The goal is minimal friction — a designer should be able to place an enemy by specifying:
+**Any enemy:** position, radius, color, behavior type.
 
-**Any enemy:**
-- Position
-- Radius
-- Color (until sprites are assigned)
-- Which behavior to attach
+**Patrol:** waypoints (position + speed each), end behavior (Loop / Reverse / Disappear).
 
-**Patrol enemy additionally:**
-- Ordered waypoints (click-to-place in editor), each with a travel speed
-- End behavior (Loop or Disappear)
+**Wander:** polygon (3+ vertices), speed, min/max idle duration, optional start position.
 
-**Wander enemy additionally:**
-- Polygon defining the wander area (drawn in editor)
-- Speed, min/max idle duration
-- Optional start position (defaults to random point in polygon)
+**Orbiter:** center position, orbit radius, angular speed, direction, start angle.

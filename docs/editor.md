@@ -3,63 +3,57 @@
 ## Layout
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  [New] [Open] [Save] [Play]  │  Paint │ Entities │ Enemies │ Triggers   │
-├──────────────────────────────────────────────────────────────┬──────────┤
-│                                                              │ Options  │
-│                         VIEWPORT                             │  Panel   │
-│                      (map canvas)                            │ (220 px) │
-│                                                              │          │
-│                                                              │          │
-├──────────────────────────────────────────────────────────────┴──────────┤
-│         [1] [2] [3] [4] [5] [6] [7] [8]   ←  hotbar, changes per mode  │
-└─────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  [New] [Open] [Save] [Save As] [Settings] [Play] [Fit]  [Undo] [Redo]           │
+│  │ Paint │ Entities │ Enemies │ Triggers │              (level name *)           │
+├─────────────────────────────────────────────────────────────────────┬────────────┤
+│                                                                     │  Options   │
+│                          VIEWPORT                                   │   Panel    │
+│                       (map canvas)                                  │  (260 px)  │
+│                                                                     │            │
+├─────────────────────────────────────────────────────────────────────┴────────────┤
+│              [1] [2] [3] [4] [5] [6] [7] [8]   ←  hotbar, changes per mode      │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Top Bar
 
-The top bar has two sections:
+| Button   | Shortcut       | Action |
+|----------|----------------|--------|
+| New      | Ctrl+N         | Create a blank level (prompts if unsaved) |
+| Open     | Ctrl+O         | Open the level file browser |
+| Save     | Ctrl+S         | Save current level |
+| Save As  | Ctrl+Shift+S   | Save to a new path |
+| Settings | Ctrl+,         | Edit level metadata (name, author, description) |
+| Play     | F5             | Launch level in-game; Escape returns to editor |
+| Fit      | F              | Zoom/pan canvas to fit the whole level in view |
+| Undo     | Ctrl+Z         | Undo last action |
+| Redo     | Ctrl+Y         | Redo |
 
-**Left — global actions:**
+The active mode tab is highlighted. Switching mode clears any in-progress placement and selection.
 
-| Button | Shortcut | Action |
-|--------|----------|--------|
-| New    | Ctrl+N   | Create a blank level (prompts to save if unsaved changes exist) |
-| Open   | Ctrl+O   | Open the level file browser |
-| Save   | Ctrl+S   | Save current level to `user://levels/` |
-| Play   | F5       | Launch the current level in-game; Escape returns to the editor |
-
-**Right — mode tabs:**
-
-| Tab | Shortcut | Purpose |
-|-----|----------|---------|
-| Paint    | Tab (cycle) or `M` | Paint surface types onto map pixels |
-| Entities | Tab (cycle) or `M` | Place start block, end block, and bonuses |
-| Enemies  | Tab (cycle) or `M` | Place and configure enemies |
-| Triggers | Tab (cycle) or `M` | Place buttons and doors; wire actions |
-
-The active mode tab is highlighted. Switching mode clears any in-progress placement (e.g. a patrol path being drawn).
+**Right-click auto-switching:** Right-clicking an entity or enemy on the canvas from *any* mode selects it and automatically switches to the correct tab (Entities or Enemies). This means you can edit enemies from Paint mode without manually switching first.
 
 ---
 
 ## Bottom Hotbar
 
-The hotbar shows the items available in the current mode. Press the number key shown to select that item. The selected slot is highlighted (bright border). Scroll the mouse wheel over the hotbar to cycle through slots.
+Press the number key shown on a slot to select it. In Entities / Enemies mode, the selected slot arms a placement — the next left-click drops that item.
 
 ### Paint mode
 
-| Key | Surface | Color hint |
-|-----|---------|------------|
-| `1` | Ground | Muted green |
-| `2` | Slidy | Blue |
-| `3` | Fast | Cyan |
-| `4` | Confusing | Purple |
-| `5` | Fast Confusing | Magenta |
-| `6` | Straight | Orange |
-| `7` | Kill | Red |
-| `8` | Void | Dark / transparent |
+| Key | Surface |
+|-----|---------|
+| `1` | Ground |
+| `2` | Slidy |
+| `3` | Fast |
+| `4` | Confusing |
+| `5` | Fast Confusing |
+| `6` | Straight |
+| `7` | Kill |
+| `8` | Void |
 
 ### Entities mode
 
@@ -77,13 +71,6 @@ The hotbar shows the items available in the current mode. Press the number key s
 | `2` | Wander |
 | `3` | Orbiter |
 
-### Triggers mode
-
-| Key | Object |
-|-----|--------|
-| `1` | Button |
-| `2` | Door |
-
 ---
 
 ## Viewport
@@ -92,33 +79,35 @@ The hotbar shows the items available in the current mode. Press the number key s
 
 | Input | Action |
 |-------|--------|
-| Middle mouse drag | Pan |
+| Middle-mouse drag | Pan |
 | Scroll wheel | Zoom in / out |
-| `Home` | Fit entire level in view |
+| `F` or Fit button | Fit entire level in view |
 
-### Grid
+A pixel grid appears at zoom ≥ 8× showing individual cell boundaries.
 
-A pixel grid appears at high zoom levels (zoom ≥ 8×) showing individual cell boundaries. Each cell in the editor corresponds to one pixel in the PNG bitmap and one `cellSize`-unit square in the game world.
+### Overlays
 
-Grid lines scale with zoom so they remain usable at any level of detail.
+All entities and enemies are drawn as colored overlays on the canvas regardless of which mode tab is active:
+
+- **Diamond** — Start / End / Bonus entities; also the "start position" marker on Wander enemies
+- **Circle** — Enemies (filled with the enemy's color)
+- **Lines** — Patrol paths, Wander polygon edges, Orbiter orbit circle
+- **Spoke + diamond** — Orbiter start angle marker (shows where on the circle the enemy begins)
+- **Yellow ring** — Currently selected entity or enemy
+- **Ghost line** — Dashed line from last-placed point to cursor during multi-click placement
 
 ---
 
 ## Paint mode
 
-Painting writes surface type colors directly into the PNG bitmap. Each pixel encodes one surface type as an RGB color (see `map.md` for the full color table). The PNG is the source of truth — no intermediate representation.
+Left-click or drag to paint surface types onto the bitmap. Each pixel encodes one surface type as an RGB color (see `map.md`).
 
 | Input | Action |
 |-------|--------|
-| Left-click | Paint pixel(s) under cursor with selected surface type |
-| Left-click + drag | Paint continuously while dragging |
+| Left-click / drag | Paint pixel(s) with selected surface |
 | `[` / `]` | Decrease / increase brush radius |
 
-**Brush:** The brush is a filled circle. Radius 0 paints a single pixel. Higher radii paint all pixels within that radius. A white circle preview follows the cursor, showing exactly which pixels will be painted.
-
-**Options panel (right sidebar):** In Paint mode shows the current brush size with `−` / `+` buttons as an alternative to the bracket shortcuts.
-
-**What you see:** The viewport renders the PNG bitmap directly — the colors you paint are the colors that appear in-game as surface zones. No baking or export step is needed; Save writes the PNG and JSON together.
+The options panel shows the current brush size. Brush preview circle follows the cursor.
 
 ---
 
@@ -126,129 +115,114 @@ Painting writes surface type colors directly into the PNG bitmap. Each pixel enc
 
 | Input | Action |
 |-------|--------|
-| Left-click | Place selected entity at cursor (snaps to tile center) |
-| Right-click | Select nearest entity within ~4 cells; clears selection if none nearby |
-| Delete | Remove the selected entity |
+| Left-click | Place selected entity (snaps to tile center) |
+| Right-click | Select nearest entity or enemy within ~4 cells |
+| Delete | Remove selected entity |
 
-**Constraints:**
-- Only one Start Block and one End Block are allowed per level. Placing a second replaces the existing one.
-- Bonuses are unlimited.
+Only one Start and one End are allowed per level — placing a second replaces the existing one. Right-clicking near multiple overlapping items shows a disambiguation popup.
 
-**Selection:** Right-clicking near multiple overlapping entities shows a disambiguation popup listing each candidate by name or tile position — click one to select it. The selected entity gets a yellow ring on the canvas.
-
-**Options panel (right sidebar):** When an entity is selected, the panel shows its kind, tile position, an editable Name field, and a Delete button. Names display as "Kind - Name" (e.g. "Bonus - hidden gem") in both the panel and the canvas overlay label.
-
-**Entity IDs:** Every entity is assigned a GUID at placement time. This ID is stable across renames and is how the trigger system will reference doors and targets.
+**Options panel when selected:** kind label, tile X/Y (editable), Name field, Delete button. Names appear as "Kind - Name" on the canvas overlay.
 
 ---
 
 ## Enemies mode
 
-### Placing an enemy
+### Placing
 
-Left-click anywhere in the viewport to drop an enemy of the selected behavior type. A properties panel opens on the right immediately. The enemy is not fully configured until its required behavior fields are filled.
+Select a behavior type from the hotbar (1/2/3), then left-click the canvas to begin placement. Patrol and Wander require multiple canvas clicks to build their path/polygon; press Enter or click Done when finished. Orbiter is placed in one click.
 
-Right-click an existing enemy to select it and reopen its properties panel. Delete key removes the selected enemy.
+Right-click an existing enemy to select it. Delete removes the selected enemy.
 
-### Properties panel — common fields
-
-| Field | Notes |
-|-------|-------|
-| Radius | Visual and collision radius in world units |
-| Color | Color picker — sets the enemy's display color |
-| Spawn condition | Immediate, Timed (delay in seconds), or On Trigger (pick a trigger ID from dropdown) |
-
-### Properties panel — behavior-specific fields
-
-**Patrol**
-- Waypoint list with per-waypoint speed fields.
-- Click **Add Waypoint** or click directly in the viewport while the patrol editor is active to append a waypoint at that position. Drag waypoints to reposition. Numbers show the order.
-- End behavior: Loop or Disappear.
-
-**Wander**
-- Click in viewport to add polygon vertices. Double-click or click the first vertex to close the polygon.
-- Speed, min/max idle, seed fields in the panel.
-- Seed auto-assigned from a counter; can be manually overridden.
-- Start position: optional override; click **Pick** then click in the viewport.
-
-**Orbiter**
-- Click **Pick Center** then click in the viewport to set the orbit center.
-- Radius, angular speed, clockwise toggle, start angle fields.
-- The orbit circle is always visible as an overlay in the viewport.
-
----
-
-## Triggers mode
-
-### Button
-
-Left-click to place a button in the viewport. Buttons snap to tile grid by default; hold `Alt` for free placement.
-
-**Properties panel:**
-- **One-shot:** Toggle — if on, the button deactivates after the first activation.
-- **Actions list:** Add/remove actions. Each action entry has a type dropdown and type-specific fields:
-  - Open Door / Close Door / Toggle Door → Door ID picker (dropdown of all doors in the level)
-  - Spawn Wave → Spawner index picker
-  - Despawn Enemies → Multi-select enemy list
-  - Fire Trigger → Trigger ID picker
-
-### Door
-
-Left-click to place, then drag to set width and height (or enter in properties panel). Doors snap to tile grid.
-
-**Properties panel:**
-- Width and height fields (world units).
-- Closed surface type (defaults to Kill).
-- Initial state: Open or Closed.
-
-**Viewport overlays:**
-- Closed doors are rendered with their surface color and a lock icon.
-- Open doors show an outline only.
-- Drag corner handles to resize.
-
-### Wiring view
-
-With the Triggers mode active, dashed lines connect each button to the doors and spawners it controls, giving a visual map of the level's event graph. Lines are color-coded by action type.
-
----
-
-## Options panel
-
-The options panel is a fixed 220px right sidebar. Its content changes based on mode and selection:
-
-| State | Panel shows |
-|-------|-------------|
-| Paint mode | Brush size (`−` / `+` buttons, or `[` / `]` keys) |
-| Entities/Enemies/Triggers — nothing selected | "Right-click to select" hint |
-| Entity selected | Kind label (e.g. "Bonus - hidden gem"), tile position, Name field, Delete button |
-| Enemy selected | Behavior type label, tile position, Name field, Delete button (behavior config fields coming in Milestone 8d) |
-
-Selection is cleared when switching modes or opening a different level.
-
----
-
-## Level metadata
-
-Accessible via **File → Level Settings** (or a gear icon in the top bar):
+### Common panel fields
 
 | Field | Notes |
 |-------|-------|
-| Name | Display name shown in level select |
-| Author | Auto-filled from editor profile; editable |
-| Description | Optional. Shown in level select tooltip |
-| Tile size | Default 64. Changing after painting rescales the world coordinate positions of all entities and enemies proportionally |
+| Radius | Collision and visual radius; `−` / `+` buttons |
+| Color | Color picker; changes take effect immediately on the canvas |
+| Name | Optional label shown on the canvas overlay |
+| X / Y | Tile position of the enemy's origin; editable |
+
+### Patrol
+
+The enemy walks an ordered list of waypoints, each with its own travel speed.
+
+**Waypoint list** — each row shows:
+- Index number
+- X / Y tile position (editable; live-updates the canvas)
+- Speed (`s:` field)
+- ↑ / ↓ reorder buttons
+- ✏ pick-on-canvas button — click it, then click anywhere on the canvas to move that waypoint
+- × delete button
+
+**All speeds** — bulk field above the list; sets every waypoint to the same speed at once.
+
+**Add Waypoint** button — appends waypoints by clicking the canvas; press Enter or Done when finished. The ghost line shows the path being built.
+
+**End behavior:**
+- **Loop** — return to waypoint 1 and repeat
+- **Reverse** — ping-pong back and forth along the path
+- **Disappear** — enemy is removed after reaching the last waypoint
+
+### Wander
+
+The enemy picks random destinations inside a polygon and idles between moves.
+
+**Polygon** — drawn by clicking vertices on the canvas (3 minimum). Use Edit Polygon to modify an existing one; click near the first vertex or press Enter to close.
+
+**Vertex list** — each row shows:
+- Index number
+- X / Y tile position (editable; live-updates the canvas)
+- ✏ pick-on-canvas button
+- × delete button (disabled when 3 or fewer vertices remain)
+
+**Other fields:** Speed, Idle min/max (seconds), Seed (randomises movement; Rand button regenerates).
+
+**Start Position** — optional; if set, the enemy starts here instead of a random polygon point. Set button picks via canvas click; × clears it.
+
+### Orbiter
+
+The enemy orbits a center point at a fixed radius.
+
+**Pick Center** — click canvas to set the orbit center (shown as the labeled circle overlay).
+
+**Other fields:** Orbit Radius (`−` / `+`), Speed (rad/s), Direction (CW / CCW), Start Angle (degrees).
+
+The orbit circle, spoke, and start-angle diamond are always visible on the canvas. The spoke and diamond update in real time as you type the start angle.
 
 ---
 
-## Unsaved changes
+## Options Panel
 
-A dot appears next to the level name in the top bar when there are unsaved changes. Attempting to close, create a new level, or launch Play without saving prompts a confirmation dialog.
+Fixed 260 px right sidebar. Content changes based on mode and selection:
+
+| State | Shows |
+|-------|-------|
+| Paint mode | Brush size controls |
+| Entity/Enemy/Trigger mode — nothing selected | "Right-click to select" hint |
+| Entity selected | Kind, position, name, Delete |
+| Enemy selected | Kind, position, name, Delete + behavior-specific config |
 
 ---
 
-## Planned / future
+## Undo / Redo
 
-- Undo / redo (Ctrl+Z / Ctrl+Y)
-- Copy / paste selection of entities and enemies
-- In-editor playtesting with a ghost unit (no HUD, no death, just movement preview)
-- Steam Workshop publish button
+Nearly every edit is undoable:
+
+- Painting pixels
+- Placing, moving, or deleting entities and enemies
+- Waypoint and polygon edits (add, delete, reorder, move)
+- Enemy property changes (radius, color, speed, end behavior, etc.)
+- Name changes
+
+Undo history is per-session and is cleared when a new level is opened.
+
+---
+
+## Unsaved Changes
+
+A `*` appears next to the level name when there are unsaved changes. The following actions prompt a confirmation if the level is dirty:
+
+- Escape key (exit to main menu)
+- New (discard current level)
+- Open (replace current level)
+- Play (if auto-save on play is disabled)
