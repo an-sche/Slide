@@ -76,6 +76,31 @@ public partial class Editor
         SelectSlot(0);
     }
 
+    // Like SetMode but skips FinalizePlacementSilent/ClearSelection — safe to call from Select().
+    private void SwitchModeTab(EditorMode mode)
+    {
+        if (_mode == mode) return;
+        _mode = mode;
+
+        for (int i = 0; i < _modeTabs.Length; i++)
+            _modeTabStyles[i].BgColor = i == (int)mode ? ActiveTabBg : InactiveTabBg;
+
+        string[] labels = SlotLabels[(int)mode];
+        Color[]  colors = SlotColors[(int)mode];
+        for (int i = 0; i < 8; i++)
+        {
+            bool active = i < labels.Length;
+            _slotRoots[i].Visible = active;
+            if (!active) continue;
+            _slotSwatches[i].Color = colors[i];
+            _slotNames[i].Text     = labels[i];
+        }
+
+        _placementArmed = false;
+        _selectedSlot   = 0;
+        RefreshSlotBorders();
+    }
+
     private void ArmPlacement()
     {
         if (_mode is not (EditorMode.Entities or EditorMode.Enemies)) return;

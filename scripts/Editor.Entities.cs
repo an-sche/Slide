@@ -8,7 +8,7 @@ public partial class Editor
     private void OnPixelRightClicked(Vector2I px, Vector2 screenPos)
     {
         if (_placementMode != EnemyPlacementMode.None) return;
-        if (_mode is not (EditorMode.Entities or EditorMode.Enemies) || _levelData == null) return;
+        if (_levelData == null) return;
 
         float cellSize    = GameplayConstants.CellSize;
         var   world       = new Vector2((px.X + 0.5f) * cellSize, (px.Y + 0.5f) * cellSize);
@@ -59,6 +59,13 @@ public partial class Editor
     private void Select(int overlayIndex)
     {
         _selectedIndex = overlayIndex;
+        if (_levelData != null)
+        {
+            EditorMode target = overlayIndex < _levelData.Entities.Length
+                ? EditorMode.Entities
+                : EditorMode.Enemies;
+            SwitchModeTab(target);
+        }
         RefreshOverlays();
         SyncNameField();
     }
@@ -162,7 +169,13 @@ public partial class Editor
     private void OnPixelLeftPressed(Vector2I px)
     {
         if (_levelData == null) return;
-        if (_mode == EditorMode.Enemies) { OnEnemyLeftPressed(px); return; }
+        // Route to enemy handler if in Enemies mode OR if an enemy placement is already active
+        // (the enemy panel is accessible from Entities mode too, so placement can start there).
+        if (_mode == EditorMode.Enemies || _placementMode != EnemyPlacementMode.None)
+        {
+            OnEnemyLeftPressed(px);
+            return;
+        }
         if (_mode != EditorMode.Entities || !_placementArmed) return;
 
         float cellSize = GameplayConstants.CellSize;

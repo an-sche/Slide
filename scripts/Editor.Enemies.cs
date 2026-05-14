@@ -1,15 +1,17 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace Slide;
 
 public partial class Editor
 {
-    private enum EnemyPlacementMode { None, PlacingWaypoints, PlacingPolygon, PickingCenter, PickingStartPos }
+    private enum EnemyPlacementMode { None, PlacingWaypoints, PlacingPolygon, PickingCenter, PickingStartPos, PickingWaypointPos }
 
     private EnemyData[]?    _enemyPlacementSnapshot;
     private WaypointData[]? _waypointAddSnapshot;
     private Vec2Data[]?     _polygonEditSnapshot;
+    private int             _pickingWaypointIndex = -1;
 
     // ── Placement ────────────────────────────────────────────────────────────
 
@@ -21,10 +23,11 @@ public partial class Editor
 
         switch (_placementMode)
         {
-            case EnemyPlacementMode.PlacingWaypoints: AppendPatrolWaypoint(world); return;
-            case EnemyPlacementMode.PlacingPolygon:   AppendOrClosePolygon(world); return;
-            case EnemyPlacementMode.PickingCenter:    ApplyPickedCenter(world);    return;
-            case EnemyPlacementMode.PickingStartPos:  ApplyPickedStartPos(world);  return;
+            case EnemyPlacementMode.PlacingWaypoints:   AppendPatrolWaypoint(world);   return;
+            case EnemyPlacementMode.PlacingPolygon:     AppendOrClosePolygon(world);   return;
+            case EnemyPlacementMode.PickingCenter:      ApplyPickedCenter(world);      return;
+            case EnemyPlacementMode.PickingStartPos:    ApplyPickedStartPos(world);    return;
+            case EnemyPlacementMode.PickingWaypointPos: ApplyPickedWaypointPos(world); return;
         }
 
         if (!_placementArmed) return;
@@ -174,6 +177,25 @@ public partial class Editor
         ));
     }
 
+    private void ApplyPickedWaypointPos(Vector2 world)
+    {
+        if (_placementTarget == null) return;
+        var patrol = (PatrolBehaviorData)_placementTarget.Behavior;
+        int idx    = _pickingWaypointIndex;
+        if (idx < 0 || idx >= patrol.Waypoints.Length) { FinalizePlacementSilent(); RefreshOverlays(); return; }
+        var before = new Vector2(patrol.Waypoints[idx].X, patrol.Waypoints[idx].Y);
+        patrol.Waypoints[idx].X = world.X;
+        patrol.Waypoints[idx].Y = world.Y;
+        _placementMode        = EnemyPlacementMode.None;
+        _placementTarget      = null;
+        _pickingWaypointIndex = -1;
+        RefreshOverlays();
+        _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+            () => { patrol.Waypoints[idx].X = world.X;  patrol.Waypoints[idx].Y = world.Y;  RefreshOverlays(); },
+            () => { patrol.Waypoints[idx].X = before.X; patrol.Waypoints[idx].Y = before.Y; RefreshOverlays(); }
+        ));
+    }
+
     private void FinalizePlacement()
     {
         if (_placementMode == EnemyPlacementMode.None) return;
@@ -262,6 +284,7 @@ public partial class Editor
         _enemyPlacementSnapshot = null;
         _waypointAddSnapshot    = null;
         _polygonEditSnapshot    = null;
+        _pickingWaypointIndex   = -1;
         _canvas.SetGhostLine(null);
         RefreshSlotBorders();
     }
@@ -379,6 +402,28 @@ public partial class Editor
 
     private void BuildPatrolConfig(PatrolBehaviorData patrol, EnemyData enemy)
     {
+        if (_placementMode == EnemyPlacementMode.PickingWaypointPos)
+        {
+            var hint = new Label
+            {
+                Text         = $"Click canvas to set position for waypoint {_pickingWaypointIndex + 1}",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+            hint.AddThemeFontSizeOverride("font_size", 12);
+            hint.AddThemeColorOverride("font_color", new Color(0.65f, 0.75f, 0.90f));
+            _behaviorConfigContainer.AddChild(hint);
+            var cancelBtn = new Button { Text = "Cancel", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            cancelBtn.Pressed += () =>
+            {
+                _placementMode        = EnemyPlacementMode.None;
+                _placementTarget      = null;
+                _pickingWaypointIndex = -1;
+                RefreshOverlays();
+            };
+            _behaviorConfigContainer.AddChild(cancelBtn);
+            return;
+        }
+
         if (_placementMode == EnemyPlacementMode.PlacingWaypoints)
         {
             var hint = new Label
@@ -479,6 +524,7 @@ public partial class Editor
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
             allEdit.AddThemeFontSizeOverride("font_size", 11);
+            WireIntFilter(allEdit);
 
             float[]? allBefore     = null;
             bool     allCommitting = false;
@@ -501,6 +547,7 @@ public partial class Editor
             void CommitAllSpeeds()
             {
                 if (allCommitting) return;
+                if (_placementMode != EnemyPlacementMode.None) return;
                 string text = allEdit.Text;
                 if (!float.TryParse(text, out float sa)) return;
                 sa = Mathf.Max(1f, sa);
@@ -555,29 +602,84 @@ public partial class Editor
         {
             int captured = w;
             var wp       = patrol.Waypoints[w];
-            int tx = (int)(wp.X / cellSize);
-            int ty = (int)(wp.Y / cellSize);
 
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 2);
 
+            // Index label
             var numLabel = new Label
             {
                 Text              = $"{w + 1}",
-                CustomMinimumSize = new Vector2(16, 0),
+                CustomMinimumSize = new Vector2(14, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             };
             numLabel.AddThemeFontSizeOverride("font_size", 11);
             numLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.55f, 0.60f));
 
-            var posLabel = new Label
+            // X position edit
+            var xEdit = new LineEdit
             {
-                Text              = $"{tx},{ty}",
-                CustomMinimumSize = new Vector2(44, 0),
-                VerticalAlignment = VerticalAlignment.Center,
+                Text                = ((int)(wp.X / cellSize)).ToString(),
+                PlaceholderText     = "X",
+                CustomMinimumSize   = new Vector2(32, 0),
             };
-            posLabel.AddThemeFontSizeOverride("font_size", 11);
+            xEdit.AddThemeFontSizeOverride("font_size", 11);
+            WireIntFilter(xEdit);
 
+            // Y position edit
+            var yEdit = new LineEdit
+            {
+                Text                = ((int)(wp.Y / cellSize)).ToString(),
+                PlaceholderText     = "Y",
+                CustomMinimumSize   = new Vector2(32, 0),
+            };
+            yEdit.AddThemeFontSizeOverride("font_size", 11);
+            WireIntFilter(yEdit);
+
+            // Wire X/Y with live preview + commit-on-leave
+            // Initialize from current data so FocusExited during panel teardown doesn't push spurious undo entries.
+            Vector2 posBefore = new Vector2(wp.X, wp.Y);
+
+            xEdit.FocusEntered += () => posBefore = new Vector2(patrol.Waypoints[captured].X, patrol.Waypoints[captured].Y);
+            yEdit.FocusEntered += () => posBefore = new Vector2(patrol.Waypoints[captured].X, patrol.Waypoints[captured].Y);
+
+            xEdit.TextChanged += val =>
+            {
+                if (int.TryParse(val, out int tx))
+                    patrol.Waypoints[captured].X = (tx + 0.5f) * cellSize;
+                RefreshCanvasOverlays();
+            };
+            yEdit.TextChanged += val =>
+            {
+                if (int.TryParse(val, out int ty))
+                    patrol.Waypoints[captured].Y = (ty + 0.5f) * cellSize;
+                RefreshCanvasOverlays();
+            };
+
+            void CommitPos()
+            {
+                // Bail if panel is being rebuilt (e.g. entering a placement mode tore down the old panel).
+                if (_placementMode != EnemyPlacementMode.None) return;
+                // Wait until focus has left both fields before committing.
+                if (xEdit.HasFocus() || yEdit.HasFocus()) return;
+                var finalPos = new Vector2(patrol.Waypoints[captured].X, patrol.Waypoints[captured].Y);
+                if (finalPos == posBefore) return;
+                Vector2 pb = posBefore, pa = finalPos;
+                int     wi = captured;
+                posBefore = pa;
+                _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                    () => { patrol.Waypoints[wi].X = pa.X; patrol.Waypoints[wi].Y = pa.Y; RefreshOverlays(); },
+                    () => { patrol.Waypoints[wi].X = pb.X; patrol.Waypoints[wi].Y = pb.Y; RefreshOverlays(); }
+                ));
+                // No RefreshSelectionPanel needed — the fields already display what the user typed.
+            }
+
+            xEdit.FocusExited   += CommitPos;
+            yEdit.FocusExited   += CommitPos;
+            xEdit.TextSubmitted += _ => CommitPos();
+            yEdit.TextSubmitted += _ => CommitPos();
+
+            // Speed label + edit
             var sLabel = new Label { Text = "s:", VerticalAlignment = VerticalAlignment.Center };
             sLabel.AddThemeFontSizeOverride("font_size", 11);
             sLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.55f, 0.60f));
@@ -588,29 +690,88 @@ public partial class Editor
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
             speedEdit.AddThemeFontSizeOverride("font_size", 11);
+            WireIntFilter(speedEdit);
 
-            float speedBefore = 0f;
+            float speedBefore = wp.Speed;
             speedEdit.FocusEntered += () => speedBefore = patrol.Waypoints[captured].Speed;
-            speedEdit.FocusExited  += () =>
-            {
-                string text = speedEdit.Text;
-                if (!float.TryParse(text, out float speedAfter)) return;
-                speedAfter = Mathf.Max(1f, speedAfter);
-                if (speedAfter == speedBefore) return;
-                float sb = speedBefore, sa = speedAfter;
-                int   wi = captured;
-                _undoStack.ExecuteAlreadyDone(new SimpleCommand(
-                    () => { patrol.Waypoints[wi].Speed = sa; RefreshSelectionPanel(); },
-                    () => { patrol.Waypoints[wi].Speed = sb; RefreshSelectionPanel(); }
-                ));
-            };
-            speedEdit.TextChanged += val =>
+            speedEdit.TextChanged  += val =>
             {
                 if (float.TryParse(val, out float spd))
                     patrol.Waypoints[captured].Speed = Mathf.Max(1f, spd);
             };
 
-            var delBtn = new Button { Text = "×", CustomMinimumSize = new Vector2(22, 0) };
+            void CommitSpeed()
+            {
+                if (_placementMode != EnemyPlacementMode.None) return;
+                if (!float.TryParse(speedEdit.Text, out float sa)) return;
+                sa = Mathf.Max(1f, sa);
+                if (sa == speedBefore) return;
+                float sb = speedBefore, sc = sa;
+                int   wi = captured;
+                speedBefore = sa;
+                _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                    () => { patrol.Waypoints[wi].Speed = sc; RefreshSelectionPanel(); },
+                    () => { patrol.Waypoints[wi].Speed = sb; RefreshSelectionPanel(); }
+                ));
+            }
+
+            speedEdit.FocusExited   += CommitSpeed;
+            speedEdit.TextSubmitted += _ => CommitSpeed();
+
+            // Up / Down reorder buttons
+            var upBtn = new Button
+            {
+                Text              = "↑",
+                CustomMinimumSize = new Vector2(20, 0),
+                Disabled          = w == 0,
+            };
+            upBtn.AddThemeFontSizeOverride("font_size", 11);
+            upBtn.Pressed += () =>
+            {
+                int i = captured;
+                var before = patrol.Waypoints;
+                var wps    = new List<WaypointData>(patrol.Waypoints);
+                (wps[i], wps[i - 1]) = (wps[i - 1], wps[i]);
+                var after = wps.ToArray();
+                _undoStack.Execute(new SimpleCommand(
+                    () => { patrol.Waypoints = after;  RefreshOverlays(); },
+                    () => { patrol.Waypoints = before; RefreshOverlays(); }
+                ));
+            };
+
+            var downBtn = new Button
+            {
+                Text              = "↓",
+                CustomMinimumSize = new Vector2(20, 0),
+                Disabled          = w == patrol.Waypoints.Length - 1,
+            };
+            downBtn.AddThemeFontSizeOverride("font_size", 11);
+            downBtn.Pressed += () =>
+            {
+                int i = captured;
+                var before = patrol.Waypoints;
+                var wps    = new List<WaypointData>(patrol.Waypoints);
+                (wps[i], wps[i + 1]) = (wps[i + 1], wps[i]);
+                var after = wps.ToArray();
+                _undoStack.Execute(new SimpleCommand(
+                    () => { patrol.Waypoints = after;  RefreshOverlays(); },
+                    () => { patrol.Waypoints = before; RefreshOverlays(); }
+                ));
+            };
+
+            // Pick-on-canvas button
+            var pickBtn = new Button { Text = "✏", CustomMinimumSize = new Vector2(22, 0) };
+            pickBtn.AddThemeFontSizeOverride("font_size", 13);
+            pickBtn.Pressed += () =>
+            {
+                _pickingWaypointIndex = captured;
+                _placementMode        = EnemyPlacementMode.PickingWaypointPos;
+                _placementTarget      = enemy;
+                RefreshOverlays();
+            };
+
+            // Delete button
+            var delBtn = new Button { Text = "×", CustomMinimumSize = new Vector2(20, 0) };
             delBtn.AddThemeFontSizeOverride("font_size", 13);
             delBtn.Pressed += () =>
             {
@@ -625,9 +786,13 @@ public partial class Editor
             };
 
             row.AddChild(numLabel);
-            row.AddChild(posLabel);
+            row.AddChild(xEdit);
+            row.AddChild(yEdit);
             row.AddChild(sLabel);
             row.AddChild(speedEdit);
+            row.AddChild(upBtn);
+            row.AddChild(downBtn);
+            row.AddChild(pickBtn);
             row.AddChild(delBtn);
             wpList.AddChild(row);
         }
@@ -740,6 +905,7 @@ public partial class Editor
         _behaviorConfigContainer.AddChild(MakeBehaviorLabel("Speed"));
         var speedEdit = new LineEdit { Text = ((int)wander.Speed).ToString(), SizeFlagsHorizontal = SizeFlags.ExpandFill };
         speedEdit.AddThemeFontSizeOverride("font_size", 11);
+        WireIntFilter(speedEdit);
         float speedBefore = 0f;
         speedEdit.FocusEntered += () => speedBefore = wander.Speed;
         speedEdit.FocusExited  += () =>
@@ -767,6 +933,7 @@ public partial class Editor
 
         var minEdit = new LineEdit { Text = wander.MinIdle.ToString("F1"), SizeFlagsHorizontal = SizeFlags.ExpandFill };
         minEdit.AddThemeFontSizeOverride("font_size", 11);
+        WireFloatFilter(minEdit);
         float minBefore = 0f;
         minEdit.FocusEntered += () => minBefore = wander.MinIdle;
         minEdit.FocusExited  += () =>
@@ -788,6 +955,7 @@ public partial class Editor
 
         var maxEdit = new LineEdit { Text = wander.MaxIdle.ToString("F1"), SizeFlagsHorizontal = SizeFlags.ExpandFill };
         maxEdit.AddThemeFontSizeOverride("font_size", 11);
+        WireFloatFilter(maxEdit);
         float maxBefore = 0f;
         maxEdit.FocusEntered += () => maxBefore = wander.MaxIdle;
         maxEdit.FocusExited  += () =>
@@ -820,6 +988,7 @@ public partial class Editor
         seedRow.AddThemeConstantOverride("separation", 4);
         var seedEdit = new LineEdit { Text = wander.Seed.ToString(), SizeFlagsHorizontal = SizeFlags.ExpandFill };
         seedEdit.AddThemeFontSizeOverride("font_size", 11);
+        WireIntFilter(seedEdit);
         ulong seedBefore = 0;
         seedEdit.FocusEntered += () => seedBefore = wander.Seed;
         seedEdit.FocusExited  += () =>
@@ -970,6 +1139,7 @@ public partial class Editor
         _behaviorConfigContainer.AddChild(MakeBehaviorLabel("Speed (rad/s)"));
         var angEdit = new LineEdit { Text = orbiter.AngularSpeed.ToString("F2"), SizeFlagsHorizontal = SizeFlags.ExpandFill };
         angEdit.AddThemeFontSizeOverride("font_size", 11);
+        WireFloatFilter(angEdit);
         float angBefore = 0f;
         angEdit.FocusEntered += () => angBefore = orbiter.AngularSpeed;
         angEdit.FocusExited  += () =>
@@ -1031,6 +1201,7 @@ public partial class Editor
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
         angleEdit.AddThemeFontSizeOverride("font_size", 11);
+        WireIntFilter(angleEdit);
         float angleBefore = 0f;
         angleEdit.FocusEntered += () => angleBefore = orbiter.StartAngle;
         angleEdit.FocusExited  += () =>
@@ -1050,6 +1221,45 @@ public partial class Editor
             if (float.TryParse(val, out float deg)) orbiter.StartAngle = Mathf.DegToRad(deg);
         };
         _behaviorConfigContainer.AddChild(angleEdit);
+    }
+
+    // Restricts a LineEdit to digits only (no decimals, no signs).
+    private static void WireIntFilter(LineEdit edit)
+    {
+        bool filtering = false;
+        edit.TextChanged += val =>
+        {
+            if (filtering) return;
+            string filtered = string.Concat(val.Where(char.IsDigit));
+            if (filtered == val) return;
+            filtering = true;
+            edit.Text        = filtered;
+            edit.CaretColumn = Mathf.Min(edit.CaretColumn, filtered.Length);
+            filtering = false;
+        };
+    }
+
+    // Restricts a LineEdit to a non-negative decimal number (digits + at most one dot).
+    private static void WireFloatFilter(LineEdit edit)
+    {
+        bool filtering = false;
+        edit.TextChanged += val =>
+        {
+            if (filtering) return;
+            var  sb     = new System.Text.StringBuilder(val.Length);
+            bool hasDot = false;
+            foreach (char c in val)
+            {
+                if (char.IsDigit(c)) { sb.Append(c); }
+                else if (c == '.' && !hasDot) { sb.Append(c); hasDot = true; }
+            }
+            string filtered = sb.ToString();
+            if (filtered == val) return;
+            filtering = true;
+            edit.Text        = filtered;
+            edit.CaretColumn = Mathf.Min(edit.CaretColumn, filtered.Length);
+            filtering = false;
+        };
     }
 
     private static Label MakeBehaviorLabel(string text)

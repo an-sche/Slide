@@ -6,7 +6,7 @@ public partial class Editor
 {
     private const int SlotW            = 78;
     private const int SlotH            = 66;
-    private const int OptionsPanelWidth = 220;
+    private const int OptionsPanelWidth = 260;
 
     private Control BuildTopBar()
     {
