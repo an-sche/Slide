@@ -223,6 +223,9 @@ public partial class Editor
 
         if (_enemyPlacementSnapshot != null)
         {
+            // Guard wander minimum — Enter key bypasses the UI disabled state
+            if (_placementTarget?.Behavior is WanderBehaviorData wd && wd.Polygon.Length < 3) return;
+
             var before = _enemyPlacementSnapshot;
             var after  = _levelData!.Enemies;
             int selIdx = _selectedIndex;
@@ -857,9 +860,10 @@ public partial class Editor
 
             var doneBtn = new Button
             {
-                Text                = "Done",
+                Text                = wander.Polygon.Length >= 3 ? "Done" : "Done (need 3+ vertices)",
                 CustomMinimumSize   = new Vector2(0, 28),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                Disabled            = wander.Polygon.Length < 3,
             };
             doneBtn.Pressed += FinalizePlacement;
             _behaviorConfigContainer.AddChild(doneBtn);
