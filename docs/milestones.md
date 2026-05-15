@@ -4,179 +4,9 @@ Each milestone should be fully playable and testable before moving to the next.
 
 ---
 
-## Milestone 1 — A unit on a map ✓
-- [x] Single normal-ground tile map
-- [x] Circle unit with directional arrow
-- [x] Right-click to move (crisp, snappy, straight line, no pathfinding)
-- [x] Unit stops exactly on target
-- [x] Camera follows unit
-- [x] Space tap to re-center camera
-- [x] Space hold to lock camera to unit
-- [x] Middle mouse drag to pan
-- [x] Edge scrolling to pan
-
----
-
-## Milestone 2 — Surfaces ✓
-- [x] Slidy surface (fixed speed, fixed turning rate, never stops)
-- [x] Straight surface (no input accepted, exits on surface change)
-- [x] Kill surface (instant death — corpse deferred to Milestone 3)
-- [x] Fast surface (Slidy at 2x speed, same turning radius)
-- [x] Confusing surface (Slidy but steers away from click)
-- [x] Fast Confusing surface (Confusing at 2x speed, same turning radius)
-- [x] Test level using all surface types
-- [x] Smooth visual transitions between surface types (no jagged edges)
-
----
-
-## Milestone 3a — Death & respawn ✓
-- [x] Start block (players spawn here)
-- [x] Kill surface leaves a corpse instead of instant reset
-- [x] Respawn at start block after short delay
-- [x] End block (touching it beats the level)
-
----
-
-## Milestone 3b — HUD ✓
-- [x] Timer counting up from 0:00
-- [x] Player name, alive/dead status
-- [x] Death counter
-
----
-
-## Milestone 3c — Level transition ✓
-- [x] Auto-advance to next level
-- [x] Loading screen showing deaths + who beat the level
-- [x] Short delay before next level loads
-
----
-
-## Milestone 4a — Ability bar & skill points ✓
-- [x] Ability bar in HUD (5 slots: Q, W, E, R, F — key label, level dots)
-- [x] Skill point system (earn 1 on level complete, persist across levels via RunState)
-- [x] Spend points to level up an ability (+ button or Ctrl+key)
-- [x] Advanced ability lock (W, E, R grayed out until Lv.3)
-
----
-
-## Milestone 4b — Starter abilities: Boost & Gack ✓
-- [x] Boost (Q) — speed boost on ground, activatable on any surface, full duration regardless of surface
-- [x] Gack (F) — leaves a distance-based goo trail that boosts speed 40% on non-ground surfaces
-
----
-
-## Milestone 4c — Warp ✓
-- [x] Warp (W) — places a ghost at the unit's current position; reactivating warps the unit back to it
-- [x] Ghost fades and disappears after its duration expires
-- [x] Ghost is visible to all players (multiplayer-ready visual)
-
----
-
-## Milestone 4d — Donut ✓
-- [x] Donut (E) — fires a ring projectile in the unit's facing direction at fixed speed; stationary on ground; passes through and resurrects all corpses it touches; unaffected by surfaces
-
----
-
-## Milestone 4e — Ethereal ✓
-- [x] Ethereal (R) — unit becomes ethereal; touching a corpse resurrects it at the ethereal unit's position with matching velocity; can resurrect multiple corpses per activation
-
----
-
-## Milestone 4f — Bonus pickups ✓
-- [x] `Bonus` node placed on the map — star placeholder visual, sprite later
-- [x] First unit to touch it gains +1 `PlayerLevel` (skill point); bonus disappears immediately, no respawn
-- [x] Shared: one bonus, one point — whichever player reaches it first gets it
-- [x] Add several bonuses to the test level
-
----
-
-## Milestone 5a — Enemy foundation ✓
-- [x] `IEnemyBehavior` interface (`void Process(float delta, Enemy enemy)`)
-- [x] `Enemy` class — configurable radius and color, holds one `IEnemyBehavior`, kills player on contact, added to `"enemies"` group
-- [x] Circle placeholder visual (same style as Unit)
-
----
-
-## Milestone 5b — Patrol behavior ✓
-- [x] `Waypoint` record — `Position` (Vector2) + `Speed` (float)
-- [x] `PatrolEndBehavior` enum — `Loop` / `Disappear`
-- [x] `PatrolBehavior` — moves through waypoints in order at per-waypoint speed; starts at waypoint[0]; loops or disappears at end
-
----
-
-## Milestone 5c — Random wander behavior ✓
-- [x] `RandomWanderBehavior` — polygon area (Vector2[]), speed, min/max idle duration, optional start position
-- [x] Idle → Telegraph → Moving → Idle state machine; telegraph flashes a ring on the enemy for 0.5s before it moves
-- [x] Random target points sampled uniformly via triangle decomposition — no rejection sampling, no loops
-- [x] If no start position provided, begin at a random point inside the polygon
-
----
-
 ## Milestone 6 — Multiplayer foundations (localhost)
 
 **Testing:** Use Godot's "Debug → Run Multiple Instances" to launch host + client(s) on the same machine.
-
-### 6a — Fixed timestep & simulation cleanup ✓
-- [x] Move `Unit` and `Enemy` simulation from `_Process` to `_PhysicsProcess`
-- [x] Verify movement feels identical before and after the switch
-
-### 6b — Network transport & roles ✓
-- [x] Integrate Godot's built-in ENet transport (no Steam yet)
-- [x] Main menu: "Play Solo", "Host", and "Join" buttons; Join reveals an IP field (default `127.0.0.1`)
-- [x] Lobby: players see each other, click Ready; game starts when all are ready (guaranteed simultaneous World load → deterministic enemy sync from tick 0)
-- [x] Peer disconnect removes that player's unit from the scene
-
-### 6c — Input pipeline ✓
-- [x] Client sends right-click target to host via `SetMoveTarget` RPC; host applies it to that peer's unit
-- [x] Host is sole authority on all movement and game state; clients suppress local simulation
-- [x] Host player's unit simulates directly with no RPC round-trip
-- [x] Waypoint indicator appears immediately on the clicking player's screen and clears when the host clears the target
-- [x] Ability keypresses (Q/W/E/R/F) forwarded from client to host via `UseAbility` RPC; host activates on the authoritative unit
-
-### 6d — State synchronization ✓
-- [x] Host broadcasts `GlobalPosition`, `Facing`, and move target for every unit each physics tick via `SyncUnitState` RPC (unreliable channel)
-- [x] `IsDead` synced via separate reliable `BroadcastUnitDeath` / `BroadcastUnitRespawn` RPCs
-- [x] Clients apply received state; no client-side prediction
-- [x] Camera ignores input and stops updating when its window is not focused
-- [x] Enemy positions synced via deterministic lockstep — per-instance seeded RNG, fixed physics tick, identical simulation on all peers; kill detection host-authoritative only (reconnection not supported)
-- [ ] Velocity not synced (not needed; clients don't simulate movement)
-
-### 6e — Game flow
-- [x] Resurrection by touching a teammate's corpse — host-authoritative; broadcasts respawn to all clients; units cannot self-resurrect
-- [x] Multiplayer death: units stay dead indefinitely until resurrected (no auto-respawn timer); solo mode keeps the 3-second auto-respawn
-- [x] Team wipe detection: all players dead for 5 s → full run reset (level 1, 1 skill point each); timer cancels if any resurrection occurs during the window
-- [x] Level complete triggers advance for all players simultaneously
-
-### 6f — Per-player HUD
-- [x] Each client shows only their own unit's ability bar and status (camera and HUD created only for local unit)
-- [x] All clients show a shared scoreboard: player name, alive/dead, death count
-
----
-
-## Milestone 7 — More enemy types
-
-All new behaviors implement `IEnemyBehavior` and are fully compatible with the existing `Enemy` class and multiplayer determinism model.
-
-### 7a — Orbiter ✓
-- [x] `OrbiterBehavior` — circles a fixed center point at a configurable radius and angular speed (radians/sec); clockwise or counter-clockwise
-- [x] Multiple orbiters can share the same center point
-
-### 7b — Chaser
-- [ ] `ChaserBehavior` — idles until any player enters a detection radius; switches to pursuit at fixed speed
-- [ ] Telegraph: ring flash on the enemy for 0.5 s before it starts moving (mirrors RandomWander telegraph)
-- [ ] Gives up and returns to idle if no player is within an extended give-up radius for N seconds
-
-### 7c — Bouncer
-- [ ] `BouncerBehavior` — moves in a straight line at fixed speed; bounces off a defined rectangular bounding box; configurable start position and initial direction
-
-### 7d — Sniper
-- [ ] `SniperBehavior` — stationary; aims a visible warning ray at the nearest player for 1 s; fires an instant-kill line projectile (`SniperBeam`) along that ray; configurable cooldown between shots
-- [ ] `SniperBeam` node — thin line that persists for ~0.15 s then disappears; kills any player it overlaps on the frame it fires
-
-### 7e — Guard
-- [ ] `GuardBehavior` — wraps a `PatrolBehavior`; enters chase mode when a player steps inside a detection radius; returns to patrol when all players exit a larger give-up radius or N seconds pass with no player in range
-
----
 
 ## Milestone 8 — Level editor
 
@@ -196,7 +26,7 @@ Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.pn
 - [x] Left-click / drag to paint pixels with the selected surface type; circle brush of configurable radius
 - [x] `[` / `]` keys and `−` / `+` buttons to adjust brush radius
 - [x] Palette panel listing all surface types with color swatches and number-key shortcuts
-- [x] Fixed 220px right-side options panel: brush controls in Paint mode; entity/enemy properties in other modes
+- [x] Fixed 260px right-side options panel: brush controls in Paint mode; entity/enemy properties in other modes
 - [x] Editor split into partial classes: `Editor.cs`, `Editor.Layout.cs`, `Editor.Modes.cs`, `Editor.Paint.cs`, `Editor.File.cs`, `Editor.Overlays.cs`, `Editor.Entities.cs`
 - [x] Entity overlays rendered on the canvas (start diamond, end diamond, bonus circles, enemy circles) via `EditorOverlay` record
 
@@ -209,13 +39,14 @@ Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.pn
 - [x] Options panel shows selected entity's kind, tile position, editable name field, and Delete button
 - [x] Disambiguation popup when right-clicking near multiple overlapping entities/enemies — lists candidates by name or tile position; click one to select
 
-### 8d — Enemy placement & spawner/trigger wiring
-- [ ] Place any enemy type from the enemy palette in Enemies mode; configure radius, color, and behavior params in a side panel
-- [ ] Patrol path editor: click to add waypoints sequentially; drag to reposition; per-waypoint speed field
-- [ ] Wander polygon editor: click to add vertices; drag to reposition; close polygon with double-click
-- [ ] Chaser / guard detection and give-up radii shown as overlay circles in the editor viewport
-- [ ] Spawn condition field per enemy in the options panel: Immediate (default), Timed (delay in seconds), or On Trigger (pick trigger ID from dropdown)
-- [ ] Trigger panel: place button triggers, link actions (open/close door, spawn wave, fire trigger)
+### 8d — Enemy placement ✓
+- [x] Place Patrol, Wander, and Orbiter enemies from the Enemies mode palette
+- [x] Configure radius, color, and name per enemy; editable tile position
+- [x] Patrol: waypoint list with per-waypoint speed, reorder (↑/↓), position edit (X/Y fields or ✏ pick-on-canvas), add/delete waypoints; end behavior (Loop / Reverse / Disappear); bulk "set all speeds" field
+- [x] Wander: click-to-place polygon vertices; Edit Polygon to revise; vertex list with per-vertex position edit and delete (3-vertex minimum); speed, idle min/max, seed, optional start position
+- [x] Orbiter: pick center via canvas click; orbit radius, angular speed, direction (CW/CCW), start angle; spoke + diamond overlay shows start angle live
+- [x] Right-click from any mode tab selects the nearest entity or enemy and auto-switches to the correct tab
+- [ ] Chaser / Guard detection and give-up radii shown as overlay circles (blocked on Milestone 7b/7e)
 
 ### 8e — Save, load, and play ✓
 - [x] Save button writes the PNG bitmap to disk (JSON save is a TODO — currently only PNG is saved)
@@ -224,7 +55,47 @@ Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.pn
 - [x] JSON save on Save button
 - [ ] Level select screen (accessible from main menu) lists all saved levels
 
-### 8f — Playlists
+### 8f — Spawn conditions
+
+Each enemy has an optional `Spawn` field. When null or `"immediate"`, the enemy is present from level start (current behavior). This milestone adds timed and trigger-based spawning.
+
+**Runtime (gameplay):**
+- [ ] `TimedSpawnData` — enemy is hidden at level start; a timer begins when the level loads; enemy spawns after `Delay` seconds
+- [ ] `TriggerSpawnData` — enemy spawns when the named trigger fires (wired from a button or game event)
+- [ ] Spawned enemies appear with a brief flash effect (same visual as the RandomWander telegraph)
+
+**Editor:**
+- [ ] Spawn condition selector per enemy in the options panel: Immediate (default) / Timed / On Trigger
+- [ ] Timed: float delay field (seconds until spawn)
+- [ ] On Trigger: dropdown of all trigger IDs in the level (requires Milestone 8g)
+- [ ] Non-immediate enemies shown with a distinct overlay style (e.g. dashed ring) so designers can see at a glance which enemies are deferred
+
+---
+
+### 8g — Trigger system
+
+Buttons and doors allow level designers to create interactive sequences: timed gates, one-shot traps, and enemy waves gated behind player actions.
+
+**Data structures:**
+- [ ] `ButtonData` — position (tile), activation mode (touch / proximity radius), one-shot flag, list of `ActionData`
+- [ ] `DoorData` — position (tile), width, height, initial state (open/closed), closed surface type (defaults to Kill)
+- [ ] `ActionData` — union type: OpenDoor / CloseDoor / ToggleDoor (target door ID) | SpawnEnemy (target enemy ID, overrides spawn condition) | FireTrigger (target trigger ID, for chaining)
+
+**Runtime (gameplay):**
+- [ ] `Button` node — `Area2D`; activates when any player overlaps (touch mode) or enters radius (proximity mode); fires all actions; respects one-shot flag
+- [ ] `Door` node — `Area2D` + `CollisionShape2D`; when closed, acts as a Kill surface; animates open/close with a short slide; state changes are host-authoritative and broadcast to clients
+- [ ] `LevelLoader` spawns buttons and doors from level JSON; wires action targets by ID after all nodes are created
+
+**Editor:**
+- [ ] Button placement in Triggers mode (slot 1): left-click to place; options panel shows activation mode, one-shot toggle, and action list
+- [ ] Door placement in Triggers mode (slot 2): left-click to place, then drag to set width and height; options panel shows size fields, surface type, and initial state
+- [ ] Action list editor: add/remove actions; each entry has a type dropdown and a target picker (ID dropdown populated from current level's doors and enemies)
+- [ ] Viewport overlay: dashed lines connect each button to its target doors/enemies; color-coded by action type (open = green, close = red, spawn = orange)
+- [ ] Selecting a button highlights its connected targets on the canvas
+
+---
+
+### 8h — Playlists
 - [ ] `PlaylistData` JSON schema: `{ name, levels: [<level filename>, ...] }` stored in `user://playlists/`
 - [ ] Playlist editor: create/rename a playlist, add levels from the saved-levels list, reorder with drag-and-drop, remove entries
 - [ ] `RunState` tracks the active playlist and current index; level complete advances to the next entry

@@ -146,5 +146,5 @@ public static class LevelLoader
     }
 
     private static IEnemyBehavior BuildOrbiter(OrbiterBehaviorData b) =>
-        new OrbiterBehavior(new Vector2(b.CenterX, b.CenterY), b.Radius, b.AngularSpeed, b.Clockwise, b.StartAngle);
+        new OrbiterBehavior(new Vector2(b.CenterX, b.CenterY), b.Radius, b.AngularSpeed, b.Clockwise, b.StartAngle, b.EndAngle);
 }

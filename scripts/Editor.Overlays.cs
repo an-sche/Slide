@@ -90,21 +90,71 @@ public partial class Editor
                 overlays.Add(new EditorOverlay(center, color, OverlayShape.Circle, oLabel, Selected: selected));
                 if (orbiter.Radius > 0)
                 {
-                    float alpha = selected ? 0.55f : 0.28f;
-                    const int Segs = 32;
-                    for (int s = 0; s < Segs; s++)
-                    {
-                        float a0 = s       * Mathf.Tau / Segs;
-                        float a1 = (s + 1) * Mathf.Tau / Segs;
-                        var   p0 = center + new Vector2(Mathf.Cos(a0), Mathf.Sin(a0)) * orbiter.Radius;
-                        var   p1 = center + new Vector2(Mathf.Cos(a1), Mathf.Sin(a1)) * orbiter.Radius;
-                        lines.Add(new EditorLine(p0, p1, new Color(color.R, color.G, color.B, alpha)));
-                    }
+                    float spokeAlpha = selected ? 0.90f : 0.55f;
+                    float arcAlpha   = selected ? 0.55f : 0.28f;
 
-                    // Spoke from center to start angle position
-                    var startPt = center + new Vector2(Mathf.Cos(orbiter.StartAngle), Mathf.Sin(orbiter.StartAngle)) * orbiter.Radius;
-                    lines.Add(new EditorLine(center, startPt, new Color(color.R, color.G, color.B, selected ? 0.90f : 0.55f)));
-                    overlays.Add(new EditorOverlay(startPt, color, OverlayShape.Diamond, "", Selected: false));
+                    if (orbiter.EndAngle.HasValue)
+                    {
+                        // Normalize endAngle to lie past startAngle in the travel direction
+                        float a0 = orbiter.StartAngle;
+                        float a1 = orbiter.EndAngle.Value;
+                        if (orbiter.Clockwise) { while (a1 <= a0) a1 += Mathf.Tau; }
+                        else                   { while (a1 >= a0) a1 -= Mathf.Tau; }
+                        float drawFrom = Mathf.Min(a0, a1);
+                        float drawTo   = Mathf.Max(a0, a1);
+
+                        // Active arc — bright
+                        int segs = Mathf.Max(3, (int)((drawTo - drawFrom) / Mathf.Tau * 64));
+                        float step = (drawTo - drawFrom) / segs;
+                        for (int s = 0; s < segs; s++)
+                        {
+                            float sa = drawFrom + s * step;
+                            float sb = drawFrom + (s + 1) * step;
+                            lines.Add(new EditorLine(
+                                center + new Vector2(Mathf.Cos(sa), Mathf.Sin(sa)) * orbiter.Radius,
+                                center + new Vector2(Mathf.Cos(sb), Mathf.Sin(sb)) * orbiter.Radius,
+                                new Color(color.R, color.G, color.B, arcAlpha)));
+                        }
+
+                        // Remaining circle — very faint, shows orbit radius
+                        float remnant = Mathf.Tau - (drawTo - drawFrom);
+                        int   rSegs   = Mathf.Max(3, (int)(remnant / Mathf.Tau * 64));
+                        float rStep   = remnant / rSegs;
+                        for (int s = 0; s < rSegs; s++)
+                        {
+                            float sa = drawTo + s * rStep;
+                            float sb = drawTo + (s + 1) * rStep;
+                            lines.Add(new EditorLine(
+                                center + new Vector2(Mathf.Cos(sa), Mathf.Sin(sa)) * orbiter.Radius,
+                                center + new Vector2(Mathf.Cos(sb), Mathf.Sin(sb)) * orbiter.Radius,
+                                new Color(color.R, color.G, color.B, arcAlpha * 0.35f)));
+                        }
+
+                        // Two spokes + diamonds at each arc endpoint
+                        var startPt = center + new Vector2(Mathf.Cos(orbiter.StartAngle), Mathf.Sin(orbiter.StartAngle)) * orbiter.Radius;
+                        var endPt   = center + new Vector2(Mathf.Cos(orbiter.EndAngle.Value), Mathf.Sin(orbiter.EndAngle.Value)) * orbiter.Radius;
+                        lines.Add(new EditorLine(center, startPt, new Color(color.R, color.G, color.B, spokeAlpha)));
+                        lines.Add(new EditorLine(center, endPt,   new Color(color.R, color.G, color.B, spokeAlpha)));
+                        overlays.Add(new EditorOverlay(startPt, color, OverlayShape.Diamond, "", Selected: false));
+                        overlays.Add(new EditorOverlay(endPt,   color, OverlayShape.Diamond, "", Selected: false));
+                    }
+                    else
+                    {
+                        // Full circle
+                        const int Segs = 32;
+                        for (int s = 0; s < Segs; s++)
+                        {
+                            float sa = s       * Mathf.Tau / Segs;
+                            float sb = (s + 1) * Mathf.Tau / Segs;
+                            lines.Add(new EditorLine(
+                                center + new Vector2(Mathf.Cos(sa), Mathf.Sin(sa)) * orbiter.Radius,
+                                center + new Vector2(Mathf.Cos(sb), Mathf.Sin(sb)) * orbiter.Radius,
+                                new Color(color.R, color.G, color.B, arcAlpha)));
+                        }
+                        var startPt = center + new Vector2(Mathf.Cos(orbiter.StartAngle), Mathf.Sin(orbiter.StartAngle)) * orbiter.Radius;
+                        lines.Add(new EditorLine(center, startPt, new Color(color.R, color.G, color.B, spokeAlpha)));
+                        overlays.Add(new EditorOverlay(startPt, color, OverlayShape.Diamond, "", Selected: false));
+                    }
                 }
             }
             else

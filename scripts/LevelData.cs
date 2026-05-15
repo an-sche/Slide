@@ -77,12 +77,13 @@ public class WanderBehaviorData : BehaviorData
 
 public class OrbiterBehaviorData : BehaviorData
 {
-    public float CenterX      { get; set; }
-    public float CenterY      { get; set; }
-    public float Radius       { get; set; }
-    public float AngularSpeed { get; set; }
-    public bool  Clockwise    { get; set; }
-    public float StartAngle   { get; set; }
+    public float  CenterX      { get; set; }
+    public float  CenterY      { get; set; }
+    public float  Radius       { get; set; }
+    public float  AngularSpeed { get; set; }
+    public bool   Clockwise    { get; set; }
+    public float  StartAngle   { get; set; }
+    public float? EndAngle     { get; set; }  // null = full loop; set = arc bounce between StartAngle and EndAngle
 }
 
 

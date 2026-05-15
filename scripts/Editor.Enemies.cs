@@ -1382,6 +1382,38 @@ public partial class Editor
             if (float.TryParse(val, out float deg)) { orbiter.StartAngle = Mathf.DegToRad(deg); RefreshCanvasOverlays(); }
         };
         _behaviorConfigContainer.AddChild(angleEdit);
+
+        // End Angle (arc / bounce mode)
+        _behaviorConfigContainer.AddChild(MakeBehaviorLabel("End Angle (blank = full loop)"));
+        var endAngleEdit = new LineEdit
+        {
+            Text                = orbiter.EndAngle.HasValue ? ((int)Mathf.RadToDeg(orbiter.EndAngle.Value)).ToString() : "",
+            PlaceholderText     = "full loop",
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        endAngleEdit.AddThemeFontSizeOverride("font_size", 11);
+        WireIntFilter(endAngleEdit);
+        float? endAngleBefore = null;
+        endAngleEdit.FocusEntered += () => endAngleBefore = orbiter.EndAngle;
+        endAngleEdit.FocusExited  += () =>
+        {
+            bool   empty = string.IsNullOrWhiteSpace(endAngleEdit.Text);
+            float? sa    = empty ? null : (float.TryParse(endAngleEdit.Text, out float d) ? Mathf.DegToRad(d) : orbiter.EndAngle);
+            if (sa == endAngleBefore) return;
+            float? sb = endAngleBefore;
+            _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                () => { orbiter.EndAngle = sa; RefreshSelectionPanel(); },
+                () => { orbiter.EndAngle = sb; RefreshSelectionPanel(); }
+            ));
+        };
+        endAngleEdit.TextChanged += val =>
+        {
+            orbiter.EndAngle = string.IsNullOrWhiteSpace(val) ? null
+                             : float.TryParse(val, out float deg) ? Mathf.DegToRad(deg)
+                             : orbiter.EndAngle;
+            RefreshCanvasOverlays();
+        };
+        _behaviorConfigContainer.AddChild(endAngleEdit);
     }
 
     // Restricts a LineEdit to digits only (no decimals, no signs).

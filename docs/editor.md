@@ -1,5 +1,7 @@
 # Slide Level Editor
 
+* Levels are stored as a combination of a level.png file and a level.json file. The leve.png file stores the survaces, while the level.json file stores metadata about the enemies, entities, triggers, etc.
+
 ## Layout
 
 ```
@@ -226,3 +228,16 @@ A `*` appears next to the level name when there are unsaved changes. The followi
 - New (discard current level)
 - Open (replace current level)
 - Play (if auto-save on play is disabled)
+
+---
+
+## Backlog
+
+Small improvements planned for the editor. None are blockers for level design.
+
+| # | Item | Notes |
+|---|------|-------|
+| 9 | Duplicate selected enemy | Copy an enemy with all its behavior config (waypoints, polygon, etc.) and place the clone nearby |
+| 10 | Scrollable options panel | Options panel needs a `ScrollContainer` so patrol enemies with many waypoints don't overflow off-screen |
+| 13 | Center canvas on selected | When right-clicking to select an entity or enemy, pan the canvas to center on it — useful on large levels where the selection may be off-screen |
+| 14 | Spawn condition editor | UI for the `Spawn` field per enemy: Immediate (default) / Timed (delay in seconds) / On Trigger (blocked until trigger system is built) |
