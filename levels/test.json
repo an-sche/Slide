@@ -192,7 +192,6 @@
         "speed": 120,
         "minIdle": 1.5,
         "maxIdle": 4,
-        "seed": 1001
       }
     },
     {
@@ -222,7 +221,6 @@
         "speed": 280,
         "minIdle": 0.3,
         "maxIdle": 1.5,
-        "seed": 1002
       }
     },
     {
@@ -252,7 +250,6 @@
         "speed": 180,
         "minIdle": 0.8,
         "maxIdle": 3,
-        "seed": 1003
       }
     },
     {
@@ -282,7 +279,6 @@
         "speed": 350,
         "minIdle": 0.2,
         "maxIdle": 1,
-        "seed": 1004
       }
     },
     {

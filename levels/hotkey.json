@@ -29,5 +29,127 @@
       "y": 1074
     }
   ],
-  "enemies": []
+  "enemies": [
+    {
+      "id": "3dd68c10-b7fe-425f-962e-f62327efc676",
+      "radius": 12,
+      "color": "#e63333",
+      "behavior": {
+        "type": "patrol",
+        "waypoints": [
+          {
+            "x": 702,
+            "y": 882,
+            "speed": 100
+          },
+          {
+            "x": 930,
+            "y": 670,
+            "speed": 100
+          },
+          {
+            "x": 1142,
+            "y": 838,
+            "speed": 100
+          },
+          {
+            "x": 918,
+            "y": 1058,
+            "speed": 100
+          }
+        ],
+        "endBehavior": "loop"
+      }
+    },
+    {
+      "id": "93dfce30-236f-4d91-94ce-f087c79d6415",
+      "radius": 12,
+      "color": "#dd3377",
+      "behavior": {
+        "type": "wander",
+        "polygon": [
+          {
+            "x": 422,
+            "y": 306
+          },
+          {
+            "x": 258,
+            "y": 454
+          },
+          {
+            "x": 362,
+            "y": 566
+          },
+          {
+            "x": 538,
+            "y": 422
+          }
+        ],
+        "speed": 100,
+        "minIdle": 0.5,
+        "maxIdle": 2,
+        "startX": 394,
+        "startY": 426
+      }
+    },
+    {
+      "id": "c5ed87ab-43c8-4111-ad1e-41fa79690283",
+      "radius": 12,
+      "color": "#33cc77",
+      "behavior": {
+        "type": "orbiter",
+        "centerX": 1058,
+        "centerY": 1810,
+        "radius": 146,
+        "angularSpeed": 1.5,
+        "clockwise": true,
+        "startAngle": 0
+      }
+    },
+    {
+      "id": "ffd338d2-7c14-49f7-b722-5fcc9a5c0d00",
+      "radius": 12,
+      "color": "#33cc77",
+      "behavior": {
+        "type": "orbiter",
+        "centerX": 1058,
+        "centerY": 1810,
+        "radius": 122,
+        "angularSpeed": 1.5,
+        "clockwise": true,
+        "startAngle": 0
+      }
+    },
+    {
+      "id": "8575564e-67fc-48f4-bf0c-a579c0f2c5ca",
+      "radius": 12,
+      "color": "#e63333",
+      "behavior": {
+        "type": "patrol",
+        "waypoints": [
+          {
+            "x": 14,
+            "y": 454,
+            "speed": 100
+          },
+          {
+            "x": 290,
+            "y": 310,
+            "speed": 100
+          },
+          {
+            "x": 354,
+            "y": 114,
+            "speed": 100
+          },
+          {
+            "x": 22,
+            "y": 22,
+            "speed": 200
+          }
+        ],
+        "endBehavior": "loop"
+      }
+    }
+  ]
 }

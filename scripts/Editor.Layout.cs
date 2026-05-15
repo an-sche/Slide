@@ -20,18 +20,18 @@ public partial class Editor
 
         hbox.AddChild(new Control { CustomMinimumSize = new Vector2(8, 0) });
 
-        var newBtn      = MakeTopBarButton("New", new InputEventKey { Keycode = Key.N, CtrlPressed = true });      newBtn.Pressed      += OnNew;           hbox.AddChild(newBtn);
-        var openBtn     = MakeTopBarButton("Open", new InputEventKey { Keycode = Key.O, CtrlPressed = true });     openBtn.Pressed     += OnOpen;          hbox.AddChild(openBtn);
-        var saveBtn     = MakeTopBarButton("Save", new InputEventKey { Keycode = Key.S, CtrlPressed = true });     saveBtn.Pressed     += OnSave;          hbox.AddChild(saveBtn);
-        var saveAsBtn   = MakeTopBarButton("Save As", new InputEventKey { Keycode = Key.S, CtrlPressed = true, ShiftPressed = true });  saveAsBtn.Pressed   += OnSaveAs;        hbox.AddChild(saveAsBtn);
-        var settingsBtn = MakeTopBarButton("Settings", new InputEventKey { Keycode = Key.Comma, CtrlPressed = true }); settingsBtn.Pressed += OnLevelSettings; hbox.AddChild(settingsBtn);
-        var playBtn     = MakeTopBarButton("Play", new InputEventKey { Keycode = Key.F5 });     playBtn.Pressed     += OnPlay;          hbox.AddChild(playBtn);
-        var fitBtn      = MakeTopBarButton("Fit",  new InputEventKey { Keycode = Key.F });      fitBtn.Pressed      += () => _canvas.FitToView(); hbox.AddChild(fitBtn);
+        var newBtn      = MakeTopBarButton("New",      new InputEventKey { Keycode = Key.N, CtrlPressed = true },                            "res://icons/new.svg");      newBtn.Pressed      += OnNew;                    hbox.AddChild(newBtn);
+        var openBtn     = MakeTopBarButton("Open",     new InputEventKey { Keycode = Key.O, CtrlPressed = true },                            "res://icons/open.svg");     openBtn.Pressed     += OnOpen;                   hbox.AddChild(openBtn);
+        var saveBtn     = MakeTopBarButton("Save",     new InputEventKey { Keycode = Key.S, CtrlPressed = true },                            "res://icons/save.svg");     saveBtn.Pressed     += OnSave;                   hbox.AddChild(saveBtn);
+        var saveAsBtn   = MakeTopBarButton("Save As",  new InputEventKey { Keycode = Key.S, CtrlPressed = true, ShiftPressed = true },        "res://icons/saveas.svg");   saveAsBtn.Pressed   += OnSaveAs;                 hbox.AddChild(saveAsBtn);
+        var settingsBtn = MakeTopBarButton("Settings", new InputEventKey { Keycode = Key.Comma, CtrlPressed = true },                        "res://icons/settings.svg"); settingsBtn.Pressed += OnLevelSettings;          hbox.AddChild(settingsBtn);
+        var playBtn     = MakeTopBarButton("Play",     new InputEventKey { Keycode = Key.F5 },                                               "res://icons/play.svg");     playBtn.Pressed     += OnPlay;                   hbox.AddChild(playBtn);
+        var fitBtn      = MakeTopBarButton("Fit",      new InputEventKey { Keycode = Key.F },                                                "res://icons/fit.svg");      fitBtn.Pressed      += () => _canvas.FitToView(); hbox.AddChild(fitBtn);
 
         hbox.AddChild(new VSeparator { CustomMinimumSize = new Vector2(0, 28) });
 
-        _undoBtn          = MakeTopBarButton("Undo", new InputEventKey { Keycode = Key.Z, CtrlPressed = true }); _undoBtn.Pressed += () => _undoStack.Undo(); hbox.AddChild(_undoBtn);
-        _redoBtn          = MakeTopBarButton("Redo", new InputEventKey { Keycode = Key.Y, CtrlPressed = true }); _redoBtn.Pressed += () => _undoStack.Redo(); hbox.AddChild(_redoBtn);
+        _undoBtn = MakeTopBarButton("Undo", new InputEventKey { Keycode = Key.Z, CtrlPressed = true }, "res://icons/undo.svg"); _undoBtn.Pressed += () => _undoStack.Undo(); hbox.AddChild(_undoBtn);
+        _redoBtn = MakeTopBarButton("Redo", new InputEventKey { Keycode = Key.Y, CtrlPressed = true }, "res://icons/redo.svg"); _redoBtn.Pressed += () => _undoStack.Redo(); hbox.AddChild(_redoBtn);
         _undoBtn.Disabled = true;
         _redoBtn.Disabled = true;
 
@@ -324,6 +324,25 @@ public partial class Editor
         var section = new VBoxContainer();
         section.AddThemeConstantOverride("separation", 4);
 
+        var shapeLabel = new Label { Text = "Brush Shape" };
+        shapeLabel.AddThemeFontSizeOverride("font_size", 11);
+        shapeLabel.AddThemeColorOverride("font_color", new Color(0.60f, 0.60f, 0.65f));
+        section.AddChild(shapeLabel);
+
+        var shapeRow = new HBoxContainer();
+        shapeRow.AddThemeConstantOverride("separation", 4);
+        section.AddChild(shapeRow);
+
+        var shapeGroup  = new ButtonGroup();
+        var circleBtn   = new Button { Text = "Circle", ToggleMode = true, ButtonPressed = true, ButtonGroup = shapeGroup, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        var squareBtn   = new Button { Text = "Square", ToggleMode = true,                       ButtonGroup = shapeGroup, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        circleBtn.AddThemeFontSizeOverride("font_size", 12);
+        squareBtn.AddThemeFontSizeOverride("font_size", 12);
+        circleBtn.Pressed += () => _canvas.BrushShape = BrushShape.Circle;
+        squareBtn.Pressed += () => _canvas.BrushShape = BrushShape.Square;
+        shapeRow.AddChild(circleBtn);
+        shapeRow.AddChild(squareBtn);
+
         var title = new Label { Text = "Brush Size" };
         title.AddThemeFontSizeOverride("font_size", 11);
         title.AddThemeColorOverride("font_color", new Color(0.60f, 0.60f, 0.65f));
@@ -356,22 +375,26 @@ public partial class Editor
         return section;
     }
 
-    private static Button MakeTopBarButton(string text, InputEventKey? shortcut = null)
+    private static Button MakeTopBarButton(string text, InputEventKey? shortcut = null, string? iconPath = null)
     {
-        var t = shortcut is null ? text : $"{text}\n({shortcut.AsText()})";
-        var btn = new Button 
-        { 
-            Text = t, 
-            CustomMinimumSize = new Vector2(72, 50),
+        var btn = new Button
+        {
+            Text                  = "",
+            TooltipText           = text,
+            CustomMinimumSize     = new Vector2(40, 40),
+            IconAlignment         = HorizontalAlignment.Center,
+            VerticalIconAlignment = VerticalAlignment.Center,
         };
+
+        if (iconPath != null)
+            btn.Icon = GD.Load<Texture2D>(iconPath);
 
         if (shortcut is not null)
         {
             var s = new Shortcut() { Events = [shortcut] };
-            btn.Shortcut = s;
+            btn.Shortcut         = s;
             btn.ShortcutFeedback = true;
         }
-        btn.AddThemeFontSizeOverride("font_size", 15);
         return btn;
     }
 

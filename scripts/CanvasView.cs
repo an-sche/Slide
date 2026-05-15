@@ -4,6 +4,8 @@ using Godot;
 
 namespace Slide;
 
+public enum BrushShape { Circle, Square }
+
 public partial class CanvasView : Control
 {
     public event Action<Vector2I>? PixelClicked;
@@ -21,6 +23,7 @@ public partial class CanvasView : Control
     private bool          _needsFit;
     private Label         _coordLabel  = null!;
     private int           _brushRadius = 0;
+    private BrushShape    _brushShape  = BrushShape.Circle;
     private float         _cellSize    = 1f;
     private EditorOverlay[]  _overlays              = [];
     private EditorLine[]     _lines                 = [];
@@ -90,7 +93,7 @@ public partial class CanvasView : Control
         for (int dy = -r; dy <= r; dy++)
         for (int dx = -r; dx <= r; dx++)
         {
-            if (dx * dx + dy * dy > r * r) continue;
+            if (_brushShape == BrushShape.Circle && dx * dx + dy * dy > r * r) continue;
             int px = center.X + dx, py = center.Y + dy;
             if ((uint)px >= (uint)w || (uint)py >= (uint)h) continue;
             yield return new Vector2I(px, py);
@@ -101,6 +104,12 @@ public partial class CanvasView : Control
     {
         get => _brushRadius;
         set { _brushRadius = value; QueueRedraw(); }
+    }
+
+    public BrushShape BrushShape
+    {
+        get => _brushShape;
+        set { _brushShape = value; QueueRedraw(); }
     }
 
     public void AdjustBrushRadius(int delta)
@@ -186,9 +195,13 @@ public partial class CanvasView : Control
         if ((uint)cursorPx.X < (uint)_image.GetWidth() && (uint)cursorPx.Y < (uint)_image.GetHeight())
         {
             var   screenCenter = new Vector2(cursorPx.X + 0.5f, cursorPx.Y + 0.5f) * _zoom + _offset;
-            float screenRadius = (_brushRadius + 0.5f) * _zoom;
-            DrawArc(screenCenter, screenRadius, 0, Mathf.Tau, 64, new Color(1f, 1f, 1f, 0.8f), 1.5f);
-
+            float half         = (_brushRadius + 0.5f) * _zoom;
+            var   cursorColor  = new Color(1f, 1f, 1f, 0.8f);
+            if (_brushShape == BrushShape.Square)
+                DrawRect(new Rect2(screenCenter - new Vector2(half, half), new Vector2(half * 2f, half * 2f)),
+                    cursorColor, false, 1.5f);
+            else
+                DrawArc(screenCenter, half, 0, Mathf.Tau, 64, cursorColor, 1.5f);
         }
     }
 
