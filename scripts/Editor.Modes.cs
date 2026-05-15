@@ -82,6 +82,9 @@ public partial class Editor
         if (_mode == mode) return;
         _mode = mode;
 
+        _brushSection.Visible = mode == EditorMode.Paint;
+        _canvas.BrushRadius   = mode == EditorMode.Paint ? 0 : -1;
+
         for (int i = 0; i < _modeTabs.Length; i++)
             _modeTabStyles[i].BgColor = i == (int)mode ? ActiveTabBg : InactiveTabBg;
 

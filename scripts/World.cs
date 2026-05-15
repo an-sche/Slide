@@ -20,6 +20,7 @@ public partial class World : Node2D
     private ProjectileSystem _projectiles = null!;
 
     private readonly Dictionary<long, Unit> _units = new();
+    private Enemy[] _enemies = [];
 
     public override void _Ready()
     {
@@ -35,10 +36,12 @@ public partial class World : Node2D
 
         string levelPath = GameSetup.IsPlaytest ? GameSetup.PlaytestPath! : "res://levels/test.json";
         if (GameSetup.IsPlaytest) AddPlaytestBanner();
+        ulong levelSeed = ((ulong)GD.Randi() << 32) | GD.Randi();
         var snap   = GameSetup.PlaytestRestore;
         var result = snap != null
-            ? LevelLoader.Load(snap.LevelData, snap.Image, this)
-            : LevelLoader.Load(levelPath, this);
+            ? LevelLoader.Load(snap.LevelData, snap.Image, this, levelSeed)
+            : LevelLoader.Load(levelPath, this, levelSeed);
+        _enemies = result.Enemies;
         _startPosition = result.StartPosition;
         _levelBounds   = result.LevelBounds;
         if (result.EndBlock != null)
@@ -131,9 +134,22 @@ public partial class World : Node2D
 
     public override void _PhysicsProcess(double delta)
     {
-        if (!GameNetwork.IsMultiplayer || !Multiplayer.IsServer() || _units.Count == 0) return;
+        if (!GameNetwork.IsMultiplayer || !Multiplayer.IsServer()) return;
+
         foreach (var (peerId, unit) in _units)
             Rpc(nameof(SyncUnitState), peerId, unit.GlobalPosition, unit.Facing, unit.HasTarget, unit.TargetPosition, unit.AbilitiesActiveMask);
+
+        if (_enemies.Length > 0)
+        {
+            var positions  = new Vector2[_enemies.Length];
+            var telegraphs = new float[_enemies.Length];
+            for (int i = 0; i < _enemies.Length; i++)
+            {
+                positions[i]  = _enemies[i].GlobalPosition;
+                telegraphs[i] = _enemies[i].TelegraphProgress;
+            }
+            Rpc(nameof(SyncEnemyStates), (Variant)positions, (Variant)telegraphs);
+        }
     }
 
     public override void _Process(double delta)
@@ -173,6 +189,16 @@ public partial class World : Node2D
         if (hasTarget) unit.SetTarget(target);
         else           unit.ClearTarget();
         unit.SetAbilitiesActive(abilitiesActive);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    public void SyncEnemyStates(Vector2[] positions, float[] telegraphProgress)
+    {
+        for (int i = 0; i < positions.Length && i < _enemies.Length; i++)
+        {
+            _enemies[i].GlobalPosition    = positions[i];
+            _enemies[i].TelegraphProgress = telegraphProgress[i];
+        }
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority)]

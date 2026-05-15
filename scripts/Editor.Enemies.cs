@@ -71,7 +71,6 @@ public partial class Editor
                 Speed   = 100f,
                 MinIdle = 0.5f,
                 MaxIdle = 2f,
-                Seed    = ((ulong)GD.Randi() << 32) | (ulong)GD.Randi(),
             },
         };
         BeginMultiClickPlacement(enemy);
@@ -1143,45 +1142,6 @@ public partial class Editor
         idleRow.AddChild(slashLbl);
         idleRow.AddChild(maxEdit);
         _behaviorConfigContainer.AddChild(idleRow);
-
-        // Seed
-        _behaviorConfigContainer.AddChild(MakeBehaviorLabel("Seed"));
-        var seedRow = new HBoxContainer();
-        seedRow.AddThemeConstantOverride("separation", 4);
-        var seedEdit = new LineEdit { Text = wander.Seed.ToString(), SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        seedEdit.AddThemeFontSizeOverride("font_size", 11);
-        WireIntFilter(seedEdit);
-        ulong seedBefore = 0;
-        seedEdit.FocusEntered += () => seedBefore = wander.Seed;
-        seedEdit.FocusExited  += () =>
-        {
-            string text = seedEdit.Text;
-            if (!ulong.TryParse(text, out ulong sa)) return;
-            if (sa == seedBefore) return;
-            ulong sb = seedBefore;
-            _undoStack.ExecuteAlreadyDone(new SimpleCommand(
-                () => { wander.Seed = sa; RefreshSelectionPanel(); },
-                () => { wander.Seed = sb; RefreshSelectionPanel(); }
-            ));
-        };
-        seedEdit.TextChanged += val =>
-        {
-            if (ulong.TryParse(val, out ulong s)) wander.Seed = s;
-        };
-        var randBtn = new Button { Text = "Rand", CustomMinimumSize = new Vector2(44, 0) };
-        randBtn.AddThemeFontSizeOverride("font_size", 11);
-        randBtn.Pressed += () =>
-        {
-            ulong before = wander.Seed;
-            ulong after  = ((ulong)GD.Randi() << 32) | (ulong)GD.Randi();
-            _undoStack.Execute(new SimpleCommand(
-                () => { wander.Seed = after;  RefreshSelectionPanel(); },
-                () => { wander.Seed = before; RefreshSelectionPanel(); }
-            ));
-        };
-        seedRow.AddChild(seedEdit);
-        seedRow.AddChild(randBtn);
-        _behaviorConfigContainer.AddChild(seedRow);
 
         // Start Position
         _behaviorConfigContainer.AddChild(MakeBehaviorLabel("Start Position"));

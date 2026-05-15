@@ -43,7 +43,7 @@ Levels are stored as a JSON + PNG pair (`user://levels/<name>.json` + `<name>.pn
 - [x] Place Patrol, Wander, and Orbiter enemies from the Enemies mode palette
 - [x] Configure radius, color, and name per enemy; editable tile position
 - [x] Patrol: waypoint list with per-waypoint speed, reorder (↑/↓), position edit (X/Y fields or ✏ pick-on-canvas), add/delete waypoints; end behavior (Loop / Reverse / Disappear); bulk "set all speeds" field
-- [x] Wander: click-to-place polygon vertices; Edit Polygon to revise; vertex list with per-vertex position edit and delete (3-vertex minimum); speed, idle min/max, seed, optional start position
+- [x] Wander: click-to-place polygon vertices; Edit Polygon to revise; vertex list with per-vertex position edit and delete (3-vertex minimum); speed, idle min/max, optional start position
 - [x] Orbiter: pick center via canvas click; orbit radius, angular speed, direction (CW/CCW), start angle; spoke + diamond overlay shows start angle live
 - [x] Right-click from any mode tab selects the nearest entity or enemy and auto-switches to the correct tab
 - [ ] Chaser / Guard detection and give-up radii shown as overlay circles (blocked on Milestone 7b/7e)
@@ -118,7 +118,7 @@ Buttons and doors allow level designers to create interactive sequences: timed g
 
 **Simulation model: host-authoritative using Godot's built-in multiplayer**
 - Host runs all game logic (unit movement, enemy behaviors, ability effects, kill detection)
-- Clients send right-click inputs to host via `@rpc`; host simulates and broadcasts state back via manual RPCs (`SyncUnitState` unreliable, death/respawn reliable)
+- Clients send right-click inputs to host via RPC; host simulates and broadcasts state back
 - Steam Relay (via GodotSteam addon) routes traffic between players — same role as Battle.net for StarCraft
 - Host has zero latency advantage; acceptable for a co-op puzzle game
 
@@ -131,11 +131,15 @@ Buttons and doors allow level designers to create interactive sequences: timed g
 - Physics interpolation enabled project-wide for smooth visuals at any framerate
 
 **Enemy sync**
-- Patrol enemies are deterministic — host broadcasts config once at level load; clients can simulate locally
-- Wander enemies and all kill decisions are host-authoritative only; results broadcast to clients
+- Host simulates all enemy behaviors; clients receive positions and telegraph state each tick via a single batched unreliable RPC (`SyncEnemyStates`)
+- Enemy seeds are generated at level load from a per-run seed; clients don't need seeds since they don't simulate
+
+**Unit sync**
+- Currently uses manual RPCs: `SyncUnitState` (unreliable, every tick) for position/facing/abilities; `BroadcastUnitDeath` / `BroadcastUnitRespawn` (reliable) for lifecycle events
+- See deferred item below for a planned upgrade to `MultiplayerSynchronizer`
 
 **Bandwidth**
-- `MultiplayerSynchronizer` broadcasts positions each tick; 100 enemies × 8 bytes × 20 ticks/sec ≈ 16KB/s — well within Steam relay limits
+- 100 enemies × 12 bytes (position + telegraph) × 20 ticks/sec ≈ 24 KB/s — well within Steam relay limits
 - Player inputs (target point, ability key) are small RPCs from each client to host
 
 ---
@@ -145,3 +149,9 @@ Buttons and doors allow level designers to create interactive sequences: timed g
 - Upgrade UI feedback: flash or sound when a point is spent (deferred from 4a, low priority)
 - Waypoint cleanup: when a unit reaches its waypoint on ground, the waypoint marker should be removed from the display
 - Slidy surface steering: holding right-click should orbit the unit around the target point, not steer toward a point on the tangent of the unit's circle — needs tuning to feel correct
+- **Unit sync: migrate to `MultiplayerSynchronizer`** — replace the manual `SyncUnitState` RPC loop in `World._PhysicsProcess` with a `MultiplayerSynchronizer` node per unit. Benefits:
+  - Built-in **interpolation** between received snapshots — unit movement on clients will appear smooth even at low sync rates, rather than snapping to positions
+  - **Configurable sync interval** per property — position can sync at 20Hz while less-critical properties sync less often
+  - Declarative property list instead of hand-written RPC marshaling — easier to add/remove synced fields
+  - Less manual code in `World.cs`; Godot manages the per-peer state and delta encoding
+  - 8 units is the right scale for per-node synchronizers (unlike enemies, where a single batched RPC is more efficient)

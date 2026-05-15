@@ -70,7 +70,6 @@ public class WanderBehaviorData : BehaviorData
     public float      Speed   { get; set; }
     public float      MinIdle { get; set; }
     public float      MaxIdle { get; set; }
-    public ulong      Seed    { get; set; }
     public float?     StartX  { get; set; }
     public float?     StartY  { get; set; }
 }

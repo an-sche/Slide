@@ -11,6 +11,7 @@ public static class LevelLoader
         public Vector2   StartPosition;
         public EndBlock? EndBlock;
         public Rect2     LevelBounds;
+        public Enemy[]   Enemies;
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -18,20 +19,20 @@ public static class LevelLoader
         PropertyNameCaseInsensitive = true,
     };
 
-    public static LoadResult Load(string path, Node parent)
+    public static LoadResult Load(string path, Node parent, ulong levelSeed = 0)
     {
         string    json = FileAccess.GetFileAsString(path);
         LevelData data = JsonSerializer.Deserialize<LevelData>(json, JsonOptions)!;
-        return Populate(data, path.GetBaseDir(), parent);
+        return Populate(data, path.GetBaseDir(), parent, levelSeed);
     }
 
-    public static LoadResult Load(LevelData data, Image image, Node parent) =>
-        Populate(data, image, parent);
+    public static LoadResult Load(LevelData data, Image image, Node parent, ulong levelSeed = 0) =>
+        Populate(data, image, parent, levelSeed);
 
-    private static LoadResult Populate(LevelData data, string levelDir, Node parent) =>
-        Populate(data, Image.LoadFromFile(levelDir + "/" + data.Bitmap), parent);
+    private static LoadResult Populate(LevelData data, string levelDir, Node parent, ulong levelSeed = 0) =>
+        Populate(data, Image.LoadFromFile(levelDir + "/" + data.Bitmap), parent, levelSeed);
 
-    private static LoadResult Populate(LevelData data, Image image, Node parent)
+    private static LoadResult Populate(LevelData data, Image image, Node parent, ulong levelSeed = 0)
     {
         var result = new LoadResult();
 
@@ -57,12 +58,20 @@ public static class LevelLoader
             }
         }
 
+        var rng     = new RandomNumberGenerator { Seed = levelSeed };
+        var enemies = new System.Collections.Generic.List<Enemy>();
         foreach (var e in data.Enemies)
         {
             if (e.Spawn is null or ImmediateSpawnData)
-                parent.AddChild(BuildEnemy(e));
+            {
+                ulong enemySeed = ((ulong)rng.Randi() << 32) | rng.Randi();
+                var   enemy     = BuildEnemy(e, enemySeed);
+                parent.AddChild(enemy);
+                enemies.Add(enemy);
+            }
             // TimedSpawn and TriggerSpawn handled when those systems are built
         }
+        result.Enemies = enemies.ToArray();
 
         return result;
     }
@@ -103,23 +112,24 @@ public static class LevelLoader
 
     // --- Enemy construction ---
 
-    private static Enemy BuildEnemy(EnemyData data)
+    private static Enemy BuildEnemy(EnemyData data, ulong seed = 0)
     {
         var enemy = new Enemy
         {
+            Name     = data.Id,
             Radius   = data.Radius,
             Color    = Color.FromHtml(data.Color),
-            Behavior = BuildBehavior(data.Behavior),
+            Behavior = BuildBehavior(data.Behavior, seed),
         };
         if (data.Behavior is PatrolBehaviorData p && p.Waypoints.Length > 0)
             enemy.Position = new Vector2(p.Waypoints[0].X, p.Waypoints[0].Y);
         return enemy;
     }
 
-    private static IEnemyBehavior BuildBehavior(BehaviorData b) => b switch
+    private static IEnemyBehavior BuildBehavior(BehaviorData b, ulong seed) => b switch
     {
         PatrolBehaviorData  p => BuildPatrol(p),
-        WanderBehaviorData  w => BuildWander(w),
+        WanderBehaviorData  w => BuildWander(w, seed),
         OrbiterBehaviorData o => BuildOrbiter(o),
         _ => throw new InvalidOperationException($"Unknown behavior type: {b.GetType().Name}"),
     };
@@ -136,13 +146,13 @@ public static class LevelLoader
         return new PatrolBehavior(waypoints, end);
     }
 
-    private static IEnemyBehavior BuildWander(WanderBehaviorData b)
+    private static IEnemyBehavior BuildWander(WanderBehaviorData b, ulong seed)
     {
         var polygon = Array.ConvertAll(b.Polygon, v => new Vector2(v.X, v.Y));
         Vector2? start = (b.StartX.HasValue && b.StartY.HasValue)
             ? new Vector2(b.StartX.Value, b.StartY.Value)
             : (Vector2?)null;
-        return new RandomWanderBehavior(polygon, b.Speed, b.MinIdle, b.MaxIdle, start, b.Seed);
+        return new RandomWanderBehavior(polygon, b.Speed, b.MinIdle, b.MaxIdle, start, seed);
     }
 
     private static IEnemyBehavior BuildOrbiter(OrbiterBehaviorData b) =>

@@ -89,14 +89,21 @@ public partial class Editor
         var panel = new PanelContainer { CustomMinimumSize = new Vector2(OptionsPanelWidth, 0) };
         panel.AddThemeStyleboxOverride("panel", borderStyle);
 
-        var margin = new MarginContainer();
+        var scroll = new ScrollContainer
+        {
+            SizeFlagsVertical    = SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+        };
+        panel.AddChild(scroll);
+
+        var margin = new MarginContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         margin.AddThemeConstantOverride("margin_top",    10);
         margin.AddThemeConstantOverride("margin_left",   10);
         margin.AddThemeConstantOverride("margin_right",  10);
         margin.AddThemeConstantOverride("margin_bottom", 10);
-        panel.AddChild(margin);
+        scroll.AddChild(margin);
 
-        _optionsPanelContent = new VBoxContainer();
+        _optionsPanelContent = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         _optionsPanelContent.AddThemeConstantOverride("separation", 8);
         margin.AddChild(_optionsPanelContent);
 

@@ -83,8 +83,12 @@ public class RandomWanderBehavior : IEnemyBehavior
 
             case WanderState.Telegraph:
                 _telegraphTimer -= delta;
+                enemy.TelegraphProgress = 1f - (_telegraphTimer / TelegraphDuration);
                 if (_telegraphTimer <= 0f)
+                {
+                    enemy.TelegraphProgress = 0f;
                     _state = WanderState.Moving;
+                }
                 break;
 
             case WanderState.Moving:
@@ -104,14 +108,7 @@ public class RandomWanderBehavior : IEnemyBehavior
         }
     }
 
-    public void Draw(Enemy enemy)
-    {
-        if (_state != WanderState.Telegraph) return;
-
-        float progress = 1f - (_telegraphTimer / TelegraphDuration);
-        enemy.DrawArc(Vector2.Zero, enemy.Radius + 6f, 0, Mathf.Tau, 32,
-            new Color(1f, 0.85f, 0.1f, progress), 2.5f);
-    }
+    public void Draw(Enemy enemy) { }
 
     private void EnterIdle()
     {
