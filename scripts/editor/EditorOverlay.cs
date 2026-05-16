@@ -2,7 +2,7 @@ using Godot;
 
 namespace Slide;
 
-public enum OverlayShape { Circle, Diamond }
+public enum OverlayShape { Circle, Diamond, Square }
 
 public readonly record struct EditorOverlay(
     Vector2      WorldPos,

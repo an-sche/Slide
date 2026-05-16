@@ -27,6 +27,15 @@
       "kind": "bonus",
       "x": 698,
       "y": 1074
+    },
+    {
+      "id": "993ebaa7-a429-455d-8ae1-b25d288787b2",
+      "kind": "wall",
+      "x": 518,
+      "y": 718,
+      "width": 200,
+      "height": 25,
+      "rotation": 15
     }
   ],
   "enemies": [

@@ -186,6 +186,7 @@ public partial class Editor
             0 => "start",
             1 => "end",
             2 => "bonus",
+            3 => "wall",
             _ => "",
         };
         if (string.IsNullOrEmpty(kind)) return;

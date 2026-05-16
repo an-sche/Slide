@@ -21,6 +21,7 @@ public partial class Unit : Area2D
 	private SceneTreeTimer?  _respawnTimer;
 
 	private readonly Ability?[] _abilities = new Ability?[5];
+	private CircleShape2D _wallCheckShape = null!;
 
 
 	public int         PlayerId      { get; set; } = 0;
@@ -85,7 +86,8 @@ public partial class Unit : Area2D
 		CollisionMask  = Layers.Corpses;
 		ZIndex = 1;
 
-		AddChild(new CollisionShape2D { Shape = new CircleShape2D { Radius = Radius * 0.8f } });
+		_wallCheckShape = new CircleShape2D { Radius = Radius * 0.8f };
+		AddChild(new CollisionShape2D { Shape = _wallCheckShape });
 
 		AreaEntered += OnZoneEntered;
 
@@ -119,6 +121,8 @@ public partial class Unit : Area2D
 
 		if (_isDead) return;
 
+		var posBeforeMove = GlobalPosition;
+
 		UpdateSurfaceFromPoint();
 
 		switch (_currentSurface)
@@ -141,6 +145,13 @@ public partial class Unit : Area2D
 			case SurfaceType.Straight:
 				ProcessStraightMovement(dt);
 				break;
+		}
+
+		if (!_isDead && IsOverlappingWall())
+		{
+			GlobalPosition = posBeforeMove;
+			_velocity      = Vector2.Zero;
+			_target        = null;
 		}
 	}
 
@@ -212,6 +223,19 @@ public partial class Unit : Area2D
 	private void OnZoneEntered(Area2D area)
 	{
 		if (area is Corpse c && !_isDead) CorpseTouched?.Invoke(c);
+	}
+
+	private bool IsOverlappingWall()
+	{
+		var query = new PhysicsShapeQueryParameters2D
+		{
+			Shape             = _wallCheckShape,
+			Transform         = new Transform2D(0, GlobalPosition),
+			CollideWithAreas  = true,
+			CollideWithBodies = false,
+			CollisionMask     = Layers.Walls,
+		};
+		return GetWorld2D().DirectSpaceState.IntersectShape(query, 1).Count > 0;
 	}
 
 	private void UpdateSurfaceFromPoint()

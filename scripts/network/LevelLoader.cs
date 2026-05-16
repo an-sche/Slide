@@ -55,6 +55,14 @@ public static class LevelLoader
                 case "bonus":
                     parent.AddChild(new Bonus { Position = pos });
                     break;
+                case "wall":
+                    parent.AddChild(new Wall
+                    {
+                        Position = pos,
+                        WallSize = new Vector2(e.Width ?? 80f, e.Height ?? 80f),
+                        Rotation = Mathf.DegToRad(e.Rotation ?? 0f),
+                    });
+                    break;
             }
         }
 

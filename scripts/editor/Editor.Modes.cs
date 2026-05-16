@@ -9,7 +9,7 @@ public partial class Editor
     private static readonly string[][] SlotLabels =
     [
         ["Ground", "Slidy", "Fast", "Confusing", "FastConf", "Straight", "Kill", "Void"],
-        ["Start", "End", "Bonus"],
+        ["Start", "End", "Bonus", "Wall"],
         ["Patrol", "Wander", "Orbiter"],
         ["Button", "Door"],
     ];
@@ -30,6 +30,7 @@ public partial class Editor
             new Color(0.18f, 0.80f, 0.28f),
             new Color(1.00f, 0.85f, 0.00f),
             new Color(1.00f, 0.88f, 0.20f),
+            new Color(0.55f, 0.55f, 0.75f),
         ],
         [
             new Color(0.88f, 0.28f, 0.18f),

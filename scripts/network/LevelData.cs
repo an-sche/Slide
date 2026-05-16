@@ -17,11 +17,14 @@ public class LevelData
 
 public class EntityData
 {
-    public string  Id   { get; set; } = Guid.NewGuid().ToString();
-    public string  Kind { get; set; } = "";
-    public string? Name { get; set; }
-    public float   X    { get; set; }
-    public float   Y    { get; set; }
+    public string  Id       { get; set; } = Guid.NewGuid().ToString();
+    public string  Kind     { get; set; } = "";
+    public string? Name     { get; set; }
+    public float   X        { get; set; }
+    public float   Y        { get; set; }
+    public float?  Width    { get; set; }
+    public float?  Height   { get; set; }
+    public float?  Rotation { get; set; }  // degrees; wall-only
 }
 
 public class EnemyData

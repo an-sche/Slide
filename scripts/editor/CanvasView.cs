@@ -299,6 +299,16 @@ public partial class CanvasView : Control
                     DrawPolyline([..sel_pts, sel_pts[0]], sel, 2f);
                 }
                 break;
+
+            case OverlayShape.Square:
+                DrawRect(new Rect2(sp - new Vector2(R, R), new Vector2(R * 2, R * 2)), ov.Color);
+                DrawRect(new Rect2(sp - new Vector2(R, R), new Vector2(R * 2, R * 2)), white, filled: false, width: 1.5f);
+                if (ov.Selected)
+                {
+                    float s = R + 4f;
+                    DrawRect(new Rect2(sp - new Vector2(s, s), new Vector2(s * 2, s * 2)), sel, filled: false, width: 2f);
+                }
+                break;
         }
 
         if (_zoom >= 3f && !string.IsNullOrEmpty(ov.Label))

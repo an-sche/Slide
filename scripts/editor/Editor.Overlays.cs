@@ -22,16 +22,38 @@ public partial class Editor
         {
             var e   = _levelData.Entities[i];
             var pos = new Vector2(e.X, e.Y);
-            var (color, shape) = e.Kind switch
-            {
-                "start" => (new Color(0.20f, 0.90f, 0.30f), OverlayShape.Diamond),
-                "end"   => (new Color(1.00f, 0.80f, 0.10f), OverlayShape.Diamond),
-                "bonus" => (new Color(1.00f, 0.85f, 0.10f), OverlayShape.Circle),
-                _       => (Colors.White,                    OverlayShape.Circle),
-            };
             string kind  = EntityKindLabel(e.Kind);
             string label = string.IsNullOrEmpty(e.Name) ? kind : $"{kind} - {e.Name}";
-            overlays.Add(new EditorOverlay(pos, color, shape, label, Selected: i == _selectedIndex));
+
+            if (e.Kind == "wall")
+            {
+                float     rot      = Mathf.DegToRad(e.Rotation ?? 0f);
+                var       hw       = new Vector2(e.Width ?? 80f, e.Height ?? 80f) / 2f;
+                var       wallColor = new Color(0.55f, 0.55f, 0.75f);
+                float     alpha    = i == _selectedIndex ? 1f : 0.6f;
+                Vector2[] corners  =
+                [
+                    pos + new Vector2(-hw.X, -hw.Y).Rotated(rot),
+                    pos + new Vector2( hw.X, -hw.Y).Rotated(rot),
+                    pos + new Vector2( hw.X,  hw.Y).Rotated(rot),
+                    pos + new Vector2(-hw.X,  hw.Y).Rotated(rot),
+                ];
+                for (int c = 0; c < 4; c++)
+                    lines.Add(new EditorLine(corners[c], corners[(c + 1) % 4],
+                        new Color(wallColor.R, wallColor.G, wallColor.B, alpha)));
+                overlays.Add(new EditorOverlay(pos, wallColor, OverlayShape.Square, label, Selected: i == _selectedIndex));
+            }
+            else
+            {
+                var (color, shape) = e.Kind switch
+                {
+                    "start" => (new Color(0.20f, 0.90f, 0.30f), OverlayShape.Diamond),
+                    "end"   => (new Color(1.00f, 0.80f, 0.10f), OverlayShape.Diamond),
+                    "bonus" => (new Color(1.00f, 0.85f, 0.10f), OverlayShape.Circle),
+                    _       => (Colors.White,                    OverlayShape.Circle),
+                };
+                overlays.Add(new EditorOverlay(pos, color, shape, label, Selected: i == _selectedIndex));
+            }
         }
 
         for (int i = 0; i < _levelData.Enemies.Length; i++)
@@ -225,6 +247,7 @@ public partial class Editor
         "start" => "Start",
         "end"   => "End",
         "bonus" => "Bonus",
+        "wall"  => "Wall",
         _       => kind,
     };
 

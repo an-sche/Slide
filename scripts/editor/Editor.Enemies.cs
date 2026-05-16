@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -323,10 +324,24 @@ public partial class Editor
             child.QueueFree();
         }
 
-        if (_selectedIndex < 0 || _levelData == null ||
-            _selectedIndex < _levelData.Entities.Length)
+        if (_selectedIndex < 0 || _levelData == null)
         {
             _behaviorConfigContainer.Visible = false;
+            return;
+        }
+
+        if (_selectedIndex < _levelData.Entities.Length)
+        {
+            var ent = _levelData.Entities[_selectedIndex];
+            if (ent.Kind == "wall")
+            {
+                _behaviorConfigContainer.Visible = true;
+                BuildWallConfig(ent);
+            }
+            else
+            {
+                _behaviorConfigContainer.Visible = false;
+            }
             return;
         }
 
@@ -1413,6 +1428,71 @@ public partial class Editor
             edit.CaretColumn = Mathf.Min(edit.CaretColumn, filtered.Length);
             filtering = false;
         };
+    }
+
+    private void BuildWallConfig(EntityData wall)
+    {
+        BuildWallDimField("Width",  () => wall.Width  ?? 80f, v => wall.Width  = v);
+        BuildWallDimField("Height", () => wall.Height ?? 80f, v => wall.Height = v);
+
+        _behaviorConfigContainer.AddChild(MakeBehaviorLabel("Rotation (degrees)"));
+        var rotEdit = new LineEdit
+        {
+            Text                = ((int)(wall.Rotation ?? 0f)).ToString(),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        rotEdit.AddThemeFontSizeOverride("font_size", 11);
+        float rotBefore = 0f;
+        rotEdit.FocusEntered += () => rotBefore = wall.Rotation ?? 0f;
+        rotEdit.TextChanged  += val =>
+        {
+            if (float.TryParse(val, out float r)) wall.Rotation = r;
+            RefreshCanvasOverlays();
+        };
+        rotEdit.FocusExited += () =>
+        {
+            if (!float.TryParse(rotEdit.Text, out float ra)) return;
+            if (Mathf.IsEqualApprox(ra, rotBefore)) return;
+            float rb = rotBefore;
+            _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                () => { wall.Rotation = ra; RefreshOverlays(); },
+                () => { wall.Rotation = rb; RefreshOverlays(); }
+            ));
+        };
+        rotEdit.TextSubmitted += _ => rotEdit.ReleaseFocus();
+        _behaviorConfigContainer.AddChild(rotEdit);
+    }
+
+    private void BuildWallDimField(string labelText, Func<float> get, Action<float> set)
+    {
+        _behaviorConfigContainer.AddChild(MakeBehaviorLabel(labelText));
+        var edit = new LineEdit
+        {
+            Text                = ((int)get()).ToString(),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        edit.AddThemeFontSizeOverride("font_size", 11);
+        WireIntFilter(edit);
+        float before = 0f;
+        edit.FocusEntered += () => before = get();
+        edit.TextChanged  += val =>
+        {
+            if (float.TryParse(val, out float v)) set(Mathf.Max(4f, v));
+            RefreshCanvasOverlays();
+        };
+        edit.FocusExited += () =>
+        {
+            if (!float.TryParse(edit.Text, out float va)) return;
+            va = Mathf.Max(4f, va);
+            if (Mathf.IsEqualApprox(va, before)) return;
+            float vb = before;
+            _undoStack.ExecuteAlreadyDone(new SimpleCommand(
+                () => { set(va); RefreshOverlays(); },
+                () => { set(vb); RefreshOverlays(); }
+            ));
+        };
+        edit.TextSubmitted += _ => edit.ReleaseFocus();
+        _behaviorConfigContainer.AddChild(edit);
     }
 
     private static Label MakeBehaviorLabel(string text)
