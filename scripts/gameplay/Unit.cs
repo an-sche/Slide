@@ -147,11 +147,18 @@ public partial class Unit : Area2D
 				break;
 		}
 
-		if (!_isDead && IsOverlappingWall())
+		if (!_isDead && TryGetWallNormal(out var wallNormal))
 		{
 			GlobalPosition = posBeforeMove;
-			_velocity      = Vector2.Zero;
-			_target        = null;
+			if (_currentSurface == SurfaceType.Ground)
+			{
+				_velocity = Vector2.Zero;
+				_target   = null;
+			}
+			else
+			{
+				SlideAlongWall(wallNormal);
+			}
 		}
 	}
 
@@ -225,7 +232,7 @@ public partial class Unit : Area2D
 		if (area is Corpse c && !_isDead) CorpseTouched?.Invoke(c);
 	}
 
-	private bool IsOverlappingWall()
+	private bool TryGetWallNormal(out Vector2 normal)
 	{
 		var query = new PhysicsShapeQueryParameters2D
 		{
@@ -235,7 +242,47 @@ public partial class Unit : Area2D
 			CollideWithBodies = false,
 			CollisionMask     = Layers.Walls,
 		};
-		return GetWorld2D().DirectSpaceState.IntersectShape(query, 1).Count > 0;
+		var results = GetWorld2D().DirectSpaceState.IntersectShape(query, 1);
+		if (results.Count == 0) { normal = Vector2.Zero; return false; }
+
+		if (results[0]["collider"].As<Wall>() is not { } wall)
+		{
+			normal = Vector2.Zero;
+			return false;
+		}
+
+		// Determine which face was hit by finding the dominant axis in wall-local space.
+		var   localPos  = (GlobalPosition - wall.GlobalPosition).Rotated(-wall.GlobalRotation);
+		var   halfSize  = wall.WallSize / 2f;
+		float nx        = localPos.X / halfSize.X;
+		float ny        = localPos.Y / halfSize.Y;
+		var   localNorm = Mathf.Abs(nx) >= Mathf.Abs(ny)
+			? new Vector2(Mathf.Sign(nx), 0f)
+			: new Vector2(0f, Mathf.Sign(ny));
+		normal = localNorm.Rotated(wall.GlobalRotation);
+		return true;
+	}
+
+	private void SlideAlongWall(Vector2 wallNormal)
+	{
+		// Cancel the into-wall velocity component.
+		float dot = _velocity.Dot(wallNormal);
+		if (dot < 0f)
+			_velocity -= dot * wallNormal;
+
+		// If the result is near-zero (right-angle hit), pick the tangent direction
+		// that best matches intent: target direction for steered surfaces, facing for Straight.
+		if (_velocity.LengthSquared() < 1f)
+		{
+			var   tangent   = new Vector2(-wallNormal.Y, wallNormal.X);
+			var   intendDir = (_currentSurface == SurfaceType.Straight || !_target.HasValue)
+				? _facing
+				: (_target.Value - GlobalPosition).Normalized();
+			float sign      = intendDir.Dot(tangent) >= 0f ? 1f : -1f;
+			_velocity       = tangent * sign * GetBaseSpeed(_currentSurface);
+		}
+
+		_target = null;
 	}
 
 	private void UpdateSurfaceFromPoint()
