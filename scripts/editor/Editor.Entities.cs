@@ -196,11 +196,12 @@ public partial class Editor
         if (kind is "start" or "end")
             entities.RemoveAll(e => e.Kind == kind);
         entities.Add(new EntityData { Kind = kind, X = world.X, Y = world.Y });
-        var after = entities.ToArray();
+        var after  = entities.ToArray();
+        int selIdx = after.Length - 1;
 
         _undoStack.Execute(new SimpleCommand(
-            () => { _levelData.Entities = after;  RefreshOverlays(); },
-            () => { _levelData.Entities = before; RefreshOverlays(); }
+            () => { _levelData.Entities = after;  Select(selIdx);   },
+            () => { _levelData.Entities = before; ClearSelection(); }
         ));
 
         _placementArmed = false;

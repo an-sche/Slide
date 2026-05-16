@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "name": "",
+  "author": "",
+  "bitmap": "round.png",
+  "entities": [
+    {
+      "id": "f1423f90-4da3-4c71-8d81-b250b82c204d",
+      "kind": "start",
+      "x": 102,
+      "y": 110
+    },
+    {
+      "id": "a117ce9e-f3dc-44b8-b300-7f00bc3d23f4",
+      "kind": "end",
+      "x": 502,
+      "y": 998
+    },
+    {
+      "id": "aca1bd2c-b7fc-42b9-a7cc-0eadbb45aafd",
+      "kind": "wall",
+      "x": 934,
+      "y": 830,
+      "width": 400,
+      "rotation": 0
+    },
+    {
+      "id": "c5bb33ff-7593-4c9d-a358-ea3600949673",
+      "kind": "wall",
+      "x": 1230,
+      "y": 738,
+      "width": 400,
+      "rotation": -40
+    }
+  ],
+  "enemies": []
+}

@@ -89,6 +89,15 @@
       "kind": "start",
       "x": 194,
       "y": 2234
+    },
+    {
+      "id": "b6805b81-a4d9-4726-8574-4bb157c834fa",
+      "kind": "wall",
+      "x": 482,
+      "y": 2642,
+      "width": 500,
+      "height": 20,
+      "rotation": 45
     }
   ],
   "enemies": [

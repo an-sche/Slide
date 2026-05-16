@@ -254,9 +254,13 @@ public partial class Unit : Area2D
 		// Determine which face was hit by finding the dominant axis in wall-local space.
 		var   localPos  = (GlobalPosition - wall.GlobalPosition).Rotated(-wall.GlobalRotation);
 		var   halfSize  = wall.WallSize / 2f;
-		float nx        = localPos.X / halfSize.X;
-		float ny        = localPos.Y / halfSize.Y;
-		var   localNorm = Mathf.Abs(nx) >= Mathf.Abs(ny)
+		if (halfSize.X < 1f || halfSize.Y < 1f) { normal = Vector2.Zero; return false; }
+
+		float nx = localPos.X / halfSize.X;
+		float ny = localPos.Y / halfSize.Y;
+		if (nx == 0f && ny == 0f)              { normal = Vector2.Zero; return false; }
+
+		var localNorm = Mathf.Abs(nx) >= Mathf.Abs(ny)
 			? new Vector2(Mathf.Sign(nx), 0f)
 			: new Vector2(0f, Mathf.Sign(ny));
 		normal = localNorm.Rotated(wall.GlobalRotation);
