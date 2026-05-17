@@ -19,6 +19,8 @@ public partial class World : Node2D
     private EffectSystem     _effects     = null!;
     private ProjectileSystem _projectiles = null!;
 
+    private CanvasLayer? _escapeMenu;
+
     private readonly Dictionary<long, Unit> _units = new();
     private Enemy[] _enemies = [];
 
@@ -278,7 +280,7 @@ public partial class World : Node2D
         var canvas = new CanvasLayer { Layer = 128 };
         var label  = new Label
         {
-            Text                = "PLAYTEST  —  Esc to return to editor",
+            Text                = "PLAYTEST  —  Esc for menu",
             HorizontalAlignment = HorizontalAlignment.Center,
             AnchorLeft          = 0f,
             AnchorRight         = 1f,
@@ -292,15 +294,58 @@ public partial class World : Node2D
         AddChild(canvas);
     }
 
+    private void ShowEscapeMenu()
+    {
+        var canvas = new CanvasLayer { Layer = 20 };
+
+        var bg = new ColorRect { Color = new Color(0f, 0f, 0f, 0.6f) };
+        bg.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        canvas.AddChild(bg);
+
+        var center = new CenterContainer();
+        center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        canvas.AddChild(center);
+
+        var vbox = new VBoxContainer { CustomMinimumSize = new Vector2(300, 0) };
+        center.AddChild(vbox);
+
+        var btn = new Button { CustomMinimumSize = new Vector2(0, 50) };
+        btn.Text = GameSetup.IsPlaytest ? "Quit to Editor" : "Quit to Home";
+        btn.Pressed += () =>
+        {
+            if (GameSetup.IsPlaytest)
+            {
+                GameSetup.PlaytestPath = null;
+                Input.MouseMode        = Input.MouseModeEnum.Visible;
+                GetTree().ChangeSceneToFile("res://scenes/Editor.tscn");
+            }
+            else
+            {
+                GetTree().ChangeSceneToFile("res://scenes/MainMenu.tscn");
+            }
+        };
+        vbox.AddChild(btn);
+
+        AddChild(canvas);
+        _escapeMenu = canvas;
+    }
+
+    private void CloseEscapeMenu()
+    {
+        _escapeMenu?.QueueFree();
+        _escapeMenu = null;
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
 
-        if (GameSetup.IsPlaytest && key.Keycode == Key.Escape)
+        if (key.Keycode == Key.Escape)
         {
-            GameSetup.PlaytestPath  = null;
-            Input.MouseMode         = Input.MouseModeEnum.Visible;
-            GetTree().ChangeSceneToFile("res://scenes/Editor.tscn");
+            if (_escapeMenu != null)
+                CloseEscapeMenu();
+            else
+                ShowEscapeMenu();
             GetViewport().SetInputAsHandled();
             return;
         }
