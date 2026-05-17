@@ -20,6 +20,8 @@ public partial class World : Node2D
     private ProjectileSystem _projectiles = null!;
 
     private CanvasLayer? _escapeMenu;
+    private bool         _settingLocation;
+    private Label?       _playtestBanner;
 
     private readonly Dictionary<long, Unit> _units = new();
     private Enemy[] _enemies = [];
@@ -156,6 +158,7 @@ public partial class World : Node2D
 
     public override void _Process(double delta)
     {
+        if (_settingLocation) return;
         if (!Input.IsMouseButtonPressed(MouseButton.Right)) return;
         var target = GetGlobalMousePosition();
         _localUnit?.SetTarget(target);
@@ -292,6 +295,7 @@ public partial class World : Node2D
         label.AddThemeColorOverride("font_color", new Color(1f, 0.85f, 0.2f, 0.85f));
         canvas.AddChild(label);
         AddChild(canvas);
+        _playtestBanner = label;
     }
 
     private void ShowEscapeMenu()
@@ -308,6 +312,14 @@ public partial class World : Node2D
 
         var vbox = new VBoxContainer { CustomMinimumSize = new Vector2(300, 0) };
         center.AddChild(vbox);
+
+        if (GameSetup.IsPlaytest)
+        {
+            var setLocBtn = new Button { CustomMinimumSize = new Vector2(0, 50) };
+            setLocBtn.Text    = "Set Location";
+            setLocBtn.Pressed += BeginSetLocation;
+            vbox.AddChild(setLocBtn);
+        }
 
         var btn = new Button { CustomMinimumSize = new Vector2(0, 50) };
         btn.Text = GameSetup.IsPlaytest ? "Quit to Editor" : "Quit to Home";
@@ -336,8 +348,44 @@ public partial class World : Node2D
         _escapeMenu = null;
     }
 
+    private void BeginSetLocation()
+    {
+        CloseEscapeMenu();
+        _settingLocation = true;
+        if (_playtestBanner != null)
+            _playtestBanner.Text = "Click to teleport  —  Esc to cancel";
+    }
+
+    private void EndSetLocation()
+    {
+        _settingLocation = false;
+        if (_playtestBanner != null)
+            _playtestBanner.Text = "PLAYTEST  —  Esc for menu";
+    }
+
+    public override void _Input(InputEvent @event)
+    {
+        if (_settingLocation && @event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
+        {
+            if (_localUnit != null)
+                _localUnit.GlobalPosition = GetGlobalMousePosition();
+            EndSetLocation();
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (_settingLocation)
+        {
+            if (@event is InputEventKey { Pressed: true, Echo: false, Keycode: Key.Escape })
+            {
+                EndSetLocation();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+        }
+
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
 
         if (key.Keycode == Key.Escape)

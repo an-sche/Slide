@@ -31,6 +31,14 @@
       "y": 738,
       "width": 400,
       "rotation": -40
+    },
+    {
+      "id": "8930fae2-6c89-49c9-b472-3f096af9e1ac",
+      "kind": "wall",
+      "x": 486,
+      "y": 1102,
+      "width": 250,
+      "height": 10
     }
   ],
   "enemies": []
