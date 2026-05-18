@@ -22,9 +22,10 @@ public class EntityData
     public string? Name     { get; set; }
     public float   X        { get; set; }
     public float   Y        { get; set; }
-    public float?  Width    { get; set; }
-    public float?  Height   { get; set; }
-    public float?  Rotation { get; set; }  // degrees; wall-only
+    public float?  Width          { get; set; }
+    public float?  Height         { get; set; }
+    public float?  Rotation       { get; set; }  // degrees; wall-only
+    public string? LinkedPortalId { get; set; }  // portal-only
 }
 
 public class EnemyData

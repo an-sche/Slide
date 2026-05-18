@@ -38,6 +38,8 @@ public static class LevelLoader
 
         result.LevelBounds = BuildSurfaces(image, parent);
 
+        var portalNodes = new System.Collections.Generic.Dictionary<string, Portal>();
+
         foreach (var e in data.Entities)
         {
             var pos = new Vector2(e.X, e.Y);
@@ -63,7 +65,19 @@ public static class LevelLoader
                         Rotation = Mathf.DegToRad(e.Rotation ?? 0f),
                     });
                     break;
+                case "portal":
+                    var portal = new Portal { Position = pos, Name = e.Id };
+                    parent.AddChild(portal);
+                    portalNodes[e.Id] = portal;
+                    break;
             }
+        }
+
+        foreach (var e in data.Entities)
+        {
+            if (e.Kind != "portal" || string.IsNullOrEmpty(e.LinkedPortalId)) continue;
+            if (portalNodes.TryGetValue(e.Id, out var from) && portalNodes.TryGetValue(e.LinkedPortalId, out var to))
+                from.LinkedPortal = to;
         }
 
         var rng     = new RandomNumberGenerator { Seed = levelSeed };

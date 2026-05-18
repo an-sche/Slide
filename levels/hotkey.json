@@ -36,6 +36,20 @@
       "width": 200,
       "height": 25,
       "rotation": 15
+    },
+    {
+      "id": "50e372cb-90b4-4274-af49-2a2debc8e1cb",
+      "kind": "portal",
+      "x": 102,
+      "y": 302,
+      "linkedPortalId": "9a6bf9f1-569b-4df7-bffc-e1a3d4b1f8cc"
+    },
+    {
+      "id": "9a6bf9f1-569b-4df7-bffc-e1a3d4b1f8cc",
+      "kind": "portal",
+      "x": 1730,
+      "y": 866,
+      "linkedPortalId": "50e372cb-90b4-4274-af49-2a2debc8e1cb"
     }
   ],
   "enemies": [

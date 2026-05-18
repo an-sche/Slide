@@ -11,4 +11,5 @@ public static class Layers
     public const int Enemies  = 64;
     public const int Bonuses  = 128;
     public const int Walls    = 256;
+    public const int Portals  = 512;
 }

@@ -43,6 +43,22 @@ public partial class Editor
                         new Color(wallColor.R, wallColor.G, wallColor.B, alpha)));
                 overlays.Add(new EditorOverlay(pos, wallColor, OverlayShape.Square, label, Selected: i == _selectedIndex));
             }
+            else if (e.Kind == "portal")
+            {
+                var portalColor = new Color(0.60f, 0.20f, 1.00f);
+                overlays.Add(new EditorOverlay(pos, portalColor, OverlayShape.Circle, label, Selected: i == _selectedIndex));
+
+                if (!string.IsNullOrEmpty(e.LinkedPortalId))
+                {
+                    var partner = System.Array.Find(_levelData.Entities, p => p.Id == e.LinkedPortalId);
+                    if (partner != null)
+                    {
+                        float alpha = i == _selectedIndex ? 0.85f : 0.50f;
+                        lines.Add(new EditorLine(pos, new Vector2(partner.X, partner.Y),
+                            new Color(portalColor.R, portalColor.G, portalColor.B, alpha)));
+                    }
+                }
+            }
             else
             {
                 var (color, shape) = e.Kind switch
@@ -244,11 +260,12 @@ public partial class Editor
 
     private static string EntityKindLabel(string kind) => kind switch
     {
-        "start" => "Start",
-        "end"   => "End",
-        "bonus" => "Bonus",
-        "wall"  => "Wall",
-        _       => kind,
+        "start"  => "Start",
+        "end"    => "End",
+        "bonus"  => "Bonus",
+        "wall"   => "Wall",
+        "portal" => "Portal",
+        _        => kind,
     };
 
     private static string EnemyKindLabel(BehaviorData b) => b switch

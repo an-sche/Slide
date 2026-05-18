@@ -39,6 +39,8 @@ public partial class Editor : Control
     private VBoxContainer _behaviorConfigContainer = null!;
     private EnemyPlacementMode _placementMode   = EnemyPlacementMode.None;
     private EnemyData?    _placementTarget;
+    private EntityData[]? _portalEntitiesSnapshot;
+    private EntityData?   _portalAData;
     private LevelData? _levelData;
     private string     _levelDir  = "";
     private string     _levelPath = "";

@@ -181,6 +181,12 @@ public partial class Editor
         float cellSize = GameplayConstants.CellSize;
         var   world    = new Vector2((px.X + 0.5f) * cellSize, (px.Y + 0.5f) * cellSize);
 
+        if (_selectedSlot == 4)
+        {
+            BeginPortalPlacement(world);
+            return;
+        }
+
         string kind = _selectedSlot switch
         {
             0 => "start",
@@ -323,5 +329,43 @@ public partial class Editor
             case WanderBehaviorData  w when w.StartX.HasValue: w.StartX = world.X; w.StartY = world.Y; break;
             case WanderBehaviorData  w when w.Polygon.Length > 0: w.Polygon[0].X = world.X; w.Polygon[0].Y = world.Y; break;
         }
+    }
+
+    private void BeginPortalPlacement(Vector2 world)
+    {
+        var portalA = new EntityData { Kind = "portal", X = world.X, Y = world.Y };
+        _portalEntitiesSnapshot = _levelData!.Entities;
+        _portalAData            = portalA;
+
+        var list = new List<EntityData>(_levelData.Entities) { portalA };
+        _levelData.Entities = [..list];
+        _selectedIndex      = list.Count - 1;
+        _placementMode      = EnemyPlacementMode.PlacingPortalB;
+        _placementArmed     = false;
+        RefreshSlotBorders();
+        RefreshOverlays();
+        SyncNameField();
+    }
+
+    private void PlacePortalB(Vector2 world)
+    {
+        if (_portalAData == null) { FinalizePlacementSilent(); return; }
+
+        var portalB = new EntityData { Kind = "portal", X = world.X, Y = world.Y };
+        _portalAData.LinkedPortalId = portalB.Id;
+
+        var before = _portalEntitiesSnapshot!;
+        var list   = new List<EntityData>(_levelData!.Entities) { portalB };
+        var after  = list.ToArray();
+        int selIdx = after.Length - 1;
+
+        _portalEntitiesSnapshot = null;
+        _portalAData            = null;
+        FinalizePlacementSilent();
+
+        _undoStack.Execute(new SimpleCommand(
+            () => { _levelData!.Entities = after;  Select(selIdx);   },
+            () => { _levelData!.Entities = before; ClearSelection(); }
+        ));
     }
 }

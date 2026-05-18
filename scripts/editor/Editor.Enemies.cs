@@ -7,7 +7,7 @@ namespace Slide;
 
 public partial class Editor
 {
-    private enum EnemyPlacementMode { None, PlacingWaypoints, PlacingPolygon, PickingCenter, PickingStartPos, PickingWaypointPos, PickingPolygonVertex }
+    private enum EnemyPlacementMode { None, PlacingWaypoints, PlacingPolygon, PickingCenter, PickingStartPos, PickingWaypointPos, PickingPolygonVertex, PlacingPortalB }
 
     private EnemyData[]?    _enemyPlacementSnapshot;
     private WaypointData[]? _waypointAddSnapshot;
@@ -31,6 +31,7 @@ public partial class Editor
             case EnemyPlacementMode.PickingStartPos:    ApplyPickedStartPos(world);    return;
             case EnemyPlacementMode.PickingWaypointPos:   ApplyPickedWaypointPos(world);   return;
             case EnemyPlacementMode.PickingPolygonVertex: ApplyPickedPolygonVertex(world); return;
+            case EnemyPlacementMode.PlacingPortalB:     PlacePortalB(world);           return;
         }
 
         if (!_placementArmed) return;
@@ -280,6 +281,15 @@ public partial class Editor
     {
         if (_placementMode == EnemyPlacementMode.None) return;
 
+        // Portal B placement: discard partially-placed portal A.
+        if (_portalEntitiesSnapshot != null)
+        {
+            _levelData!.Entities = _portalEntitiesSnapshot;
+            FinalizePlacementSilent();
+            ClearSelection();
+            return;
+        }
+
         // Initial enemy placement: discard the partially-built enemy.
         if (_enemyPlacementSnapshot != null)
         {
@@ -308,6 +318,8 @@ public partial class Editor
         _enemyPlacementSnapshot = null;
         _waypointAddSnapshot    = null;
         _polygonEditSnapshot    = null;
+        _portalEntitiesSnapshot = null;
+        _portalAData            = null;
         _pickingWaypointIndex      = -1;
         _pickingPolygonVertexIndex = -1;
         _canvas.SetGhostLine(null);
@@ -337,6 +349,11 @@ public partial class Editor
             {
                 _behaviorConfigContainer.Visible = true;
                 BuildWallConfig(ent);
+            }
+            else if (ent.Kind == "portal")
+            {
+                _behaviorConfigContainer.Visible = true;
+                BuildPortalConfig(ent);
             }
             else
             {
@@ -1493,6 +1510,91 @@ public partial class Editor
         };
         edit.TextSubmitted += _ => edit.ReleaseFocus();
         _behaviorConfigContainer.AddChild(edit);
+    }
+
+    private void BuildPortalConfig(EntityData portal)
+    {
+        if (_placementMode == EnemyPlacementMode.PlacingPortalB && _portalAData == portal)
+        {
+            var hint = new Label
+            {
+                Text         = "Click canvas to place exit portal",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+            hint.AddThemeFontSizeOverride("font_size", 12);
+            hint.AddThemeColorOverride("font_color", new Color(0.65f, 0.75f, 0.90f));
+            _behaviorConfigContainer.AddChild(hint);
+
+            var cancelBtn = new Button
+            {
+                Text                = "Cancel",
+                CustomMinimumSize   = new Vector2(0, 26),
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            cancelBtn.Pressed += CancelPlacement;
+            _behaviorConfigContainer.AddChild(cancelBtn);
+            return;
+        }
+
+        if (_levelData == null) return;
+
+        EntityData? partner = string.IsNullOrEmpty(portal.LinkedPortalId) ? null
+            : System.Array.Find(_levelData.Entities, e => e.Id == portal.LinkedPortalId);
+
+        EntityData? origin = partner == null
+            ? System.Array.Find(_levelData.Entities, e => e.Kind == "portal" && e.LinkedPortalId == portal.Id)
+            : null;
+
+        float cs = GameplayConstants.CellSize;
+
+        if (partner != null)
+        {
+            string partnerLabel = string.IsNullOrEmpty(partner.Name)
+                ? $"({(int)(partner.X / cs)}, {(int)(partner.Y / cs)})"
+                : partner.Name;
+            _behaviorConfigContainer.AddChild(MakeBehaviorLabel($"Exit: {partnerLabel}"));
+
+            bool twoWay = partner.LinkedPortalId == portal.Id;
+            var cb = new CheckBox { Text = "Two-way", ButtonPressed = twoWay };
+            cb.Toggled += pressed =>
+            {
+                bool before = partner.LinkedPortalId == portal.Id;
+                if (pressed == before) return;
+                string? bval = partner.LinkedPortalId;
+                string? aval = pressed ? portal.Id : null;
+                _undoStack.Execute(new SimpleCommand(
+                    () => { partner.LinkedPortalId = aval; RefreshOverlays(); },
+                    () => { partner.LinkedPortalId = bval; RefreshOverlays(); }
+                ));
+            };
+            _behaviorConfigContainer.AddChild(cb);
+        }
+        else if (origin != null)
+        {
+            string originLabel = string.IsNullOrEmpty(origin.Name)
+                ? $"({(int)(origin.X / cs)}, {(int)(origin.Y / cs)})"
+                : origin.Name;
+            _behaviorConfigContainer.AddChild(MakeBehaviorLabel($"Entry from: {originLabel}"));
+
+            bool twoWay = portal.LinkedPortalId == origin.Id;
+            var cb = new CheckBox { Text = "Two-way", ButtonPressed = twoWay };
+            cb.Toggled += pressed =>
+            {
+                bool before = portal.LinkedPortalId == origin.Id;
+                if (pressed == before) return;
+                string? bval = portal.LinkedPortalId;
+                string? aval = pressed ? origin.Id : null;
+                _undoStack.Execute(new SimpleCommand(
+                    () => { portal.LinkedPortalId = aval; RefreshOverlays(); },
+                    () => { portal.LinkedPortalId = bval; RefreshOverlays(); }
+                ));
+            };
+            _behaviorConfigContainer.AddChild(cb);
+        }
+        else
+        {
+            _behaviorConfigContainer.AddChild(MakeBehaviorLabel("No exit linked"));
+        }
     }
 
     private static Label MakeBehaviorLabel(string text)
